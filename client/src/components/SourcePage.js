@@ -3,6 +3,7 @@ import './index.css';
 import { yale_to_hangul } from './YaleToHangul';
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { highlight } from './Highlight';
+import ReactPaginate from 'react-paginate';
 
 
 function showSentence(sentence, highlight_term, i) {
@@ -18,67 +19,151 @@ function showSentence(sentence, highlight_term, i) {
 class SourcePage extends React.Component {
     constructor(props) {
         super(props);
-        let name = props.searchParams.get("name");
-        let n = props.searchParams.get("n");
-        this.state = {
-            name: name,
-            n: n,
-            data: null
-        };
     }
 
     componentDidMount() {
-        fetch("/api/source?" + new URLSearchParams({
-            name: this.state.name,
-            number_in_source: this.state.n
-        }))
-        .then((res) => res.json())
-        .then((result) => {
-            console.log(result);
-            if (result.status === 'success') {
-                this.setState({
-                    ...this.state,
-                    data: result.data
-                });
-            }
-            else {
-                console.log(result);
-            }
-        })
-        .catch(err => {
-            console.log(err);
-        });
+        this.props.initialize();
     }
 
     render() {
-        if (this.state.data === null) {
+        if (this.props.result.data === null) {
             return (
                 <div>
-                    <h1>{this.state.name}</h1>
+                    <h1>{this.props.bookName}</h1>
                     Loading...
                 </div>
             );
         }
 
+        let hl = this.props.highlightWord
+
+        const PAGE = 20;
+        let pageCount = 100; // TODO: get number of pages from server
+
+        let n = this.props.numberInSource;
+        let page = Math.floor(n / PAGE);
+
         return (
             <div>
-                <h1>{this.state.name}</h1>
-                {this.state.data.sentences.map(
-                    (sentence, i) => showSentence(sentence, this.props.searchParams.get("hl"), i)
-                )}
+                <div>
+                    <h1>{this.props.bookName}</h1>
+                    {this.props.result.data.sentences.map(
+                        (sentence, i) => showSentence(sentence, hl, i)
+                    )}
+                </div>
+
+                {/* Pager */}
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel="▶"
+                    previousLabel="◀"
+                    pageCount={pageCount}
+                    initialPage={page}
+                    disableInitialCallback={true}
+                    onPageChange={(event) => {
+                        let newPage = event.selected;
+                        let newN = this.props.numberInSource;
+                        if (newPage != page) {
+                            newN = newPage * PAGE;
+                        }
+                        this.props.setSearchParams({
+                            name: this.props.bookName,
+                            n: newN,
+                            hl: this.props.highlightWord
+                        });
+                    }}
+                />
             </div>
         );
     }
 }
 
 
-function withNavigation(Component) {
-    return props => <Component {...props}
+function load_source(bookName, numberInSource, resultFunc) {
+    fetch("/api/source?" + new URLSearchParams({
+        name: bookName,
+        number_in_source: numberInSource
+    }))
+    .then((res) => res.json())
+    .then((result) => {
+        console.log(result);
+        if (result.status === 'success') {
+            resultFunc(result.data);
+        }
+        else {
+            console.log(result);
+            resultFunc(null);
+        }
+    })
+    .catch(err => {
+        console.log(err);
+        resultFunc(null);
+    });
+}
+
+
+function SoucePageWrapper(props) {
+    let [searchParams, setSearchParams] = useSearchParams();
+    let bookName = searchParams.get("name");
+    let numberInSource = searchParams.get("n");
+    let highlightWord = searchParams.get("hl");
+    let [result, setResult] = React.useState({
+        data: null,
+        loaded: false
+    });
+
+    const prevResult = React.useRef(result);
+    const prevBookName = React.useRef(bookName);
+    const prevNumberInSource = React.useRef(numberInSource);
+
+    const refresh = React.useCallback(
+        (bookName, numberInSource) => {
+            let active = true;
+            setResult({
+                ...prevResult.current,
+                loaded: false
+            });
+
+            load_source(
+                bookName, numberInSource,
+                (data) => {
+                    if (active) {
+                        setResult({
+                            data: data,
+                            loaded: true
+                        });
+                    }
+                }
+            );
+
+            return () => {
+                active = false;
+            }
+        },
+        []
+    );
+
+    React.useEffect(() => {
+        prevBookName.current = bookName;
+        prevNumberInSource.current = numberInSource;
+        return refresh(bookName, numberInSource);
+    }, [bookName, numberInSource, refresh]);
+
+    function initialize() {
+        refresh(prevBookName.current, prevNumberInSource.current);
+    }
+
+    return <SourcePage {...props}
         navigate={useNavigate()}
-        searchParams={useSearchParams()[0]}
-        setSearchParams={useSearchParams()[1]}
+        bookName={bookName}
+        numberInSource={numberInSource}
+        result={result}
+        setSearchParams={setSearchParams}
+        initialize={initialize}
+        highlightWord={highlightWord}
     />;
 }
 
 
-export default withNavigation(SourcePage);
+export default SoucePageWrapper;

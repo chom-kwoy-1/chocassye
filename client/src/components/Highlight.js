@@ -6,6 +6,9 @@ function escapeRegex(string) {
 }
 
 export function highlight(sentence, romanize, searchTerm) {
+    if (searchTerm === null) {
+        searchTerm = "NULL";
+    }
     if (romanize) {
         let regexp = new RegExp(escapeRegex(searchTerm), 'g');
         let match;

@@ -126,7 +126,10 @@ class SearchPage extends React.Component {
                     initialPage={page - 1}
                     onPageChange={(event) => {
                         console.log("page changed to", event.selected + 1);
-                        this.props.setSearchParams({term: searchTerm, page: event.selected + 1});
+                        this.props.setSearchParams({
+                            term: searchTerm,
+                            page: event.selected + 1
+                        });
                     }}
                 />
 

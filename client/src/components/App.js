@@ -5,7 +5,7 @@ class App extends React.Component {
         return (
             <div>
                 <header>
-                    ᄎᆞ자쎠
+                    <a href="/search">ᄎᆞ자쎠</a>
                 </header>
 
                 <main>
