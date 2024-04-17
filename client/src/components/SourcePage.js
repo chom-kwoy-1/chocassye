@@ -64,7 +64,7 @@ class SourcePage extends React.Component {
                     onPageChange={(event) => {
                         let newPage = event.selected;
                         let newN = this.props.numberInSource;
-                        if (newPage != page) {
+                        if (newPage !== page) {
                             newN = newPage * PAGE;
                         }
                         this.props.setSearchParams({

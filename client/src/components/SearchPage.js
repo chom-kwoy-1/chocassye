@@ -124,9 +124,9 @@ class SearchPage extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.result.result_term != this.props.result.result_term
-            || prevProps.page != this.props.page
-            || prevProps.doc != this.props.doc) {
+        if (prevProps.result.result_term !== this.props.result.result_term
+            || prevProps.page !== this.props.page
+            || prevProps.doc !== this.props.doc) {
             this.setState({
                 ...this.state,
                 disabledMatches: new Set()
