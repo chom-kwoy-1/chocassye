@@ -326,7 +326,7 @@ class SearchResults extends React.Component {
                         <Chip 
                             label={part} 
                             sx={{backgroundColor: highlightColors[i % highlightColors.length]}}
-                            size="small" 
+                            size="small"
                             onDelete={() => null} 
                             clickable>
                             {/*<span

@@ -181,9 +181,9 @@ export function toText(sentence) {
     [sentence, mapping] = replace_and_map(
         sentence, /(<[^>]*>)/g,
         function (match) {
-            return "";
+            return ".";
         });
-    
+
     [sentence, mapping] = replace_and_map(
         sentence, TONED_SYLLABLE_REGEX,
         function (_, syllable) {
@@ -201,7 +201,7 @@ export function toTextIgnoreTone(sentence) {
     [sentence, mapping] = replace_and_map(
         sentence, /(<[^>]*>)/g,
         function (match) {
-            return "";
+            return ".";
         });
     
     [sentence, mapping] = replace_and_map(
