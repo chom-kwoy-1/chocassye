@@ -10,15 +10,13 @@ import {
     removeOverlappingRanges,
     addHighlights,
 } from './Highlight';
-import ReactPaginate from 'react-paginate';
 import { Interweave } from 'interweave';
 import { useTranslation } from 'react-i18next';
 import {
-    TextField, Button, Grid, Autocomplete,
-    CircularProgress, Typography, FormControlLabel,
+    Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
-    Backdrop, TableContainer, Table, Chip
-    , TableBody, TableRow, TableCell,
+    TableContainer, Table, TableBody,
+    TableRow, TableCell,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { tableCellClasses } from '@mui/material/TableCell';
