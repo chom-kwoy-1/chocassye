@@ -4,7 +4,7 @@ import glob from 'glob';
 import jsdom from 'jsdom';
 import { promisify } from 'util';
 import { Database, aql } from "arangojs";
-import { hangul_to_yale } from './client/src/components/YaleToHangul.mjs'
+import { hangul_to_yale } from './client/src/components/YaleToHangul.mjs';
 
 
 function uni(str) {
@@ -111,12 +111,12 @@ function add_file(collection, book_collection, file, xml) {
     }
 
     let elements = doc.querySelectorAll(
-        ':not(meta):not(titleStmt) > sent,' +
-        ':not(meta):not(titleStmt) > mark,' +
-        ':not(meta):not(titleStmt) > title,' +
-        ':not(meta):not(titleStmt) > head,' +
-        ':not(meta):not(titleStmt) > chr,' +
-        ':not(meta):not(titleStmt) > c'
+        ':not(meta):not(titleStmt):not(bibl) > sent,' +
+        ':not(meta):not(titleStmt):not(bibl) > mark,' +
+        ':not(meta):not(titleStmt):not(bibl) > title,' +
+        ':not(meta):not(titleStmt):not(bibl) > head,' +
+        ':not(meta):not(titleStmt):not(bibl) > chr,' +
+        ':not(meta):not(titleStmt):not(bibl) > c'
     );
     console.log(`${filename}: ${elements.length} sentences selected.`);
     let sentences = [];

@@ -295,7 +295,8 @@ class SearchPage extends React.Component {
         this.props.setSearchParams({
             term: searchTerm,
             doc: this.props.doc,
-            page: this.props.page
+            page: this.props.page,
+            excludeModern: this.props.excludeModern
         });
     }
 
@@ -304,7 +305,18 @@ class SearchPage extends React.Component {
         this.props.setSearchParams({
             term: this.props.term,
             doc: doc,
-            page: this.props.page
+            page: this.props.page,
+            excludeModern: this.props.excludeModern
+        });
+    }
+
+    handleExcludeModernChange(event) {
+        let excludeModern = event.target.checked;
+        this.props.setSearchParams({
+            term: this.props.term,
+            doc: this.props.doc,
+            page: this.props.page,
+            excludeModern: excludeModern? "yes" : "no"
         });
     }
 
@@ -357,6 +369,17 @@ class SearchPage extends React.Component {
 
 
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
+
+                <span className="searchOptionBox">
+                    <input
+                        type="checkbox"
+                        id="except_modern_checkbox"
+                        checked={this.props.excludeModern === "yes"}
+                        onChange={(event) => this.handleExcludeModernChange(event)}
+                    />
+                    <label htmlFor="except_modern_checkbox">{this.props.t("Exclude modern translations")}</label>
+                </span>
+
                 <div className="resultsAndRomCheckBox">
                     <span className="numResults">
                         {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
@@ -396,7 +419,7 @@ class SearchPage extends React.Component {
 }
 
 
-function search(word, doc, page, callback) {
+function search(word, doc, page, excludeModern, callback) {
     let term = hangul_to_yale(word);
 
     let prefix = "%";
@@ -415,7 +438,8 @@ function search(word, doc, page, callback) {
     postData('/api/search', {
         term: term,
         doc: doc,
-        page: page
+        page: page,
+        excludeModern: excludeModern
     }).then((result) => {
         if (result.status === 'success') {
             callback(result.results, result.total_rows, result.histogram, result.page_N);
@@ -452,6 +476,8 @@ function SearchPageWrapper(props) {
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
     let doc = searchParams.get('doc') ?? "";
+    let excludeModern = searchParams.get('excludeModern') ?? 'no';
+
     let [result, setResult] = React.useState({
         result: [],
         histogram: [],
@@ -469,16 +495,22 @@ function SearchPageWrapper(props) {
     const prevTerm = React.useRef(term);
     const prevDoc = React.useRef(doc);
     const prevPage = React.useRef(page);
+    const prevExcludeModern = React.useRef(excludeModern);
 
     const refresh = React.useCallback(
-        (term, doc, page) => {
+        (term, doc, page, excludeModern) => {
             let active = true;
 
-            if (page !== 1 && (prevTerm.current !== term || prevDoc.current !== doc)) {
+            if (page !== 1 && (
+                prevTerm.current !== term ||
+                prevDoc.current !== doc ||
+                prevExcludeModern.current !== excludeModern)) {
+
                 setSearchParams({
                     page: 1,
                     term: term,
-                    doc: doc
+                    doc: doc,
+                    excludeModern: excludeModern
                 });
             }
             else {
@@ -488,7 +520,7 @@ function SearchPageWrapper(props) {
                 });
 
                 search(
-                    term, doc, page,
+                    term, doc, page, excludeModern,
                     (result, num_results, histogram, page_N) => {
                         if (active) {
                             setResult({
@@ -534,15 +566,17 @@ function SearchPageWrapper(props) {
     React.useEffect(() => {
         if (!isInited.current || // if first call
             (hangul_to_yale(term).length > 5 && prevTerm.current !== term) || // or current term has changed
-            prevPage.current !== page) // or current page has changed
+            prevPage.current !== page ||   // or current page has changed
+            prevExcludeModern.current !== excludeModern)
         {
             isInited.current = true;
             prevPage.current = page;
             prevTerm.current = term;
             prevDoc.current = doc;
-            return refresh(term, prevDoc.current, page);
+            prevExcludeModern.current = excludeModern;
+            return refresh(term, prevDoc.current, page, excludeModern);
         }
-    }, [term, page, doc, refresh]);
+    }, [term, page, doc, excludeModern, refresh]);
 
     React.useEffect(() => {
         return suggest_doc(doc);
@@ -560,12 +594,12 @@ function SearchPageWrapper(props) {
 
     function forceRefresh(e) {
         e.preventDefault();
-        return refresh(term, doc, page);
+        return refresh(term, doc, page, excludeModern);
     }
 
     return (
         <SearchPage {...props}
-            page={page} term={term} doc={doc}
+            page={page} term={term} doc={doc} excludeModern={excludeModern}
             result={result.result}
             numResults={result.num_results}
             resultTerm={result.result_term}

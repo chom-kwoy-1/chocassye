@@ -124,6 +124,8 @@ footer {
     left: 0;
     width: 100%;
     height: 100%;
+    overflow-x: clip;
+    overflow-y: visible;
 }
 
 .histogramOverlay div {
@@ -615,7 +617,8 @@ abbr[data-title]:focus::after,
 
   /* position tooltip like the native one */
   position: absolute;
-  left: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
   bottom: -30px;
   width: auto;
   white-space: nowrap;

@@ -76,7 +76,8 @@ app.post('/api/doc_suggest', (req, res) => {
 app.post('/api/search', (req, res) => {
     let text = req.body.term;
     let doc = req.body.doc;
-    console.log(`search text=${text} doc=${doc} ip=${req.socket.remoteAddress}`);
+    let excludeModern = req.body.excludeModern === "yes";
+    console.log(`search text=${text} doc=${doc} exMod=${excludeModern} ip=${req.socket.remoteAddress}`);
 
     let N = 50;
     if (text === '%%') {
@@ -90,6 +91,7 @@ app.post('/api/search', (req, res) => {
         return;
     }
 
+
     let offset = (req.body.page - 1) * N;
     let query = aql`
         LET query = ${text}
@@ -97,6 +99,7 @@ app.post('/api/search', (req, res) => {
         LET results = (
         FOR s IN doc_view
             SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), "identity")
+            FILTER ${!excludeModern} OR ((s.lang NOT IN ["mod", "modern translation", "pho"]) AND (s.lang NOT LIKE "%역"))
             RETURN s
         )
 

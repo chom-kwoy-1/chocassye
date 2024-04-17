@@ -1,3 +1,5 @@
+import { PUA_CONV_TABLE } from './PuaToUni.mjs';
+
 
 const YALE_TO_HANGUL_INITIAL_CONSONANTS = {
     'k': '\u1100',
@@ -153,6 +155,22 @@ const INITIAL_HANGUL_TO_YALE = {
 };
 
 
+function normalize_string(string) {
+    string = string.normalize('NFKD');
+
+    let conv_string = "";
+    for (let ch of string) {
+        if (PUA_CONV_TABLE.hasOwnProperty(ch)) {
+            conv_string += PUA_CONV_TABLE[ch];
+        }
+        else {
+            conv_string += ch;
+        }
+    }
+    return conv_string;
+}
+
+
 export function yale_to_hangul(string, get_index_map=false) {
     let result = "";
     let index_map = {};
@@ -165,7 +183,7 @@ export function yale_to_hangul(string, get_index_map=false) {
     let lastBlock = "";
     let curBlock = "";
 
-    string = string + ".";
+    string = normalize_string(string) + ".";
 
     let last_i = 0;
     for (let i = 0; i < string.length;) {
@@ -290,11 +308,12 @@ export function yale_to_hangul(string, get_index_map=false) {
     return result;
 }
 
+
 export function hangul_to_yale(string) {
     let result = "";
     let wasHangul = false;
 
-    string = string.normalize('NFKD');
+    string = normalize_string(string);
 
     for (let ch of string) {
         if (HANGUL_TO_YALE.hasOwnProperty(ch)) {
