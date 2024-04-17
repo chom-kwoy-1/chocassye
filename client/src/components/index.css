@@ -688,8 +688,7 @@ span[is-tone]::before {
 span[is-tone] {
     width: 0.001px;
     display: inline-block;
-}
-
-span[is-tone] {
+    position: relative;
+    z-index: -100;
     opacity: 0;
 }
