@@ -1,7 +1,7 @@
 ## Dump Database
 
 ```
-arangodump --output-directory "dump" --overwrite true --server.database etym_db --server.username root
+arangodump --output-directory "dump" --overwrite true --server.username root --all-databases true
 ```
 
 ## Restore Database
