@@ -102,6 +102,8 @@ app.post('/api/search', (req, res) => {
                     year_start = s.year_start,
                     year_end = s.year_end,
                     year_string = s.year_string INTO groups
+            LET nyear = year == null? 9999: year
+            SORT nyear ASC, doc ASC
             RETURN {
                 name: doc,
                 year: year,
