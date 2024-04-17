@@ -46,7 +46,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const allowList = ['mark', 'abbr', 'span'];
 
 
-function showSentence(sentence, highlight_term, i) {
+function showSentence(bookname, sentence, highlight_term, i) {
     let text = sentence.html ?? sentence.text;
     
     // Into HTML for display
@@ -83,7 +83,14 @@ function showSentence(sentence, highlight_term, i) {
                 </Typography>
             </StyledTableCell>
             <StyledTableCell align="right">
-                <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>({sentence.page})</span>
+                {sentence.hasImages && sentence.page !== '' ?
+                    <a className="pageNum"
+                       style={{color: '#888', userSelect: 'none', textDecoration: 'underline'}}
+                       href={'https://f004.backblazeb2.com/file/chocassye/scans/' + bookname + '/' + sentence.page + '.jpg'}
+                       target="blank"
+                    >(️{sentence.page})</a>:
+                    <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>({sentence.page})</span>
+                }
             </StyledTableCell>
         </StyledTableRow>
     );
@@ -183,7 +190,7 @@ class SourcePage extends React.Component {
                         <Table size="small">
                             <TableBody>
                                 {this.props.result.data.sentences.map(
-                                    (sentence, i) => showSentence(sentence, hl, i)
+                                    (sentence, i) => showSentence(this.props.bookName, sentence, hl, i)
                                 )}
                             </TableBody>
                         </Table>

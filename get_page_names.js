@@ -1,4 +1,5 @@
 import { Database, aql } from "arangojs";
+import fs from "fs";
 
 // initialize db
 const db = new Database({
@@ -15,3 +16,25 @@ let query = aql`
         SORT s.number_in_book ASC
         RETURN s
 `;
+db.query(query)
+.then(async (cursor) => {
+    let result = await cursor.all();
+    let pages = [];
+    let last_page_name = null;
+    for (let i = 0; i < result.length; i++) {
+        if (result[i].page !== '') {
+            let cur_pages = result[i].page.split('-');
+            for (let j = 1; j < cur_pages.length; j++) {
+                cur_pages[j] = cur_pages[0].split(/(\d+)/)[0] + cur_pages[j];
+            }
+            for (let cur_page of cur_pages) {
+                if (cur_page !== last_page_name)
+                    pages.push(cur_page);
+                last_page_name = cur_page;
+            }
+        }
+    }
+
+    // Write pages to file, each page on a new line
+    fs.writeFileSync('pages.txt', pages.join('\n'));
+});

@@ -46,6 +46,12 @@ function add_file(collection, book_collection, file, xml) {
 
     let doc = xml.documentElement;
 
+    // check if doc has hasImages attribute
+    let hasImages = (
+        doc.attributes.hasImages !== undefined &&
+        doc.attributes.hasImages.value === 'true'
+    );
+
     if (year_string === null) {
         year_string = find_year(doc).normalize('NFKC');
     }
@@ -189,7 +195,8 @@ function add_file(collection, book_collection, file, xml) {
                     page: page,
                     orig_tag: sentence.tagName,
                     number_in_page: number_in_page,
-                    number_in_book: index
+                    number_in_book: index,
+                    hasImages: hasImages,
                 });
             } catch (error) {
                 console.error(filename, " Error:", error, uni(sentence.textContent));
