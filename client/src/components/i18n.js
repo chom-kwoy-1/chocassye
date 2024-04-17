@@ -43,6 +43,7 @@ const resources = {
       "wildcard-detail-2": "The <strong>‘%’</strong> (percent sign) matches <strong>any number</strong> of letters, including zero.",
       "startend-detail-1": "To find a sentence that <strong>starts with</strong> a certain phrase, prepend a <strong>‘^’</strong> (caret) to the query string.",
       "startend-detail-2": "To find a sentence that <strong>ends with</strong> a certain phrase, append a <strong>‘$’</strong> (dollar sign) to the query string.",
+      "Exclude Chinese": "Exclude Chinese",
     }
   },
   ko: {
@@ -84,6 +85,7 @@ const resources = {
       "wildcard-detail-2": "<strong>‘%’</strong> (퍼센트 기호)는 아무 길이의 문자열을 대신할 수 있습니다 (길이가 0인 경우도 포함).",
       "startend-detail-1": "<strong>‘^’</strong> (캐럿) 기호를 검색어 맨 앞에 붙이면 그 문자열로 시작하는 문장만 검색됩니다.",
       "startend-detail-2": "<strong>‘$’</strong> (달러) 기호를 검색어 맨 뒤에 붙이면 그 문자열로 끝나는 문장만 검색됩니다.",
+      "Exclude Chinese": "한문 숨기기",
     }
   }
 };
