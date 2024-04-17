@@ -59,6 +59,16 @@ class SearchPage extends React.Component {
         let searchTerm = event.target.value;
         this.props.setSearchParams({
             term: searchTerm,
+            doc: this.props.doc,
+            page: 1
+        });
+    }
+
+    handleDocChange(event) {
+        let doc = event.target.value;
+        this.props.setSearchParams({
+            term: this.props.term,
+            doc: doc,
             page: 1
         });
     }
@@ -72,6 +82,7 @@ class SearchPage extends React.Component {
     render() {
         let page = this.props.page;
         let searchTerm = this.props.term;
+        let doc = this.props.doc;
 
         const N = 20;
         let num_pages = Math.ceil(this.props.numResults / N);
@@ -85,6 +96,14 @@ class SearchPage extends React.Component {
                         onChange={(event) => this.handleChange(event)}
                     />
                     <button onClick={(e) => this.props.onRefresh(e)}>Search</button>
+
+                    <input
+                        type="text"
+                        value={doc}
+                        placeholder="document name..."
+                        onChange={(event) => this.handleDocChange(event)}
+                        style={{float: 'right'}}
+                    />
                 </form>
 
 
@@ -128,6 +147,7 @@ class SearchPage extends React.Component {
                         console.log("page changed to", event.selected + 1);
                         this.props.setSearchParams({
                             term: searchTerm,
+                            doc: doc,
                             page: event.selected + 1
                         });
                     }}
@@ -139,7 +159,7 @@ class SearchPage extends React.Component {
 }
 
 
-function search(word, page, func) {
+function search(word, doc, page, func) {
     let term = hangul_to_yale(word.normalize("NFKD"));
 
     let prefix = "%";
@@ -156,6 +176,7 @@ function search(word, page, func) {
 
     postData('/api/search', {
         term: term,
+        doc: doc,
         page: page
     }).then((result) => {
         if (result.status === 'success') {
@@ -177,6 +198,7 @@ function SearchPageWrapper(props) {
     let [searchParams, setSearchParams] = useSearchParams();
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
+    let doc = searchParams.get('doc') ?? "";
     let [result, setResult] = React.useState({
         result: [],
         num_results: 0,
@@ -186,10 +208,11 @@ function SearchPageWrapper(props) {
 
     const prevResult = React.useRef(result);
     const prevTerm = React.useRef(term);
+    const prevDoc = React.useRef(doc);
     const prevPage = React.useRef(page);
 
     const refresh = React.useCallback(
-        (term, page) => {
+        (term, doc, page) => {
             let active = true;
             setResult({
                 ...prevResult.current,
@@ -197,8 +220,7 @@ function SearchPageWrapper(props) {
             });
 
             search(
-                term,
-                page,
+                term, doc, page,
                 (result, num_results) => {
                     if (active) {
                         setResult({
@@ -220,15 +242,20 @@ function SearchPageWrapper(props) {
 
     React.useEffect(() => {
         prevPage.current = page;
-        return refresh(prevTerm.current, page);
+        return refresh(prevTerm.current, prevDoc.current, page);
     }, [page, refresh]);
 
     React.useEffect(() => {
         prevTerm.current = term;
         if (term.length > 4) {
-            return refresh(term, prevPage.current);
+            return refresh(term, prevDoc.current, prevPage.current);
         }
     }, [term, refresh]);
+
+    React.useEffect(() => {
+        prevDoc.current = doc;
+        //return refresh(prevTerm.current, doc, prevPage.current);
+    }, [doc, refresh]);
 
     React.useEffect(() => {
         prevResult.current = result;
@@ -236,11 +263,11 @@ function SearchPageWrapper(props) {
 
     function clickSubmit(e) {
         e.preventDefault();
-        return refresh(prevTerm.current, prevPage.current)
+        return refresh(prevTerm.current, prevDoc.current, prevPage.current)
     }
 
     return <SearchPage {...props}
-        page={page} term={term}
+        page={page} term={term} doc={doc}
         result={result.result}
         numResults={result.num_results}
         resultTerm={result.result_term}

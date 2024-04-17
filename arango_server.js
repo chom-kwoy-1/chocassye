@@ -27,7 +27,8 @@ app.use(express.static(path.join(__dirname, "client/build")));
 
 app.post('/api/search', (req, res) => {
     let text = req.body.term;
-    console.log(text);
+    let doc = req.body.doc;
+    console.log(text, doc);
 
     if (text === '%%') {
         res.send({
@@ -40,11 +41,12 @@ app.post('/api/search', (req, res) => {
 
     let N = 20;
     let offset = (req.body.page - 1) * N;
-
-    db.query(aql`
+    let query = aql`
         LET query = ${text}
+        LET doc_pattern = ${'%' + doc + '%'}
         FOR d IN doc_view
             SEARCH ANALYZER(LIKE(d.sentences.text, query), "identity")
+            FILTER d.filename LIKE doc_pattern
             LET year = d.year == null? 9999: d.year
             SORT year ASC, TFIDF(d) DESC
             LIMIT ${offset}, ${N}
@@ -64,7 +66,9 @@ app.post('/api/search', (req, res) => {
                     RETURN s
                 )
             }
-    `, {fullCount: true})
+    `;
+
+    db.query(query, {fullCount: true})
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);
         return {
