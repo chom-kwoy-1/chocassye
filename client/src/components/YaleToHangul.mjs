@@ -317,7 +317,7 @@ export function yale_to_hangul(string, get_index_map=false) {
     let input_idx = 0;
     let syllable_begin_pos = 0;
 
-    let index_map = {};
+    let index_map = Array(string.length);
 
     for (const split of splits) {
 
@@ -465,18 +465,11 @@ export function yale_to_hangul(string, get_index_map=false) {
     }
     to_next_index[last_output_index] = result.length;
 
-    let next_index_map = {};
-    last_output_index = 0;
+    let mapping = Array(string.length);
     for (let i = 0; i < string.length; ++i) {
-        if (index_map[i] !== last_output_index) {
-            next_index_map[i] = index_map[i];
-        } else {
-            next_index_map[i] = to_next_index[index_map[i]];
-        }
-        last_output_index = index_map[i];
+        mapping[i] = [index_map[i], to_next_index[index_map[i]]];
     }
-    next_index_map[string.length] = next_index_map[string.length - 1];
-
+    
     // replace freestanding consonants with compatibility forms
     result = result.replace(INDEP_CONS_RE, (_, p1) => {
         if (TO_COMPATIBILITY_FORM.hasOwnProperty(p1)) {
@@ -488,12 +481,7 @@ export function yale_to_hangul(string, get_index_map=false) {
     if (get_index_map) {
         return {
             result: result,
-
-            // map from original char index -> position of syllable's beginning in output
-            index_map: index_map,
-
-            // map from original char index -> position of next syllable's beginning in output
-            next_index_map: next_index_map
+            mapping: mapping,
         }
     }
 

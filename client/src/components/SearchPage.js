@@ -3,7 +3,15 @@ import './index.css';
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { Link, useSearchParams } from "react-router-dom";
 import ReactPaginate from 'react-paginate';
-import { highlight } from './Highlight';
+import { 
+    searchTerm2Regex, 
+    toDisplayHTML,
+    getMatchingRanges,
+    toText,
+    toTextIgnoreTone,
+    removeOverlappingRanges,
+    addHighlights,
+} from './Highlight';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Interweave } from 'interweave';
@@ -112,15 +120,12 @@ class SearchResultsList extends React.Component {
                                 {/* Highlighted sentence */}
                                 <Interweave
                                     content={highlight(
-                                        sentence.text,
-                                        this.props.romanize,
+                                        sentence.html ?? sentence.text,
                                         this.props.resultTerm,
-                                        false,
-                                        match_ids_in_sentence,
-                                        null,
-                                        true
+                                        match_ids_in_sentence
                                     )}
-                                    allowList={['mark']}
+                                    allowList={['mark', 'span']}
+                                    allowAttributes={true}
                                 />&#8203;
                                 
                                 {/* Add source link */}
@@ -142,6 +147,37 @@ class SearchResultsList extends React.Component {
 
         </React.Fragment>;
     }
+}
+
+function highlight(text, searchTerm, match_ids) {
+    
+    // Into HTML for display
+    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text);
+    
+    // Find matches
+    let hlRegex = searchTerm2Regex(searchTerm);
+    let match_ranges = [
+        ...getMatchingRanges(
+            hlRegex, 
+            ...toText(text),
+            displayHTMLMapping
+        ),
+        ...getMatchingRanges(
+            hlRegex, 
+            ...toTextIgnoreTone(text),
+            displayHTMLMapping
+        )
+    ];
+    
+    // Remove overlapping ranges
+    match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
+    
+    console.log(match_ids);
+    
+    // Add highlights
+    let html = addHighlights(displayHTML, match_ranges, match_ids);
+    
+    return html;
 }
 
 
@@ -190,16 +226,26 @@ class SearchResults extends React.Component {
 
         for (const book of this.props.results) {
             let book_parts = [];
-            for (const s of book.sentences) {
-                let parts = highlight(
-                    s.text,                // sentences
-                    this.props.romanize,   // romanize
-                    this.props.resultTerm, // searchTerm
-                    true,                  // return_highlighted_parts
-                    null,                  // highlight_colors
-                    null,                  // transformText
-                    true,                  // inline
-                );
+            for (const sentence of book.sentences) {
+                
+                let text = sentence.html ?? sentence.text;
+                
+                // Find matches
+                let hlRegex = searchTerm2Regex(this.props.resultTerm);
+                let [rawText, rawTextRanges] = toText(text);
+                let match_ranges = [
+                    ...getMatchingRanges(hlRegex, rawText, rawTextRanges, rawTextRanges),
+                    ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
+                ];
+                
+                // Remove overlapping ranges
+                match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
+                
+                let parts = [];
+                for (let range of match_ranges) {
+                    parts.push(yale_to_hangul(rawText.slice(...range)));
+                }
+                
                 book_parts.push(parts);
             }
             matches.push(book_parts);
