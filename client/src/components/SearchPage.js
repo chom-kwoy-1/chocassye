@@ -22,15 +22,37 @@ async function postData(url = '', data = {}) {
 }
 
 
+const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_,i) => arr.map(a => a[i]));
+
+
 class SearchResults extends React.Component {
 
     render() {
-        return this.props.results.map((book, i) => [
+        let results_list = zip(
+            this.props.results,
+            this.props.partsUniqueIndices
+        ).filter(([_, unique_idxs]) =>
+            !unique_idxs.flat().every(
+                elem => this.props.disabledMatches.has(elem)
+            )
+        ).map(([book, book_unique_idxs]) => {
+            let sentences_and_indices = zip(book.sentences, book_unique_idxs).filter(([_, sentence_unique_idxs]) =>
+                !sentence_unique_idxs.every(elem => this.props.disabledMatches.has(elem))
+            );
+            let [sentences, indices] = zip(...sentences_and_indices);
+            return [{...book, sentences: sentences}, indices];
+        }).map(([book, book_unique_idxs], i) => [
             <span key={i + "y"} className="year"><div>{book.year ?? "-"}</div></span>,
             <span key={i + "s"} className="sentence">
                 {book.sentences.map((s, j) => (
                     <div key={j}>
-                        <span>{highlight(s.text, this.props.romanize, this.props.resultTerm, false, this.props.partsUniqueIndices[i][j])}</span>
+                        <span>{highlight(
+                            s.text,
+                            this.props.romanize,
+                            this.props.resultTerm,
+                            false,
+                            book_unique_idxs[j]
+                        )}</span>
                         <span className="sourceWrapper">
                             &lang;
                             <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
@@ -41,7 +63,13 @@ class SearchResults extends React.Component {
                     </div>
                 ))}
             </span>
-        ])
+        ]);
+
+        if (results_list.length === 0) {
+            return [<div key="0"></div>, <div key="1">No match</div>];
+        }
+
+        return results_list;
     }
 }
 
@@ -51,6 +79,7 @@ class SearchPage extends React.Component {
         super(props);
         this.state = {
             romanize: false,
+            disabledMatches: new Set()
         };
     }
 
@@ -74,8 +103,35 @@ class SearchPage extends React.Component {
 
     handleRomanizeChange(event) {
         this.setState({
+            ...this.state,
             romanize: event.target.checked
         })
+    }
+
+    toggleMatch(event, i) {
+        let disabledMatches = new Set(this.state.disabledMatches);
+        if (disabledMatches.has(i)) {
+            disabledMatches.delete(i);
+        }
+        else {
+            disabledMatches.add(i);
+        }
+
+        this.setState({
+            ...this.state,
+            disabledMatches: disabledMatches
+        });
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.result.result_term != this.props.result.result_term
+            || prevProps.page != this.props.page
+            || prevProps.doc != this.props.doc) {
+            this.setState({
+                ...this.state,
+                disabledMatches: new Set()
+            });
+        }
     }
 
     render() {
@@ -157,24 +213,47 @@ class SearchPage extends React.Component {
 
                 {/* Show highlight match legend */}
                 <div className='matchLegend'>
-                    {unique_parts.map((part, i) => (<span key={i} className="matchLegendItem">
-                        <span className={"colorShower s" + i}>●</span>
-                        &nbsp;&nbsp;
-                        <span>{part}</span>
-                    </span>))}
+                    {unique_parts.map((part, i) => [
+                        <span key={i}
+                              className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                              onClick={(event) => {this.toggleMatch(event, i)}}>
+                            <span className={"colorShower s" + i}></span>
+                            <span className="matchLegendWord">{part}</span>
+                        </span>,
+                        <wbr key={'wbr'+i}/>
+                    ])}
                 </div>
+
+                <div className="dividerTop"></div>
+
+                {/* Pager at top */}
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel="▶"
+                    previousLabel="◀"
+                    pageCount={num_pages}
+                    forcePage={page - 1}
+                    onPageChange={(event) => {
+                        this.props.setSearchParams({
+                            term: searchTerm,
+                            doc: doc,
+                            page: event.selected + 1
+                        });
+                    }}
+                />
 
                 {/* Results area */}
                 <div className="dividerBottom"></div>
                 <div className="loadingWrapper">
                     <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                    {this.props.result.length === 0? [<div key="0"></div>, <div key="1">No match</div>] :
                      <SearchResults
                          results={this.props.result}
                          romanize={this.state.romanize}
                          resultTerm={this.props.resultTerm}
                          partsUniqueIndices={parts_unique_indices}
-                     />}
+                         disabledMatches={this.state.disabledMatches}
+                     />
                 </div>
                 <div className="dividerTop"></div>
 
@@ -187,7 +266,6 @@ class SearchPage extends React.Component {
                     pageCount={num_pages}
                     forcePage={page - 1}
                     onPageChange={(event) => {
-                        console.log("page changed to", event.selected + 1);
                         this.props.setSearchParams({
                             term: searchTerm,
                             doc: doc,
@@ -223,10 +301,8 @@ function search(word, doc, page, func) {
         page: page
     }).then((result) => {
         if (result.status === 'success') {
-            console.log(result);
             func(result.results, result.total_rows);
         } else {
-            console.log(result);
             func([], 0);
         }
     })

@@ -246,9 +246,10 @@ footer {
     height: 100%;
     color: white;
     justify-content: center;
-    align-items: center;
+    align-items: top;
     font-size: 30pt;
     opacity: 100%;
+    padding-top: 10px;
     transition: opacity .25s ease-in-out;
 }
 
@@ -289,19 +290,42 @@ footer {
 }
 
 .matchLegend {
-    padding: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .matchLegendItem {
     border: 1px solid grey;
     border-radius: 6px;
-    margin-right: 10px;
+    margin-right: 5px;
     padding-left: 3px;
     padding-right: 3px;
+    line-height: 2.0;
+    user-select: none;
 }
 
 .colorShower {
     color: #FEB7B3;
+    margin-right: 3px;
+}
+
+.colorShower::after {
+    content: "●";
+}
+
+.matchLegendItem:hover .colorShower::after,
+.matchLegendItem.disabled .colorShower::after {
+    color: black;
+    content: "×";
+}
+
+.matchLegendItem:hover,
+.matchLegendItem.disabled {
+    background-color: #eee;
+}
+
+.matchLegendItem:hover .matchLegendWord {
+    text-decoration: line-through;
 }
 
 .colorShower.s0 {
