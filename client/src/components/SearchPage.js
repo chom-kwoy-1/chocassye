@@ -116,7 +116,7 @@ class SearchResultsList extends React.Component {
                                     {/* For each sentence */}
                                     {zip(book.sentences, match_ids_in_book)
                                     .map(([sentence, match_ids_in_sentence], i) =>
-                                        <Grid item key={i}>
+                                        <Grid item key={i} sx={{ py: 0.4 }}>
 
                                             {/* Highlighted sentence */}
                                             <Interweave
