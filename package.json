@@ -1,0 +1,19 @@
+{
+  "name": "etym-eomi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.2",
+    "glob": "^7.2.0",
+    "sqlite3": "^5.0.2",
+    "xml2js": "^0.4.23",
+    "xmldom": "^0.6.0"
+  }
+}
