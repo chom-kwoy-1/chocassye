@@ -16,6 +16,7 @@ import {Trans, useTranslation} from 'react-i18next';
 import {Interweave} from 'interweave';
 import HowToPageWrapper from './HowToPage';
 import Histogram from './Histogram';
+import {suggestGugyeol} from './Gugyeol';
 import {
     Autocomplete,
     Backdrop,
@@ -28,6 +29,7 @@ import {
     Grid,
     Pagination,
     Paper,
+    Popper,
     Table,
     TableBody,
     TableCell,
@@ -36,6 +38,8 @@ import {
     TextField,
     Tooltip,
     Typography,
+    IconButton,
+    Stack,
 } from '@mui/material';
 import {styled} from '@mui/material/styles';
 import {tableCellClasses} from '@mui/material/TableCell';
@@ -572,6 +576,9 @@ class SearchPage extends React.Component {
         super(props);
         this.state = {
             romanize: false,
+            anchorEl: null,
+            gugyeolInputOpen: false,
+            isFocused: false,
         };
 
         this.setPage = this.setPage.bind(this);
@@ -624,21 +631,99 @@ class SearchPage extends React.Component {
         this.setSearchParams({page: page});
     }
 
+    toggleGugyeolInput(e) {
+        this.setState({
+            ...this.state,
+            anchorEl: document.getElementById('searchTermField'),
+            gugyeolInputOpen: !this.state.gugyeolInputOpen,
+            isFocused: !this.state.gugyeolInputOpen,
+        });
+    }
+
+    setGugyeolFocus(isFocused) {
+        this.setState({
+            ...this.state,
+            anchorEl: document.getElementById('searchTermField'),
+            isFocused: isFocused
+        });
+    }
+
+    replaceGugyeol(suggestion) {
+        let term = this.props.term;
+        term = term.slice(0, term.length - suggestion.replaceLength) + suggestion.gugyeol;
+        this.props.setSearchParams({
+            term: term,
+            doc: this.props.doc,
+            page: this.props.page,
+            excludeModern: this.props.excludeModern,
+            ignoreSep: this.props.ignoreSep,
+        });
+    }
+
     render() {
         console.log("SearchPage rerender");
         let searchTerm = this.props.term;
+        let suggestedGugyeols = suggestGugyeol(searchTerm);
+        let groupedSuggestions = [];
+        const COLUMNS = 3;
+        for (let i = 0; i < suggestedGugyeols.length; i++) {
+            if (i % COLUMNS === 0) {
+                groupedSuggestions.push([]);
+            }
+            groupedSuggestions[groupedSuggestions.length - 1].push(suggestedGugyeols[i]);
+        }
         
         return (
             <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
                 <Grid item xs={9} sm={6}>
-                    <TextField
-                        variant="filled"
-                        value={searchTerm}
-                        label={this.props.t("Search term...")}
-                        onChange={(event) => this.handleChange(event)}
-                        onKeyDown={(event) => this.handleKeyDown(event)}
-                        fullWidth
-                    />
+                    <Box position="relative">
+                        <TextField
+                            id={"searchTermField"}
+                            variant="filled"
+                            value={searchTerm}
+                            label={this.props.t("Search term...")}
+                            onChange={(event) => this.handleChange(event)}
+                            onKeyDown={(event) => this.handleKeyDown(event)}
+                            fullWidth
+                        />
+                        <Box style={{position: "absolute", right: 0, padding: 0, top: "50%", transform: "translateY(-50%)"}}>
+                            <Tooltip title={this.props.t("Toggle Gugyeol Input")}>
+                                <IconButton variant="outlined" onClick={(e) => this.toggleGugyeolInput(e)}>
+                                    <Typography sx={{fontSize: "20pt", fontWeight: "900", lineHeight: 0.7,
+                                                     color: this.state.gugyeolInputOpen? "#4e342e": "inherit"}}>
+                                        <br/>
+                                    </Typography>
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    </Box>
+                    <Popper open={this.state.gugyeolInputOpen && this.state.isFocused} anchorEl={this.state.anchorEl}
+                            placement='bottom-end' style={{ zIndex: 1000 }}>
+                        <TableContainer component={Paper} elevation={3}>
+                            <Table size="small">
+                                <TableBody>
+                                    {groupedSuggestions.map((group, i) =>
+                                        <TableRow key={i}>
+                                            {group.map((suggestion, j) =>
+                                                <StyledTableCell key={j} sx={{padding: 0}}>
+                                                    <Button onClick={() => this.replaceGugyeol(suggestion)}>
+                                                        <Stack direction="column" justifyContent="center" alignItems="center">
+                                                            <Typography sx={{fontSize: "15pt", fontWeight: "900", lineHeight: 0.8}}>
+                                                                {suggestion.gugyeol}
+                                                            </Typography>
+                                                            <Typography sx={{fontSize: "8pt", lineHeight: 0.8}}>
+                                                                {suggestion.pron}
+                                                            </Typography>
+                                                        </Stack>
+                                                    </Button>
+                                                </StyledTableCell>
+                                            )}
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Popper>
                 </Grid>
                 <Grid item xs={3} sm={1}>
                     <Button 
@@ -917,7 +1002,7 @@ function SearchPageWrapper(props) {
     );
 
     const ENABLE_SEARCH_AS_YOU_TYPE = false;
-    React.useEffect(async () => {
+    React.useEffect(() => {
         if (prevTerm.current !== term) {
             if (ENABLE_SEARCH_AS_YOU_TYPE) {
                 const result = refresh(
@@ -937,7 +1022,7 @@ function SearchPageWrapper(props) {
         }
     }, [term]);
 
-    React.useEffect(async () => {
+    React.useEffect(() => {
         if (prevPage.current !== page || !isInited.current) {
             console.log("Page changed: ", prevPage.current, " -> ", page);
             const result = refresh(
@@ -952,7 +1037,7 @@ function SearchPageWrapper(props) {
             return result;
         }
     }, [page]);
-    React.useEffect(async () => {
+    React.useEffect(() => {
         if (prevDoc.current !== doc) {
             console.log("Doc changed: ", prevDoc.current, " -> ", doc);
             if (ENABLE_SEARCH_AS_YOU_TYPE) {
@@ -971,7 +1056,7 @@ function SearchPageWrapper(props) {
             }
         }
     }, [doc]);
-    React.useEffect(async () => {
+    React.useEffect(() => {
         if (prevExcludeModern.current !== excludeModern) {
             console.log("Exclude modern changed: ", prevExcludeModern.current, " -> ", excludeModern);
             const result = refresh(
@@ -986,7 +1071,7 @@ function SearchPageWrapper(props) {
             return result;
         }
     }, [excludeModern]);
-    React.useEffect(async () => {
+    React.useEffect(() => {
         if (prevIgnoreSep.current !== ignoreSep) {
             console.log("Ignore separator changed: ", prevIgnoreSep.current, " -> ", ignoreSep);
             const result = refresh(

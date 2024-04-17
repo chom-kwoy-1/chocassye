@@ -13,6 +13,7 @@
   "dependencies": {
     "arangojs": "^8.4.0",
     "express": "^4.17.2",
+    "floating-ui": "^5.2.8",
     "glob": "^7.2.0",
     "jsdom": "^19.0.0",
     "log4js": "^6.7.1",
