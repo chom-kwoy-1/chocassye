@@ -27,7 +27,7 @@ class SearchResults extends React.Component {
     render() {
         console.log(this.props.results);
         return this.props.results.map((book, i) => [
-            <span key={i + "y"} className="year">{book.year ?? "-"}</span>,
+            <span key={i + "y"} className="year"><div>{book.year ?? "-"}</div></span>,
             <span key={i + "s"} className="sentence">
                 {book.sentences.map((s, i) => (
                     <div key={i}>
@@ -109,7 +109,14 @@ class SearchPage extends React.Component {
 
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
                 <div>
-                    <span className="numResults">{this.props.numResults} Results.</span>
+                    <span className="numResults">
+                        {this.props.numResults} Results&ensp;
+                        {
+                            this.props.result.length > 0?
+                            (<span>(Current page: {this.props.result[0].year} &ndash; {this.props.result[this.props.result.length - 1].year})</span>)
+                            : <span></span>
+                        }
+                    </span>
 
                     <span className="romCheckBox">
                         <input
@@ -142,7 +149,7 @@ class SearchPage extends React.Component {
                     nextLabel="▶"
                     previousLabel="◀"
                     pageCount={num_pages}
-                    initialPage={page - 1}
+                    forcePage={page - 1}
                     onPageChange={(event) => {
                         console.log("page changed to", event.selected + 1);
                         this.props.setSearchParams({
@@ -258,6 +265,12 @@ function SearchPageWrapper(props) {
     }, [doc, refresh]);
 
     React.useEffect(() => {
+        // scroll to top
+        window.scroll({
+            top: 0,
+            behavior: 'smooth'
+        });
+
         prevResult.current = result;
     }, [result]);
 

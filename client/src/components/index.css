@@ -76,11 +76,16 @@ footer {
     padding-right: 10px;
     color: grey;
     white-space: nowrap;
-    overflow: hidden;
+    /* overflow: hidden; */
     text-overflow: ellipsis "..";
     max-width: 80px;
     text-align: center;
     user-select: none;
+}
+
+.loadingWrapper .year div {
+    position: sticky;
+    top: 0px;
 }
 
 .loadingWrapper > span {
