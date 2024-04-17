@@ -127,23 +127,30 @@ class SearchPage extends React.Component {
 
         return (
             <div>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => this.handleChange(event)}
-                />
-                <button onClick={() => this.props.onRefresh()}>Search</button>
+                <form onSubmit={(e) => this.props.onRefresh(e)}>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(event) => this.handleChange(event)}
+                    />
+                    <button onClick={(e) => this.props.onRefresh(e)}>Search</button>
+                </form>
 
-                <input
-                    type="checkbox"
-                    id="rom_checkbox"
-                    checked={this.state.romanize}
-                    onChange={(event) => this.handleRomanizeChange(event)}
-                />
-                <label htmlFor="rom_checkbox">Romanization</label>
 
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
-                <div className="numResults">{this.props.numResults} Results.</div>
+                <div>
+                    <span className="numResults">{this.props.numResults} Results.</span>
+
+                    <span className="romCheckBox">
+                        <input
+                            type="checkbox"
+                            id="rom_checkbox"
+                            checked={this.state.romanize}
+                            onChange={(event) => this.handleRomanizeChange(event)}
+                        />
+                        <label htmlFor="rom_checkbox">Romanization</label>
+                    </span>
+                </div>
 
                 {/* Results area */}
                 <div className="dividerBottom"></div>
@@ -212,32 +219,60 @@ function SearchPageWrapper(props) {
         loaded: false
     });
 
-    function refresh() {
-        let active = true;
-        setResult({
-            ...result,
-            loaded: false
-        });
+    const prevResult = React.useRef(result);
+    const prevTerm = React.useRef(term);
+    const prevPage = React.useRef(page);
 
-        search(term, page, (result, num_results) => {
-            if (active) {
-                setResult({
-                    result: result,
-                    num_results: num_results,
-                    result_term: term,
-                    loaded: true
-                });
+    const refresh = React.useCallback(
+        (term, page) => {
+            let active = true;
+            setResult({
+                ...prevResult.current,
+                loaded: false
+            });
+
+            search(
+                term,
+                page,
+                (result, num_results) => {
+                    if (active) {
+                        setResult({
+                            result: result,
+                            num_results: num_results,
+                            result_term: term,
+                            loaded: true
+                        });
+                    }
+                }
+            );
+
+            return () => {
+                active = false;
             }
-        });
-
-        return () => {
-            active = false;
-        }
-    }
+        },
+        []
+    );
 
     React.useEffect(() => {
-        return refresh();
-    }, [term, page]);
+        prevPage.current = page;
+        return refresh(prevTerm.current, page);
+    }, [page, refresh]);
+
+    React.useEffect(() => {
+        prevTerm.current = term;
+        if (term.length > 4) {
+            return refresh(term, prevPage.current);
+        }
+    }, [term, refresh]);
+
+    React.useEffect(() => {
+        prevResult.current = result;
+    }, [result]);
+
+    function clickSubmit(e) {
+        e.preventDefault();
+        return refresh(prevTerm.current, prevPage.current)
+    }
 
     return <SearchPage {...props}
         page={page} term={term}
@@ -246,7 +281,7 @@ function SearchPageWrapper(props) {
         resultTerm={result.result_term}
         loaded={result.loaded}
         setSearchParams={setSearchParams}
-        onRefresh={refresh}
+        onRefresh={clickSubmit}
     />;
 }
 

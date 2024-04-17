@@ -245,3 +245,7 @@ footer {
     background-color: pink;
     font-weight: bold;
 }
+
+.romCheckBox {
+    float: right;
+}
