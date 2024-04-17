@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import ReactPaginate from 'react-paginate';
 import { 
     searchTerm2Regex, 
@@ -18,6 +18,11 @@ import { Interweave } from 'interweave';
 import HowToPageWrapper from './HowToPage';
 import { Trans } from 'react-i18next';
 import Histogram from './Histogram';
+import {
+    TextField, Button, Grid, Autocomplete,
+    CircularProgress, Typography, FormControlLabel,
+    Checkbox, Box, Stack, Pagination, Chip, Paper, ListItem, Backdrop
+} from '@mui/material';
 
 
 async function postData(url = '', data = {}) {
@@ -103,7 +108,7 @@ class SearchResultsList extends React.Component {
             {/* Show footnotes */}
             {footnotes.map((footnote, i) => 
                 <div key={i} className="footnoteContent">
-                    <a class="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
+                    <a className="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
                     &nbsp;
                     {footnote}
                 </div>
@@ -261,80 +266,107 @@ class SearchResults extends React.Component {
                 setPage={this.props.setPage}
                 pageN={this.props.pageN}
             />
-
-            <div className="flowRoot">
-                <span className="romCheckBox">
-                    <input
-                        type="checkbox"
-                        id="rom_checkbox"
+            
+            {/* Show highlight match legend */}
+            <Grid item xs={12}>
+                <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    spacing={2}>
+                    <Paper
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            listStyle: 'none',
+                            p: 0,
+                            m: 0,
+                        }}
+                        elevation={0}
+                        component="ul">
+                        {uniqueMatches.map((part, i) =>
+                            <ListItem key={i} sx={{py: .5, pl: 0, pr: 1}}>
+                                <Chip label={part} onDelete={() => null} clickable>
+                                    {/*<span
+                                        className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                                        onClick={(event) => {this.toggleMatch(event, i)}}>
+                                        <span className={"".concat("colorShower s", i)}></span>
+                                        <span className="matchLegendWord">{part}</span>
+                                    </span>*/}
+                                </Chip>
+                            </ListItem>
+                        )}
+                    </Paper>
+                    
+                    <FormControlLabel
+                        control={<Checkbox size="small" sx={{py: 0}} />} 
+                        label={
+                            <Typography sx={{fontSize: "1em"}}>
+                                {this.props.t("Romanization")}
+                            </Typography>
+                        }
                         checked={this.props.romanize}
                         onChange={(event) => this.props.handleRomanizeChange(event)}
                     />
-                    <label htmlFor="rom_checkbox">{this.props.t("Romanization")}</label>
-                </span>
-
-                {/* Show highlight match legend */}
-                <div className='matchLegend'>
-                    {uniqueMatches.map((part, i) => 
-                        <React.Fragment key={i}>
-                            <span
-                                className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                                onClick={(event) => {this.toggleMatch(event, i)}}>
-                                <span className={"".concat("colorShower s", i)}></span>
-                                <span className="matchLegendWord">{part}</span>
-                            </span>
-                            <wbr/>
-                        </React.Fragment>)}
-                </div>
-            </div>
-
-            <div className="dividerTop"></div>
-
-            {/* Pager at top */}
-            {num_pages > 0?
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel={this.props.t("nextpage")}
-                    previousLabel={this.props.t("prevpage")}
-                    pageCount={num_pages}
-                    forcePage={this.props.page - 1}
-                    onPageChange={(event) => {
-                        this.props.setPage(event.selected + 1);
-                    }}
-                /> : ""}
+                </Stack>
+            </Grid>
+            
+            {/* Pager on top */}
+            <Grid item xs={12}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center">
+                    {filtered_results_list.length > 0?
+                        <Pagination 
+                            color="primary"
+                            count={num_pages}
+                            siblingCount={2}
+                            boundaryCount={2}
+                            page={this.props.page}
+                            onChange={(_, page) => this.props.setPage(page)}
+                        /> : null}
+                </Box>
+            </Grid>
 
             {/* Results area */}
-            <div className="dividerBottom"></div>
-            {filtered_results_list.length > 0?
-                null:
-                <div>
-                    <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                    <HowToPageWrapper title=""/>
-                </div>
-            }
-            <SearchResultsList
-                filteredResults={filtered_results_list}
-                romanize={this.props.romanize}
-                ignoreSep={this.props.ignoreSep}
-                resultTerm={this.props.resultTerm}
-                t={this.props.t}
-            />
-            <div className="dividerTop"></div>
+            <Grid item xs={12}>
+                {filtered_results_list.length > 0?
+                    null:
+                    <div>
+                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                        <HowToPageWrapper title=""/>
+                    </div>
+                }
+            </Grid>
+            
+            <Grid item xs={12}>
+                <SearchResultsList
+                    filteredResults={filtered_results_list}
+                    romanize={this.props.romanize}
+                    ignoreSep={this.props.ignoreSep}
+                    resultTerm={this.props.resultTerm}
+                    t={this.props.t}
+                />
+            </Grid>
 
             {/* Pager on bottom */}
-            {num_pages > 0?
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel={this.props.t("nextpage")}
-                    previousLabel={this.props.t("prevpage")}
-                    pageCount={num_pages}
-                    forcePage={this.props.page - 1}
-                    onPageChange={(event) => {
-                        this.props.setPage(event.selected + 1);
-                    }}
-                /> : ""}
+            <Grid item xs={12}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center">
+                    {filtered_results_list.length > 0?
+                        <Pagination 
+                            color="primary"
+                            count={num_pages}
+                            siblingCount={2}
+                            boundaryCount={2}
+                            page={this.props.page}
+                            onChange={(_, page) => this.props.setPage(page)}
+                        /> : null}
+                </Box>
+            </Grid>
         </React.Fragment>;
     }
 }
@@ -354,6 +386,64 @@ function arePropsEqual(oldProps, newProps) {
     }
     console.log("Props equal=", equal);
     return equal;
+}
+
+class DocSelector extends React.Component {
+    
+    constructor(props) {
+        super(props);
+        this.state = {
+            open: false
+        };
+    }
+    
+    handleChange(ev, doc, reason) {
+        if (reason === 'selectOption') {
+            this.props.navigate(`/source?name=${doc.name}`);
+        }
+    }
+    
+    handleKeyDown(ev) {
+        if (ev.key === "Enter") {
+            this.props.onRefresh();
+        }
+    }
+    
+    render() {
+        let docCandLoading = !this.props.docSuggestions.loaded;
+        
+        return <Autocomplete
+            fullWidth
+            open={this.state.open}
+            onOpen={() => this.setState({...this.state, open: true})}
+            onClose={() => this.setState({...this.state, open: false})}
+            options={this.props.docSuggestions.result}
+            getOptionLabel={(doc) => typeof doc === 'string'? doc : `${doc.name} (${doc.year_string})`}
+            loading={docCandLoading}
+            freeSolo
+            onChange={(ev, value, reason) => this.handleChange(ev, value, reason)}
+            onInputChange={(ev) => this.props.handleDocChange(ev)}
+            onKeyDown={(ev) => this.handleKeyDown(ev)}
+            filterOptions={(x) => x}
+            inputValue={this.props.doc}
+            renderInput={(params) => (
+                <TextField
+                    {...params}
+                    variant="standard" 
+                    label={this.props.t("document name...")}
+                    InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                            <React.Fragment>
+                                {docCandLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                            </React.Fragment>
+                        ),
+                    }}
+                />
+            )}
+        />;
+    }
 }
 
 class SearchPage extends React.Component {
@@ -403,6 +493,12 @@ class SearchPage extends React.Component {
             romanize: event.target.checked
         })
     }
+    
+    handleKeyDown(ev) {
+        if (ev.key === "Enter") {
+            this.props.onRefresh();
+        }
+    }
 
     setPage(page) {
         this.setSearchParams({page: page});
@@ -412,86 +508,133 @@ class SearchPage extends React.Component {
         console.log("SearchPage rerender");
         let searchTerm = this.props.term;
         let doc = this.props.doc;
-
+        
         return (
-            <React.Fragment>
-                <form onSubmit={(e) => this.props.onRefresh(e)}>
-                    <input
-                        type="text"
+            <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
+                <Grid item xs={9} sm={6}>
+                    <TextField
+                        variant="filled"
                         value={searchTerm}
-                        placeholder={this.props.t("Search term...")}
+                        label={this.props.t("Search term...")}
                         onChange={(event) => this.handleChange(event)}
+                        onKeyDown={(event) => this.handleKeyDown(event)}
+                        fullWidth
                     />
-                    <button onClick={(e) => this.props.onRefresh(e)}>{this.props.t("Search")}</button>
-
-                    <div className="autoCompleteBox" style={{float: 'right'}}>
-                        <input
-                            type="text"
-                            value={doc}
-                            placeholder={this.props.t("document name...")}
-                            onChange={(event) => this.handleDocChange(event)}
-                        />
-                        <div className='suggestionsBox'>
-                            {this.props.docSuggestions.result.map((doc, i) =>
-                                <Link to={`/source?name=${doc.name}`} key={i} className='suggestionItem'>
-                                    {doc.name} ({doc.year_string})
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </form>
-
-
-                <div className="preview">{yale_to_hangul(searchTerm)}</div>
-
-                <span className="searchOptionBox">
-                    <input
-                        type="checkbox"
-                        id="except_modern_checkbox"
-                        checked={this.props.excludeModern === "yes"}
-                        onChange={(event) => this.handleExcludeModernChange(event)}
+                </Grid>
+                <Grid item xs={3} sm={1}>
+                    <Button 
+                        variant="contained" 
+                        fullWidth 
+                        onClick={(e) => this.props.onRefresh(e)}>
+                        {this.props.t("Search")}
+                    </Button>
+                </Grid>
+                
+                <Grid item xs={0} sm={1}>
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                    <DocSelector 
+                        t={this.props.t}
+                        doc={this.props.doc}
+                        docSuggestions={this.props.docSuggestions}
+                        navigate={this.props.navigate}
+                        handleDocChange={(ev) => this.handleDocChange(ev)}
+                        onRefresh={() => this.props.onRefresh()}
                     />
-                    <label htmlFor="except_modern_checkbox">{this.props.t("Exclude modern translations")}</label>
-                </span>
-                <span className="searchOptionBox">
-                    <input
-                        type="checkbox"
-                        id="ignore_sep_checkbox"
-                        checked={this.props.ignoreSep === "yes"}
-                        onChange={(event) => this.handleIgnoreSepChange(event)}
-                    />
-                    <label htmlFor="ignore_sep_checkbox">{this.props.t("Ignore syllable separators")}</label>
-                </span>
+                </Grid>
+                
+                <Grid item xs={12} sm={12}>
+                    <Typography
+                        variant="h5"
+                        noWrap
+                        sx={{
+                            mr: 2,
+                            display: 'flex',
+                            flexGrow: 1,
+                            fontWeight: 500,
+                            color: 'inherit',
+                            textDecoration: 'none',
+                        }}>
+                        {yale_to_hangul(searchTerm)}
+                    </Typography>
+                </Grid>
 
-                <div className="flowRoot">
-                    <span className="numResults">
+                <Grid item xs="auto" sm="auto">
+                    <Grid
+                        container
+                        direction="row"
+                        justifyContent="flex-start"
+                        alignItems="center">
+                        <Grid item xs="auto" sm="auto">
+                            <FormControlLabel
+                                control={<Checkbox size="small" sx={{py: 0}} />} 
+                                label={
+                                    <Typography sx={{fontSize: "1em"}}>
+                                        {this.props.t("Exclude modern translations")}
+                                    </Typography>
+                                }
+                                checked={this.props.excludeModern === "yes"}
+                                onChange={(event) => this.handleExcludeModernChange(event)}
+                            />
+                        </Grid>
+                        {/*
+                        <Grid item xs="auto" sm="auto">
+                            <FormControlLabel 
+                                fontSize="tiny"
+                                control={<Checkbox size="tiny" />} 
+                                label={this.props.t("Ignore syllable separators")}
+                                checked={this.props.ignoreSep === "yes"}
+                                onChange={(event) => this.handleIgnoreSepChange(event)}
+                            />
+                        </Grid>
+                        */}
+                    </Grid>
+                </Grid>
+
+                <Grid item xs={12} sm={12}>
+                    <Typography sx={{fontSize: "1em", fontWeight: 600}}>
                         {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
                         {
                             this.props.result.length > 0?
                             this.props.t('current page', { startYear: this.props.result[0].year, endYear: this.props.result[this.props.result.length - 1].year})
                             : <span></span>
                         }
-                    </span>
-                </div>
-            
-                <div className="resultArea">
-                    <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-
-                    <SearchResultsWrapper
-                        results={this.props.result}
-                        numResults={this.props.numResults}
-                        romanize={this.state.romanize}
-                        //handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
-                        ignoreSep={this.props.ignoreSep}
-                        resultTerm={this.props.resultTerm}
-                        histogram={this.props.histogram}
-                        pageN={this.props.pageN}
-                        page={this.props.page}
-                        setPage={this.setPage}
-                        t={this.props.t}
-                    />
-                </div>
-            </React.Fragment>
+                    </Typography>
+                </Grid>
+                
+                
+                <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
+                    <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
+                        <Backdrop
+                            sx={{ 
+                                color: '#fff', 
+                                zIndex: (theme) => theme.zIndex.drawer + 1,
+                                position: 'absolute',
+                                alignItems: 'flex-start',
+                                pt: 5,
+                            }}
+                            open={!this.props.loaded}>
+                            <CircularProgress color="inherit" />
+                        </Backdrop>
+                        
+                        <SearchResultsWrapper
+                            results={this.props.result}
+                            numResults={this.props.numResults}
+                            romanize={this.state.romanize}
+                            handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
+                            ignoreSep={this.props.ignoreSep}
+                            resultTerm={this.props.resultTerm}
+                            histogram={this.props.histogram}
+                            pageN={this.props.pageN}
+                            page={this.props.page}
+                            setPage={this.setPage}
+                            t={this.props.t}
+                        />
+                    </Grid>
+                </Grid>
+                
+            </Grid>
         );
     }
 }
@@ -550,7 +693,8 @@ function suggest(doc, callback) {
 
 function SearchPageWrapper(props) {
     const { t, i18n } = useTranslation();
-
+    
+    let navigate = useNavigate();
     let [searchParams, setSearchParams] = useSearchParams();
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
@@ -565,11 +709,13 @@ function SearchPageWrapper(props) {
         histogram: [],
         num_results: 0,
         result_term: "",
+        page_N: 20,
         loaded: false
     });
     let [docSuggestions, setDocSuggestions] = React.useState({
         result: [],
-        num_results: 0
+        num_results: 0,
+        loaded: false,
     });
 
     const isInited = React.useRef(false);
@@ -580,6 +726,8 @@ function SearchPageWrapper(props) {
 
     const prevExcludeModern = React.useRef(excludeModern);
     const prevIgnoreSep = React.useRef(ignoreSep);
+    
+    const prevDocSuggestions = React.useRef(docSuggestions);
 
     const refresh = React.useCallback(
         (term, doc, page, excludeModern, ignoreSep) => {
@@ -634,11 +782,17 @@ function SearchPageWrapper(props) {
         (doc) => {
             let active = true;
 
+            setDocSuggestions({
+                ...prevDocSuggestions.current,
+                loaded: false,
+            });
+            
             suggest(doc, (result, num_results) => {
                 if (active) {
                     setDocSuggestions({
                         result: result,
-                        num_results: num_results
+                        num_results: num_results,
+                        loaded: true,
                     });
                 }
             });
@@ -674,7 +828,7 @@ function SearchPageWrapper(props) {
     }, [doc, suggest_doc]);
 
     React.useEffect(() => {
-        // scroll to top
+        // Scroll to top of the page when result changes
         window.scroll({
             top: 0,
             behavior: 'smooth'
@@ -683,8 +837,11 @@ function SearchPageWrapper(props) {
         prevResult.current = result;
     }, [result]);
 
-    function forceRefresh(e) {
-        e.preventDefault();
+    React.useEffect(() => {
+        prevDocSuggestions.current = docSuggestions;
+    }, [docSuggestions]);
+
+    function forceRefresh() {
         return refresh(term, doc, page, excludeModern, ignoreSep);
     }
 
@@ -701,6 +858,7 @@ function SearchPageWrapper(props) {
             setSearchParams={setSearchParams}
             onRefresh={forceRefresh}
             docSuggestions={docSuggestions}
+            navigate={navigate}
             t={t}
         />
     );
