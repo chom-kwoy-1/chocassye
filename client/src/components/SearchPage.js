@@ -106,8 +106,10 @@ class SearchResultsList extends React.Component {
                             <StyledTableRow key={i}>
 
                                 {/* Year column */}
-                                <StyledTableCell component="th" scope="row" sx={{verticalAlign: 'top'}}>
-                                    {book.year ?? "-"}
+                                <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
+                                    <Grid item sx={{ py: 0.4 }}>
+                                        {book.year ?? "-"}
+                                    </Grid>
                                 </StyledTableCell>
 
                                 {/* Sentences column */}
