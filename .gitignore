@@ -5,3 +5,4 @@ db/*
 */build/*
 *.log
 dump/*
+.idea/*

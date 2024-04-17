@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
 import jsdom from 'jsdom';
-import { promisify } from 'util';
-import { Database, aql } from "arangojs";
-import { hangul_to_yale } from './client/src/components/YaleToHangul.mjs';
+import {promisify} from 'util';
+import {Database} from "arangojs";
+import {hangul_to_yale} from './client/src/components/YaleToHangul.mjs';
 
 
 function uni(str) {
@@ -119,7 +119,8 @@ function add_file(collection, book_collection, file, xml) {
         ':not(meta):not(titleStmt):not(bibl) > title,' +
         ':not(meta):not(titleStmt):not(bibl) > head,' +
         ':not(meta):not(titleStmt):not(bibl) > chr,' +
-        ':not(meta):not(titleStmt):not(bibl) > c'
+        ':not(meta):not(titleStmt):not(bibl) > c,' +
+        ':not(meta):not(titleStmt):not(bibl) > page'
     );
     console.log(`${filename}: ${elements.length} sentences selected.`);
     let sentences = [];
@@ -134,6 +135,7 @@ function add_file(collection, book_collection, file, xml) {
 
     // iterate over sentences
     let index = 0;
+    let global_page = null;
     for (let sentence of elements) {
         if (sentence.tagName === "mark") {
             let attr = sentence.attributes;
@@ -148,6 +150,12 @@ function add_file(collection, book_collection, file, xml) {
                 number_in_book: index
             });
         }
+        else if (sentence.tagName === "page") {
+            let attr = sentence.attributes;
+            if (attr.n !== undefined) {
+                global_page = uni(attr.n.value.trim());
+            }
+        }
         else {
             try {
                 let html = uni(sentence.innerHTML);
@@ -160,7 +168,7 @@ function add_file(collection, book_collection, file, xml) {
                 text = hangul_to_yale(text, false);
 
                 let attr = sentence.attributes;
-                let page = attr.page === undefined? null : uni(attr.page.value.trim());
+                let page = attr.page === undefined? global_page : uni(attr.page.value.trim());
                 let type = attr.type === undefined? null : uni(attr.type.value.trim());
                 let lang = attr.lang === undefined? null : uni(attr.lang.value.trim());
                 let number_in_page = null;
