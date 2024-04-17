@@ -260,8 +260,72 @@ footer {
 }
 
 .highlight{
-    background-color: pink;
+    background-color: #FEB7B3;
     font-weight: bold;
+}
+
+.highlight.s0{
+    background-color: #FEB7B3;
+}
+
+.highlight.s1{
+    background-color: #FAE100;
+}
+
+.highlight.s2{
+    background-color: #92F294;
+}
+
+.highlight.s3{
+    background-color: #AFB1ED;
+}
+
+.highlight.s4{
+    background-color: #97E5D7;
+}
+
+.highlight.s5{
+    background-color: #88CEFB;
+}
+
+.matchLegend {
+    padding: 4px;
+}
+
+.matchLegendItem {
+    border: 1px solid grey;
+    border-radius: 6px;
+    margin-right: 10px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.colorShower {
+    color: #FEB7B3;
+}
+
+.colorShower.s0 {
+    color: #FEB7B3;
+}
+
+.colorShower.s1 {
+    color: #FAE100;
+}
+
+.colorShower.s2 {
+    color: #92F294;
+}
+
+.colorShower.s3 {
+    color: #AFB1ED;
+}
+
+.colorShower.s4 {
+    color: #97E5D7;
+}
+
+.colorShower.s5 {
+    color: #88CEFB;
 }
 
 .romCheckBox {

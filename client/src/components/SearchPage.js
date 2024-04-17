@@ -25,13 +25,12 @@ async function postData(url = '', data = {}) {
 class SearchResults extends React.Component {
 
     render() {
-        console.log(this.props.results);
         return this.props.results.map((book, i) => [
             <span key={i + "y"} className="year"><div>{book.year ?? "-"}</div></span>,
             <span key={i + "s"} className="sentence">
-                {book.sentences.map((s, i) => (
-                    <div key={i}>
-                        <span>{highlight(s.text, this.props.romanize, this.props.resultTerm)}</span>
+                {book.sentences.map((s, j) => (
+                    <div key={j}>
+                        <span>{highlight(s.text, this.props.romanize, this.props.resultTerm, false, this.props.partsUniqueIndices[i][j])}</span>
                         <span className="sourceWrapper">
                             &lang;
                             <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
@@ -87,6 +86,33 @@ class SearchPage extends React.Component {
         const N = 20;
         let num_pages = Math.ceil(this.props.numResults / N);
 
+        // Determine highlight colors
+        let highlighted_parts = [];
+
+        for (const book of this.props.result) {
+            let book_parts = [];
+            for (const s of book.sentences) {
+                let parts = highlight(s.text, this.props.romanize, this.props.resultTerm, true);
+                book_parts.push(parts);
+            }
+            highlighted_parts.push(book_parts);
+        }
+
+        let unique_parts = [...new Set(highlighted_parts.flat(2))];
+
+        let parts_unique_indices = [];
+        for (const book_parts of highlighted_parts) {
+            let book_parts_indices = [];
+            for (const sentence_parts of book_parts) {
+                let indices = [];
+                for (const part of sentence_parts) {
+                    indices.push(unique_parts.indexOf(part));
+                }
+                book_parts_indices.push(indices);
+            }
+            parts_unique_indices.push(book_parts_indices);
+        }
+
         return (
             <div>
                 <form onSubmit={(e) => this.props.onRefresh(e)}>
@@ -129,15 +155,25 @@ class SearchPage extends React.Component {
                     </span>
                 </div>
 
+                {/* Show highlight match legend */}
+                <div className='matchLegend'>
+                    {unique_parts.map((part, i) => (<span key={i} className="matchLegendItem">
+                        <span className={"colorShower s" + i}>●</span>
+                        &nbsp;&nbsp;
+                        <span>{part}</span>
+                    </span>))}
+                </div>
+
                 {/* Results area */}
                 <div className="dividerBottom"></div>
                 <div className="loadingWrapper">
                     <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                    {this.props.result.length === 0? [<div></div>, <div>No match</div>] :
+                    {this.props.result.length === 0? [<div key="0"></div>, <div key="1">No match</div>] :
                      <SearchResults
                          results={this.props.result}
                          romanize={this.state.romanize}
                          resultTerm={this.props.resultTerm}
+                         partsUniqueIndices={parts_unique_indices}
                      />}
                 </div>
                 <div className="dividerTop"></div>
