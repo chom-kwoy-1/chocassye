@@ -5,6 +5,7 @@ import { highlight } from './Highlight';
 import ReactPaginate from 'react-paginate';
 import { addHintToGugyeol } from './Gugyeol'
 import { Interweave } from 'interweave';
+import { useTranslation } from 'react-i18next';
 
 
 const allowList = ['mark', 'abbr', 'span'];
@@ -63,8 +64,8 @@ class SourcePage extends React.Component {
                 <ReactPaginate
                     className="paginator"
                     pageRangeDisplayed={10}
-                    nextLabel="▶"
-                    previousLabel="◀"
+                    nextLabel={this.props.t("nextpage")}
+                    previousLabel={this.props.t("prevpage")}
                     pageCount={pageCount}
                     forcePage={page}
                     disableInitialCallback={true}
@@ -110,6 +111,8 @@ function load_source(bookName, numberInSource, resultFunc) {
 
 
 function SoucePageWrapper(props) {
+    const { t, i18n } = useTranslation();
+
     let [searchParams, setSearchParams] = useSearchParams();
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
@@ -168,6 +171,7 @@ function SoucePageWrapper(props) {
         setSearchParams={setSearchParams}
         initialize={initialize}
         highlightWord={highlightWord}
+        t={t}
     />;
 }
 

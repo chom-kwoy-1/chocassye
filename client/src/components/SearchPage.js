@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Interweave } from 'interweave';
 import HowToPageWrapper from './HowToPage';
 import { Trans } from 'react-i18next';
+import Histogram from './Histogram';
 
 
 async function postData(url = '', data = {}) {
@@ -28,59 +29,118 @@ async function postData(url = '', data = {}) {
 
 
 const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_,i) => arr.map(a => a[i]));
-const range = (start, stop, step) =>
-  Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
 
 
-class Histogram extends React.Component {
+class SearchResultsList extends React.Component {
+
     constructor(props) {
         super(props);
     }
 
-
     render() {
-        const BEGIN = 1400;
-        const END = 2000;
 
-        let hits = this.props.data.map((decade) => decade.num_hits).sort((a, b) => a > b);
-        let median_hits = hits.length > 0 ? hits[Math.floor(hits.length / 2)] : 0;
-        let acc_count = 0;
+        // Array(book)[Array(sentence)[Array(matches)[int]]]
+        let match_ids = this.props.matches.map(
+            (matches_in_book) => matches_in_book.map(
+                (matches_in_sentence) => matches_in_sentence.map(
+                    (match) => this.props.uniqueMatches.indexOf(match)
+                )
+            )
+        );
 
-        return <div className='histogramContainerContainer'>
-            <div className='histogramContainer'>
-                {range(BEGIN, END - 50, 50).map((year, i) => {
-                    return <div key={i} className='halfCentury'>
-                        <span className='hCLabel'>{year}</span>
+        let filtered_results_list = zip(
+            this.props.results,
+            match_ids
+        )
+        .filter(
+            ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
+                !match_ids_in_book.flat().every(
+                    id => this.props.disabledMatches.has(id)
+                )
+        )
+        .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
+
+            let sentences_and_indices =
+                zip(book.sentences, match_ids_in_book)
+                .filter(
+                    ([_, match_ids_in_sentence]) =>
+                        !match_ids_in_sentence.every(
+                            id => this.props.disabledMatches.has(id)
+                        )
+                );
+
+            let [sentences, indices] = zip(...sentences_and_indices);
+
+            return [{...book, sentences: sentences}, indices];
+        });
+
+        // Construct HTML for results list
+        if (filtered_results_list.length === 0) {
+            return <React.Fragment>
+
+                {/* Year column */}
+                <div>{/* Empty div for 'year' column */}</div>
+
+                {/* Sentences column */}
+                {this.props.loaded?
+                    <div>
+                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                        <HowToPageWrapper title=""/>
                     </div>
-                })}
-            </div>
-            <div className='histogramOverlay'>
-                {this.props.data.map((decade, i) => {
-                    let percentage = (decade.period - BEGIN) / (END - BEGIN) * 100;
-                    let style = {
-                        left: percentage + "%",
-                        width: (100 / ((END - BEGIN) / 10)) + "%",
-                        opacity: decade.num_hits / median_hits + 0.1
-                    };
-                    let tooltip = this.props.t('number decade', { decade: decade.period }) + ': '
-                                + this.props.t('number Results', { numResults: decade.num_hits });
+                    : this.props.t('number Results', { numResults: filtered_results_list.length })}
 
-                    let page_idx = 1 + Math.floor(acc_count / this.props.pageN);
-                    acc_count += decade.num_hits;
-                    let click = () => {
-                        this.props.setPage(page_idx);
-                    };
+            </React.Fragment>;
+        }
 
-                    return <div
-                        key={i}
-                        className="tooltip"
-                        data-title={tooltip}
-                        style={style}
-                        onClick={click}
-                    ></div>
-                })}
-            </div>
-        </div>
+        return <React.Fragment>
+
+            {/* For each book */}
+            {filtered_results_list.map(([book, match_ids_in_book], i) =>
+                <React.Fragment key={i}>
+
+                    {/* Year column */}
+                    <span className="year"><div>{book.year ?? "-"}</div></span>
+
+                    {/* Sentences column */}
+                    <span className="sentence">
+
+                        {/* For each sentence */}
+                        {zip(book.sentences, match_ids_in_book)
+                         .map(([sentence, match_ids_in_sentence], i) =>
+                            <div key={i}>
+
+                                {/* Highlighted sentence */}
+                                <Interweave
+                                    content={highlight(
+                                        sentence.text,
+                                        this.props.romanize,
+                                        this.props.resultTerm,
+                                        false,
+                                        match_ids_in_sentence,
+                                        null,
+                                        true
+                                    )}
+                                    allowList={['mark']}
+                                />&thinsp;
+
+                                {/* Add source link */}
+                                <span className="sourceWrapper">
+                                    &lang;
+                                    <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
+                                        {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
+                                    </Link>
+                                    &rang;
+                                </span>
+
+                            </div>
+                        )}
+
+                    </span>
+
+                </React.Fragment>
+            )}
+
+        </React.Fragment>;
     }
 }
 
@@ -94,7 +154,7 @@ class SearchResults extends React.Component {
         };
     }
 
-    toggleMatch(event, i) {
+    toggleMatch(_, i) {
         let disabledMatches = new Set(this.state.disabledMatches);
         if (disabledMatches.has(i)) {
             disabledMatches.delete(i);
@@ -126,91 +186,27 @@ class SearchResults extends React.Component {
         let num_pages = Math.ceil(this.props.numResults / this.props.pageN);
 
         // Determine highlight colors
-        let highlighted_parts = [];
+        let matches = [];
 
         for (const book of this.props.results) {
             let book_parts = [];
             for (const s of book.sentences) {
                 let parts = highlight(
-                    s.text,
-                    this.props.romanize,
-                    this.props.resultTerm,
-                    true,
-                    null,
-                    null,
-                    true
+                    s.text,                // sentences
+                    this.props.romanize,   // romanize
+                    this.props.resultTerm, // searchTerm
+                    true,                  // return_highlighted_parts
+                    null,                  // highlight_colors
+                    null,                  // transformText
+                    true,                  // inline
                 );
                 book_parts.push(parts);
             }
-            highlighted_parts.push(book_parts);
+            matches.push(book_parts);
         }
 
-        let unique_parts = [...new Set(highlighted_parts.flat(2))];
-
-        let parts_unique_indices = [];
-        for (const book_parts of highlighted_parts) {
-            let book_parts_indices = [];
-            for (const sentence_parts of book_parts) {
-                let indices = [];
-                for (const part of sentence_parts) {
-                    indices.push(unique_parts.indexOf(part));
-                }
-                book_parts_indices.push(indices);
-            }
-            parts_unique_indices.push(book_parts_indices);
-        }
-
-        let results_list = zip(
-            this.props.results,
-            parts_unique_indices
-        ).filter(([_, unique_idxs]) =>
-            !unique_idxs.flat().every(
-                elem => this.state.disabledMatches.has(elem)
-            )
-        ).map(([book, book_unique_idxs]) => {
-            let sentences_and_indices = zip(book.sentences, book_unique_idxs).filter(([_, sentence_unique_idxs]) =>
-                !sentence_unique_idxs.every(elem => this.state.disabledMatches.has(elem))
-            );
-            let [sentences, indices] = zip(...sentences_and_indices);
-            return [{...book, sentences: sentences}, indices];
-        }).map(([book, book_unique_idxs], i) => [
-            <span key={"".concat(i, "y")} className="year"><div>{book.year ?? "-"}</div></span>,
-            <span key={"".concat(i, "s")} className="sentence">
-                {book.sentences.map((s, j) => {
-                    let html = highlight(
-                        s.text,
-                        this.props.romanize,
-                        this.props.resultTerm,
-                        false,
-                        book_unique_idxs[j],
-                        null,
-                        true
-                    );
-                    return <div key={j}>
-                        <Interweave content={html} allowList={['mark']} />
-                        <span className="sourceWrapper">
-                            &lang;
-                            <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
-                                {s.page === null? book.name : `${book.name}:${s.page}`}
-                            </Link>
-                            &rang;
-                        </span>
-                    </div>;
-                })}
-            </span>
-        ]);
-
-        if (results_list.length === 0) {
-            results_list = <React.Fragment>
-                <div>{/* Empty div for 'year' column */}</div>
-                {
-                    this.props.loaded? <div>
-                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                        <HowToPageWrapper title=""/>
-                    </div> : this.props.t('number Results', { numResults: results_list.length })
-                }
-            </React.Fragment>;
-        }
+        // List of unique matches in current page
+        let uniqueMatches = [...new Set(matches.flat(2))];
 
         return <React.Fragment>
 
@@ -223,7 +219,7 @@ class SearchResults extends React.Component {
 
             {/* Show highlight match legend */}
             <div className='matchLegend'>
-                {unique_parts.map((part, i) => [
+                {uniqueMatches.map((part, i) => [
                     <span key={i}
                           className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
                           onClick={(event) => {this.toggleMatch(event, i)}}>
@@ -241,8 +237,8 @@ class SearchResults extends React.Component {
                 <ReactPaginate
                     className="paginator"
                     pageRangeDisplayed={10}
-                    nextLabel="▶"
-                    previousLabel="◀"
+                    nextLabel={this.props.t("nextpage")}
+                    previousLabel={this.props.t("prevpage")}
                     pageCount={num_pages}
                     forcePage={this.props.page - 1}
                     onPageChange={(event) => {
@@ -254,7 +250,17 @@ class SearchResults extends React.Component {
             <div className="dividerBottom"></div>
             <div className="loadingWrapper">
                 <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                {results_list}
+                <SearchResultsList
+                    matches={matches}
+                    uniqueMatches={uniqueMatches}
+                    disabledMatches={this.state.disabledMatches}
+                    results={this.props.results}
+                    loaded={this.props.loaded}
+                    romanize={this.props.romanize}
+                    ignoreSep={this.props.ignoreSep}
+                    resultTerm={this.props.resultTerm}
+                    t={this.props.t}
+                />
             </div>
             <div className="dividerTop"></div>
 
@@ -263,8 +269,8 @@ class SearchResults extends React.Component {
                 <ReactPaginate
                     className="paginator"
                     pageRangeDisplayed={10}
-                    nextLabel="▶"
-                    previousLabel="◀"
+                    nextLabel={this.props.t("nextpage")}
+                    previousLabel={this.props.t("prevpage")}
                     pageCount={num_pages}
                     forcePage={this.props.page - 1}
                     onPageChange={(event) => {
@@ -290,34 +296,35 @@ class SearchPage extends React.Component {
         this.setPage = this.setPage.bind(this);
     }
 
-    handleChange(event) {
-        let searchTerm = event.target.value;
+    setSearchParams(args) {
         this.props.setSearchParams({
-            term: searchTerm,
+            term: this.props.term,
             doc: this.props.doc,
             page: this.props.page,
-            excludeModern: this.props.excludeModern
+            excludeModern: this.props.excludeModern,
+            ignoreSep: this.props.ignoreSep,
+            ...args
         });
+    }
+
+    handleChange(event) {
+        let searchTerm = event.target.value;
+        this.setSearchParams({term: searchTerm});
     }
 
     handleDocChange(event) {
         let doc = event.target.value;
-        this.props.setSearchParams({
-            term: this.props.term,
-            doc: doc,
-            page: this.props.page,
-            excludeModern: this.props.excludeModern
-        });
+        this.setSearchParams({doc: doc});
     }
 
     handleExcludeModernChange(event) {
         let excludeModern = event.target.checked;
-        this.props.setSearchParams({
-            term: this.props.term,
-            doc: this.props.doc,
-            page: this.props.page,
-            excludeModern: excludeModern? "yes" : "no"
-        });
+        this.setSearchParams({excludeModern: excludeModern? "yes" : "no"});
+    }
+
+    handleIgnoreSepChange(event) {
+        let ignoreSep = event.target.checked;
+        this.setSearchParams({ignoreSep: ignoreSep? "yes" : "no"});
     }
 
     handleRomanizeChange(event) {
@@ -328,12 +335,7 @@ class SearchPage extends React.Component {
     }
 
     setPage(page) {
-        this.props.setSearchParams({
-            term: this.props.term,
-            doc: this.props.doc,
-            page: page,
-            excludeModern: this.props.excludeModern
-        });
+        this.setSearchParams({page: page});
     }
 
     render() {
@@ -380,6 +382,15 @@ class SearchPage extends React.Component {
                     />
                     <label htmlFor="except_modern_checkbox">{this.props.t("Exclude modern translations")}</label>
                 </span>
+                <span className="searchOptionBox">
+                    <input
+                        type="checkbox"
+                        id="ignore_sep_checkbox"
+                        checked={this.props.ignoreSep === "yes"}
+                        onChange={(event) => this.handleIgnoreSepChange(event)}
+                    />
+                    <label htmlFor="ignore_sep_checkbox">{this.props.t("Ignore syllable separators")}</label>
+                </span>
 
                 <div className="resultsAndRomCheckBox">
                     <span className="numResults">
@@ -406,6 +417,7 @@ class SearchPage extends React.Component {
                     results={this.props.result}
                     numResults={this.props.numResults}
                     romanize={this.state.romanize}
+                    ignoreSep={this.props.ignoreSep}
                     resultTerm={this.props.resultTerm}
                     histogram={this.props.histogram}
                     pageN={this.props.pageN}
@@ -420,7 +432,7 @@ class SearchPage extends React.Component {
 }
 
 
-function search(word, doc, page, excludeModern, callback) {
+function search(word, doc, page, excludeModern, ignoreSep, callback) {
     let term = hangul_to_yale(word);
 
     let prefix = "%";
@@ -440,7 +452,8 @@ function search(word, doc, page, excludeModern, callback) {
         term: term,
         doc: doc,
         page: page,
-        excludeModern: excludeModern
+        excludeModern: excludeModern,
+        ignoreSep: ignoreSep
     }).then((result) => {
         if (result.status === 'success') {
             callback(result.results, result.total_rows, result.histogram, result.page_N);
@@ -477,7 +490,10 @@ function SearchPageWrapper(props) {
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
     let doc = searchParams.get('doc') ?? "";
+
+    // Search options
     let excludeModern = searchParams.get('excludeModern') ?? 'no';
+    let ignoreSep = searchParams.get('ignoreSep') ?? 'no';
 
     let [result, setResult] = React.useState({
         result: [],
@@ -496,10 +512,12 @@ function SearchPageWrapper(props) {
     const prevTerm = React.useRef(term);
     const prevDoc = React.useRef(doc);
     const prevPage = React.useRef(page);
+
     const prevExcludeModern = React.useRef(excludeModern);
+    const prevIgnoreSep = React.useRef(ignoreSep);
 
     const refresh = React.useCallback(
-        (term, doc, page, excludeModern) => {
+        (term, doc, page, excludeModern, ignoreSep) => {
             let active = true;
 
             if (page !== 1 && (
@@ -511,7 +529,8 @@ function SearchPageWrapper(props) {
                     page: 1,
                     term: term,
                     doc: doc,
-                    excludeModern: excludeModern
+                    excludeModern: excludeModern,
+                    ignoreSep: ignoreSep,
                 });
             }
             else {
@@ -521,7 +540,7 @@ function SearchPageWrapper(props) {
                 });
 
                 search(
-                    term, doc, page, excludeModern,
+                    term, doc, page, excludeModern, ignoreSep,
                     (result, num_results, histogram, page_N) => {
                         if (active) {
                             setResult({
@@ -568,16 +587,20 @@ function SearchPageWrapper(props) {
         if (!isInited.current || // if first call
             (hangul_to_yale(term).length > 5 && prevTerm.current !== term) || // or current term has changed
             prevPage.current !== page ||   // or current page has changed
-            prevExcludeModern.current !== excludeModern)
+            prevExcludeModern.current !== excludeModern ||
+            prevIgnoreSep.current !== ignoreSep)
         {
             isInited.current = true;
             prevPage.current = page;
             prevTerm.current = term;
             prevDoc.current = doc;
+
             prevExcludeModern.current = excludeModern;
-            return refresh(term, prevDoc.current, page, excludeModern);
+            prevIgnoreSep.current = ignoreSep;
+
+            return refresh(term, prevDoc.current, page, excludeModern, ignoreSep);
         }
-    }, [term, page, doc, excludeModern, refresh]);
+    }, [term, page, doc, excludeModern, ignoreSep, refresh]);
 
     React.useEffect(() => {
         return suggest_doc(doc);
@@ -595,12 +618,13 @@ function SearchPageWrapper(props) {
 
     function forceRefresh(e) {
         e.preventDefault();
-        return refresh(term, doc, page, excludeModern);
+        return refresh(term, doc, page, excludeModern, ignoreSep);
     }
 
     return (
         <SearchPage {...props}
-            page={page} term={term} doc={doc} excludeModern={excludeModern}
+            page={page} term={term} doc={doc}
+            excludeModern={excludeModern} ignoreSep={ignoreSep}
             result={result.result}
             numResults={result.num_results}
             resultTerm={result.result_term}

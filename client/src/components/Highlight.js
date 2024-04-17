@@ -107,6 +107,7 @@ export function highlight(sentences, romanize, searchTerm,
                     dom.push(`</span>`);
                 }
                 else if (string.match(/^<[^>]*>$/) !== null) {
+                    // replace opening/closing custom tags with span
                     dom.push(string.replace(/^<(\/)?([^>]*)>$/, (_, closing, tag) => {
                         if (closing) {
                             return "</span>";

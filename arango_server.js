@@ -77,7 +77,8 @@ app.post('/api/search', (req, res) => {
     let text = req.body.term;
     let doc = req.body.doc;
     let excludeModern = req.body.excludeModern === "yes";
-    console.log(`search text=${text} doc=${doc} exMod=${excludeModern} ip=${req.socket.remoteAddress}`);
+    let ignoreSep = req.body.ignoreSep === "yes";
+    console.log(`search text=${text} doc=${doc} exMod=${excludeModern} igSep=${ignoreSep} ip=${req.socket.remoteAddress}`);
 
     let N = 50;
     if (text === '%%') {
@@ -98,7 +99,7 @@ app.post('/api/search', (req, res) => {
         LET doc_pattern = ${'%' + doc + '%'}
         LET results = (
         FOR s IN doc_view
-            SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), "identity")
+            SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), ${ignoreSep? "no_space" : "identity"})
             FILTER ${!excludeModern} OR ((s.lang NOT IN ["mod", "modern translation", "pho"]) AND (s.lang NOT LIKE "%역"))
             RETURN s
         )

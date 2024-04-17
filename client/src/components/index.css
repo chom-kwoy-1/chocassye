@@ -173,11 +173,11 @@ footer {
 }
 
 .sentence .sourceWrapper {
-    color: #333;
+    color: #777;
 }
 
 .sentence .source {
-    color: #333;
+    color: #777;
     white-space: nowrap;
     border: none;
     text-decoration: none;
@@ -295,7 +295,7 @@ footer {
     margin-left: 2px;
     margin-right: 2px;
     text-decoration: none;
-    border-bottom: none;
+    border-bottom: 1px dotted black;
 }
 
 .paginator .disabled {

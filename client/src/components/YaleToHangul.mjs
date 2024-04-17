@@ -137,7 +137,11 @@ const YALE_TO_HANGUL_VOWELS = {
     'o': '\u119e',
     'oy': '\u11a1',
     'yoy': '\u1188',
-    'yuy': '\u1194'
+    'yuy': '\u1194',
+    'ywe': '\u1191',
+    'ywey': '\u1192',
+    'ywa': '\u1184',
+    'yway': '\u1185',
 };
 
 function inv(obj) {
@@ -190,7 +194,7 @@ export function yale_to_hangul(string, get_index_map=false) {
         let skip = false;
         let this_i = i;
 
-        for (let l = 3; l >= 1; --l) {
+        for (let l = 4; l >= 1; --l) {
             if (i < string.length - l + 1) {
                 let ch = string.substring(i, i + l);
 
