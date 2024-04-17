@@ -145,9 +145,11 @@ function search(word, page, func) {
     let prefix = "%";
     let suffix = "%";
     if (term.startsWith('^')) {
+        term = term.slice(1);
         suffix = "";
     }
     if (term.endsWith('$')) {
+        term = term.slice(0, term.length - 1);
         suffix = "";
     }
     term = prefix + term + suffix;
