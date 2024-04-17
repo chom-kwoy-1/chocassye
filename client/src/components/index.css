@@ -96,8 +96,6 @@ footer {
 }
 
 .loadingWrapper {
-    position: relative;
-
     display: grid;
     grid-template-columns: min-content auto;
 }
@@ -127,8 +125,8 @@ footer {
     padding-bottom: 5px;
 }
 
-.loadingWrapper > span:nth-child(4n),
-.loadingWrapper > span:nth-child(4n+1) {
+.loadingWrapper > span:nth-child(4n+1),
+.loadingWrapper > span:nth-child(4n+2) {
     background-color: #ddd;
 }
 
@@ -349,6 +347,9 @@ footer {
     text-align: center;
 }
 
+.resultArea {
+    position: relative;
+}
 
 .loading {
     position: absolute;
@@ -365,13 +366,13 @@ footer {
     opacity: 100%;
     padding-top: 10px;
     transition: opacity .25s ease-in-out;
+    z-index: 1000;
 }
 
 .loading.loaded {
     opacity: 0%;
     display: none;
-    animation: fade-in 1s;
-    animation-fill-mode: forwards;
+    transition: opacity 1s ease-in-out;
 }
 
 .highlight{
@@ -670,6 +671,7 @@ abbr[data-title]:focus::after,
   font-size: 14px;
   padding: 4px 5px;
   line-height: 1.2;
+  z-index: 500;
 }
 
 span[orig-tag="anno"] {

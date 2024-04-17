@@ -52,8 +52,6 @@ class SearchResultsList extends React.Component {
         let dom = <React.Fragment>
             <div className="loadingWrapper">
             
-                <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-
                 {/* For each book */}
                 {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
                     <React.Fragment key={i}>
@@ -112,8 +110,6 @@ class SearchResultsList extends React.Component {
             )}
             
         </React.Fragment>;
-        
-        console.log(footnotes);
         
         return dom;
     }
@@ -312,16 +308,13 @@ class SearchResults extends React.Component {
             <div className="dividerBottom"></div>
             {filtered_results_list.length > 0?
                 null:
-                this.props.loaded?
-                    <div>
-                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                        <HowToPageWrapper title=""/>
-                    </div>
-                    : this.props.t('number Results', { numResults: this.props.results.length })
+                <div>
+                    <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                    <HowToPageWrapper title=""/>
+                </div>
             }
             <SearchResultsList
                 filteredResults={filtered_results_list}
-                loaded={this.props.loaded}
                 romanize={this.props.romanize}
                 ignoreSep={this.props.ignoreSep}
                 resultTerm={this.props.resultTerm}
@@ -348,8 +341,20 @@ class SearchResults extends React.Component {
 
 const SearchResultsWrapper = React.memo(function SearchResultsWrapper(props) {
     return <SearchResults {...props} />;
-});
+}, arePropsEqual);
 
+function arePropsEqual(oldProps, newProps) {
+    //console.log("Begin comparison");
+    let equal = true;
+    for (let key of Object.keys(oldProps)) {
+        equal &&= Object.is(oldProps[key], newProps[key]);
+        if (!Object.is(oldProps[key], newProps[key])) {
+            //console.log(key, Object.is(oldProps[key], newProps[key]), oldProps[key], newProps[key]);
+        }
+    }
+    console.log("Props equal=", equal);
+    return equal;
+}
 
 class SearchPage extends React.Component {
     constructor(props) {
@@ -404,6 +409,7 @@ class SearchPage extends React.Component {
     }
 
     render() {
+        console.log("SearchPage rerender");
         let searchTerm = this.props.term;
         let doc = this.props.doc;
 
@@ -467,21 +473,24 @@ class SearchPage extends React.Component {
                         }
                     </span>
                 </div>
+            
+                <div className="resultArea">
+                    <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
 
-                <SearchResultsWrapper
-                    results={this.props.result}
-                    numResults={this.props.numResults}
-                    romanize={this.state.romanize}
-                    handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
-                    ignoreSep={this.props.ignoreSep}
-                    resultTerm={this.props.resultTerm}
-                    histogram={this.props.histogram}
-                    pageN={this.props.pageN}
-                    page={this.props.page}
-                    setPage={this.setPage}
-                    loaded={this.props.loaded}
-                    t={this.props.t}
-                />
+                    <SearchResultsWrapper
+                        results={this.props.result}
+                        numResults={this.props.numResults}
+                        romanize={this.state.romanize}
+                        //handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
+                        ignoreSep={this.props.ignoreSep}
+                        resultTerm={this.props.resultTerm}
+                        histogram={this.props.histogram}
+                        pageN={this.props.pageN}
+                        page={this.props.page}
+                        setPage={this.setPage}
+                        t={this.props.t}
+                    />
+                </div>
             </React.Fragment>
         );
     }
@@ -580,7 +589,8 @@ function SearchPageWrapper(props) {
                 prevTerm.current !== term ||
                 prevDoc.current !== doc ||
                 prevExcludeModern.current !== excludeModern)) {
-
+                
+                console.log("setSearchParams");
                 setSearchParams({
                     page: 1,
                     term: term,
@@ -599,6 +609,7 @@ function SearchPageWrapper(props) {
                     term, doc, page, excludeModern, ignoreSep,
                     (result, num_results, histogram, page_N) => {
                         if (active) {
+                            console.log("setResult");
                             setResult({
                                 result: result,
                                 num_results: num_results,
@@ -616,7 +627,7 @@ function SearchPageWrapper(props) {
                 }
             }
         },
-        [setSearchParams]
+        [setSearchParams, setResult],
     );
 
     const suggest_doc = React.useCallback(

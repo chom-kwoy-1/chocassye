@@ -14,7 +14,7 @@ import TestPage from './components/TestPage';
 
 
 ReactDOM.render((
-    <React.StrictMode>
+    //<React.StrictMode>
         <BrowserRouter>
             <App>
             <Routes>
@@ -29,6 +29,6 @@ ReactDOM.render((
             </Routes>
             </App>
         </BrowserRouter>
-    </React.StrictMode>
+    //</React.StrictMode>
   ), document.getElementById('root')
 );
