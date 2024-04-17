@@ -47,6 +47,7 @@ const resources = {
       "Source": "Source",
       "Attributions": "Attributions",
       "Image for page": "Image for {page}",
+      "Toggle Gugyeol Input": "Toggle Gugyeol Input",
     }
   },
   ko: {
@@ -92,6 +93,7 @@ const resources = {
       "Source": "출처 서지정보",
       "Attributions": "입력 및 교정",
       "Image for page": "{page} 원문사진",
+      "Toggle Gugyeol Input": "구결자 입력기",
     }
   }
 };
