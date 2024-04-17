@@ -4,6 +4,8 @@ import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { Link, useSearchParams } from "react-router-dom";
 import ReactPaginate from 'react-paginate';
 import { highlight } from './Highlight';
+import './i18n';
+import { useTranslation } from 'react-i18next';
 
 
 async function postData(url = '', data = {}) {
@@ -56,7 +58,7 @@ class SearchResults extends React.Component {
                         <span className="sourceWrapper">
                             &lang;
                             <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
-                                {book.name}:{s.page}
+                                {s.page === null? book.name : `${book.name}:${s.page}`}
                             </Link>
                             &rang;
                         </span>
@@ -66,7 +68,7 @@ class SearchResults extends React.Component {
         ]);
 
         if (results_list.length === 0) {
-            return [<div key="0"></div>, <div key="1">No match</div>];
+            return [<div key="0"></div>, <div key="1">{this.props.t('No match')}</div>];
         }
 
         return results_list;
@@ -177,12 +179,12 @@ class SearchPage extends React.Component {
                         value={searchTerm}
                         onChange={(event) => this.handleChange(event)}
                     />
-                    <button onClick={(e) => this.props.onRefresh(e)}>Search</button>
+                    <button onClick={(e) => this.props.onRefresh(e)}>{this.props.t("Search")}</button>
 
                     <input
                         type="text"
                         value={doc}
-                        placeholder="document name..."
+                        placeholder={this.props.t("document name...")}
                         onChange={(event) => this.handleDocChange(event)}
                         style={{float: 'right'}}
                     />
@@ -192,10 +194,10 @@ class SearchPage extends React.Component {
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
                 <div>
                     <span className="numResults">
-                        {this.props.numResults} Results&ensp;
+                        {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
                         {
                             this.props.result.length > 0?
-                            (<span>(Current page: {this.props.result[0].year} &ndash; {this.props.result[this.props.result.length - 1].year})</span>)
+                            this.props.t('current page', { startYear: this.props.result[0].year, endYear: this.props.result[this.props.result.length - 1].year})
                             : <span></span>
                         }
                     </span>
@@ -207,7 +209,7 @@ class SearchPage extends React.Component {
                             checked={this.state.romanize}
                             onChange={(event) => this.handleRomanizeChange(event)}
                         />
-                        <label htmlFor="rom_checkbox">Romanization</label>
+                        <label htmlFor="rom_checkbox">{this.props.t("Romanization")}</label>
                     </span>
                 </div>
 
@@ -227,21 +229,22 @@ class SearchPage extends React.Component {
                 <div className="dividerTop"></div>
 
                 {/* Pager at top */}
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel="▶"
-                    previousLabel="◀"
-                    pageCount={num_pages}
-                    forcePage={page - 1}
-                    onPageChange={(event) => {
-                        this.props.setSearchParams({
-                            term: searchTerm,
-                            doc: doc,
-                            page: event.selected + 1
-                        });
-                    }}
-                />
+                {num_pages > 0?
+                    <ReactPaginate
+                        className="paginator"
+                        pageRangeDisplayed={10}
+                        nextLabel="▶"
+                        previousLabel="◀"
+                        pageCount={num_pages}
+                        forcePage={page - 1}
+                        onPageChange={(event) => {
+                            this.props.setSearchParams({
+                                term: searchTerm,
+                                doc: doc,
+                                page: event.selected + 1
+                            });
+                        }}
+                    /> : ""}
 
                 {/* Results area */}
                 <div className="dividerBottom"></div>
@@ -253,27 +256,28 @@ class SearchPage extends React.Component {
                          resultTerm={this.props.resultTerm}
                          partsUniqueIndices={parts_unique_indices}
                          disabledMatches={this.state.disabledMatches}
+                         t={this.props.t}
                      />
                 </div>
                 <div className="dividerTop"></div>
 
-                {/* Pager */}
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel="▶"
-                    previousLabel="◀"
-                    pageCount={num_pages}
-                    forcePage={page - 1}
-                    onPageChange={(event) => {
-                        this.props.setSearchParams({
-                            term: searchTerm,
-                            doc: doc,
-                            page: event.selected + 1
-                        });
-                    }}
-                />
-
+                {/* Pager on bottom */}
+                {num_pages > 0?
+                    <ReactPaginate
+                        className="paginator"
+                        pageRangeDisplayed={10}
+                        nextLabel="▶"
+                        previousLabel="◀"
+                        pageCount={num_pages}
+                        forcePage={page - 1}
+                        onPageChange={(event) => {
+                            this.props.setSearchParams({
+                                term: searchTerm,
+                                doc: doc,
+                                page: event.selected + 1
+                            });
+                        }}
+                    /> : ""}
             </div>
         );
     }
@@ -314,6 +318,8 @@ function search(word, doc, page, func) {
 
 
 function SearchPageWrapper(props) {
+    const { t, i18n } = useTranslation();
+
     let [searchParams, setSearchParams] = useSearchParams();
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
@@ -391,15 +397,18 @@ function SearchPageWrapper(props) {
         return refresh(prevTerm.current, prevDoc.current, prevPage.current)
     }
 
-    return <SearchPage {...props}
-        page={page} term={term} doc={doc}
-        result={result.result}
-        numResults={result.num_results}
-        resultTerm={result.result_term}
-        loaded={result.loaded}
-        setSearchParams={setSearchParams}
-        onRefresh={clickSubmit}
-    />;
+    return (
+        <SearchPage {...props}
+            page={page} term={term} doc={doc}
+            result={result.result}
+            numResults={result.num_results}
+            resultTerm={result.result_term}
+            loaded={result.loaded}
+            setSearchParams={setSearchParams}
+            onRefresh={clickSubmit}
+            t={t}
+        />
+    );
 }
 
 export default SearchPageWrapper;

@@ -46,7 +46,8 @@ class SourcePage extends React.Component {
         return (
             <div>
                 <div>
-                    <h1>{this.props.bookName}</h1>
+                    <h1 className="docname">{this.props.bookName}</h1>
+                    <span className="yearstring">{this.props.result.data.year_string}</span>
                     {this.props.result.data.sentences.map(
                         (sentence, i) => showSentence(sentence, hl, i)
                     )}

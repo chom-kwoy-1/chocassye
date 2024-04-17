@@ -116,7 +116,8 @@ app.get('/api/source', (req, res) => {
             RETURN {
                 name: d.filename,
                 sentences: sentences,
-                count: count
+                count: count,
+                year_string: d.year_string
             }`)
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);
