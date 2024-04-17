@@ -1,7 +1,8 @@
 import React from 'react';
 import './index.css';
-import { yale_to_hangul } from './YaleToHangul';
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
+import { Link, useSearchParams } from "react-router-dom"
+import ReactPaginate from 'react-paginate';
 
 
 async function postData(url = '', data = {}) {
@@ -40,96 +41,31 @@ class SearchResults extends React.Component {
 class SearchPage extends React.Component {
     constructor(props) {
         super(props);
-        let term = props.searchParams.get("term") ?? "";
         this.state = {
-            searchTerm: term,
-            result: [],
-            num_results: 0,
             romanize: false,
-            page: this.getPage()
         };
-    }
-
-    getPage(props = this.props) {
-        return parseInt(this.props.searchParams.get("page") ?? "1");
-    }
-
-    componentDidMount() {
-        this.search(this.state.searchTerm, this.state.page);
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        if (this.state.page !== this.getPage()) {
-            this.setState({
-                ...this.state,
-                page: this.getPage()
-            });
-            this.search(this.state.searchTerm, this.getPage());
-        }
     }
 
     handleChange(event) {
         let searchTerm = event.target.value;
-        this.setState({
-            ...this.state,
-            searchTerm: searchTerm,
-            page: 1
-        });
-
         this.props.setSearchParams({
             term: searchTerm,
             page: 1
         });
-
-        this.search(searchTerm, 1);
     }
 
     handleRomanizeChange(event) {
         this.setState({
-            ...this.state,
             romanize: event.target.checked
         })
     }
 
-    search(word, page) {
-        console.log(word, page);
-        let term = yale_to_hangul(word);
-
-        postData('/api/search', {
-            term: '*'+term+'*',
-            page: page
-        }).then((result) => {
-            if (result.status === 'success') {
-                console.log(result);
-
-                this.setState({
-                    ...this.state,
-                    result: result.sentences,
-                    num_results: result.total_rows
-                });
-
-            } else {
-                console.log(result);
-                this.setState({
-                    ...this.state,
-                    result: [],
-                    num_results: 0
-                });
-            }
-        });
-    }
-
     render() {
-        const N = 20;
-        let num_pages = Math.ceil(this.state.num_results / N);
-        let pages = [];
-        let page = this.state.page;
-        let page_start = (page - 1) - (page - 1) % N + 1;
-        for (let i = page_start; i <= Math.min(page_start + N - 1, num_pages); ++i) {
-            pages.push(i);
-        }
+        let page = this.props.page;
+        let searchTerm = this.props.term;
 
-        let searchTerm = this.state.searchTerm;
+        const N = 20;
+        let num_pages = Math.ceil(this.props.numResults / N);
 
         return (
             <div>
@@ -138,7 +74,7 @@ class SearchPage extends React.Component {
                     value={searchTerm}
                     onChange={(event) => this.handleChange(event)}
                 />
-                <button onClick={() => this.search(searchTerm)}>Search</button>
+                <button onClick={() => this.props.onRefresh()}>Search</button>
 
                 <input
                     type="checkbox"
@@ -149,35 +85,30 @@ class SearchPage extends React.Component {
                 <label htmlFor="rom_checkbox">Romanization</label>
 
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
-                <div className="numResults">{this.state.num_results} Results.</div>
+                <div className="numResults">{this.props.numResults} Results.</div>
 
                 {/* Results area */}
                 <div className="dividerBottom"></div>
-                {this.state.result.length == 0?
-                    <div>
-                        No match
-                    </div>
-                : <div></div>}
-                <SearchResults sentences={this.state.result} romanize={this.state.romanize} />
+                <div className="loadingWrapper">
+                    {this.props.loaded? <div></div> : <div className="loading">Loading...</div>}
+                    {this.props.result.length === 0? <div>No match</div>
+                        : <SearchResults sentences={this.props.result} romanize={this.state.romanize} />}
+                </div>
                 <div className="dividerTop"></div>
 
                 {/* Pager */}
-                <div className="pager">
-                    {page_start > 1 ?
-                        <Link to={`/search?term=${searchTerm}&page=${page_start - 1}`} className="pagelinkArrow">◀</Link>
-                        : <span></span>}
-                    {pages.map((pagenum, i) => (
-                        <span key={i}>
-                            {
-                                pagenum === page? <span className="curpage">{pagenum}</span> :
-                                <Link to={`/search?term=${searchTerm}&page=${pagenum}`} className="pagelink">{pagenum}</Link>
-                            }
-                        </span>
-                    ))}
-                    {page_start + N <= num_pages?
-                        <Link to={`/search?term=${searchTerm}&page=${page_start + N}`} className="pagelinkArrow">▶</Link>
-                        : <span></span>}
-                </div>
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel="▶"
+                    previousLabel="◀"
+                    pageCount={num_pages}
+                    initialPage={page - 1}
+                    onPageChange={(event) => {
+                        console.log("page changed to", event.selected + 1);
+                        this.props.setSearchParams({term: searchTerm, page: event.selected + 1});
+                    }}
+                />
 
             </div>
         );
@@ -185,12 +116,65 @@ class SearchPage extends React.Component {
 }
 
 
-function withNavigation(Component) {
-    return props => <Component {...props}
-        navigate={useNavigate()}
-        searchParams={useSearchParams()[0]}
-        setSearchParams={useSearchParams()[1]}
+function search(word, page, func) {
+    let term = hangul_to_yale(word.normalize("NFKD"));
+
+    postData('/api/search', {
+        term: '*'+term+'*',
+        page: page
+    }).then((result) => {
+        if (result.status === 'success') {
+            console.log(result);
+            func(result.sentences, result.total_rows);
+        } else {
+            console.log(result);
+            func([], 0);
+        }
+    })
+    .catch((err) => {
+        console.log(err);
+        func([], 0);
+    });
+}
+
+
+function SearchPageWrapper(props) {
+    let [searchParams, setSearchParams] = useSearchParams();
+    let page = parseInt(searchParams.get('page') ?? '1');
+    let term = searchParams.get('term') ?? "";
+    let [result, setResult] = React.useState([]);
+    let [numResults, setNumResults] = React.useState(0);
+    let [loaded, setLoaded] = React.useState(false);
+
+    function refresh() {
+        let active = true;
+        setLoaded(false);
+
+        search(term, page, (result, num_results) => {
+            if (active) {
+                setResult(result);
+                setNumResults(num_results);
+                setLoaded(true);
+            }
+        });
+
+        return () => {
+            active = false;
+        }
+    }
+
+    React.useEffect(() => {
+        console.log("term/page changed", term, page);
+        return refresh();
+    }, [term, page]);
+
+    return <SearchPage {...props}
+        loaded={loaded}
+        page={page} term={term}
+        result={result} numResults={numResults}
+        setSearchParams={setSearchParams}
+        onRefresh={refresh}
     />;
 }
 
-export default withNavigation(SearchPage);
+export default SearchPageWrapper;

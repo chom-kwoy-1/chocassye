@@ -127,6 +127,10 @@ const YALE_TO_HANGUL_INITIALS = {
     ...YALE_TO_HANGUL_INITIAL_CONSONANTS,
     ...YALE_TO_HANGUL_VOWELS
 };
+const YALE_TO_HANGUL_FINALS = {
+    ...YALE_TO_HANGUL_FINAL_CONSONANTS,
+    ...YALE_TO_HANGUL_VOWELS
+};
 
 function inv(obj) {
     return Object.fromEntries(Object.entries(obj).map(a => a.reverse()));
@@ -153,11 +157,13 @@ function yale_to_hangul(string) {
             if (i < string.length - l + 1) {
                 let ch = string.substring(i, i + l);
                 if (wasLastVowel) {
-                    if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(ch)) {
-                        result += YALE_TO_HANGUL_FINAL_CONSONANTS[ch]
+                    if (YALE_TO_HANGUL_FINALS.hasOwnProperty(ch)) {
+                        result += YALE_TO_HANGUL_FINALS[ch]
                         i += l;
 
-                        wasLastVowel = false;
+                        if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(ch)) {
+                            wasLastVowel = false;
+                        }
                         skip = true;
                         break;
                     }

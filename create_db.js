@@ -116,9 +116,9 @@ function add_file(file, xml) {
                     VALUES (?, ?, ?, ?, ?, ?, ?)`, [
                     text,
                     source_id,
-                    sentence.attributes.type.value,
-                    sentence.attributes.lang.value,
-                    sentence.attributes.page.value,
+                    sentence.attributes.type.value.trim(),
+                    sentence.attributes.lang.value.trim(),
+                    sentence.attributes.page.value.trim(),
                     sentence.attributes.n.value,
                     index
                 ]);

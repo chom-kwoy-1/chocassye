@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -5,8 +7,6 @@ const port = process.env.PORT || 5000;
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('db/database.sqlite3');
 
-const glob = require("glob");
-const promisify = require('util').promisify;
 const YaleHangul = require('./client/src/components/YaleToHangul');
 
 
@@ -130,7 +130,7 @@ app.post('/api/remove_def', (req, res) => {
 });
 
 app.post('/api/search', (req, res) => {
-    let text = YaleHangul.hangul_to_yale(req.body.term);
+    let text = req.body.term;
     console.log(text);
 
     if (text === '**') {
@@ -143,6 +143,9 @@ app.post('/api/search', (req, res) => {
     }
 
     let N = 20;
+
+    console.log(typeof(text), typeof(N), typeof((req.body.page - 1) * N));
+    console.log(text, N, req.body.page);
 
     db_all(
         `SELECT
@@ -177,6 +180,7 @@ app.post('/api/search', (req, res) => {
             sentences: rows
         });
     }).catch(err => {
+        console.log(err.message);
         res.send({
             status: "error",
             msg: err.message
@@ -187,6 +191,15 @@ app.post('/api/search', (req, res) => {
 
 app.get('/api/source', (req, res) => {
     console.log(req.query);
+    console.log(req.query.name, 100, req.query.name, req.query.page);
+
+
+    db_all(`SELECT  examples.page
+            FROM examples JOIN sources ON examples.source_id = sources.rowid
+            WHERE sources.name = ?`, [req.query.name])
+    .then(row => {
+        console.log(row);
+    });
 
     db_all(
         `SELECT
@@ -215,6 +228,7 @@ app.get('/api/source', (req, res) => {
         });
     })
     .catch(err => {
+        console.log(err.message);
         res.send({
             status: "error",
             msg: err.message

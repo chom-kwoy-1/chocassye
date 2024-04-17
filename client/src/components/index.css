@@ -93,37 +93,6 @@ footer {
     margin-top: 10px;
 }
 
-.pager {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.pager .pagelinkArrow {
-    margin-left: 2px;
-    margin-right: 2px;
-    text-decoration: none;
-}
-
-.pager .pagelink {
-    display: inline-block;
-    margin-left: 2px;
-    margin-right: 2px;
-    min-width: 15px;
-    text-decoration: none;
-    border-bottom: 1px dotted black;
-    text-align: center;
-}
-
-.pager .curpage {
-    display: inline-block;
-    margin-left: 2px;
-    margin-right: 2px;
-    font-weight: bolder;
-    min-width: 15px;
-    text-align: center;
-}
-
 .sourceSentence {
     display: flex;
     line-height: 30pt;
@@ -186,4 +155,60 @@ footer {
     padding-left: 10px;
     padding-right: 10px;
     border-radius: 20px;
+}
+
+.paginator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.paginator li {
+    list-style-type: none;
+}
+
+.paginator li a {
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+    min-width: 15px;
+    text-decoration: none;
+    border-bottom: 1px dotted black;
+    text-align: center;
+    cursor: pointer;
+}
+
+.paginator .previous a, .paginator .next a {
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+    text-decoration: none;
+}
+
+.paginator li.selected a {
+    border: none;
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+    font-weight: bolder;
+    min-width: 15px;
+    text-align: center;
+}
+
+.loadingWrapper {
+    position: relative;
+}
+
+.loading {
+    position: absolute;
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.3);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: white;
+    justify-content: center;
+    align-items: center;
+    font-size: 30pt;
 }
