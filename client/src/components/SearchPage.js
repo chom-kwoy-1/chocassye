@@ -97,7 +97,7 @@ class SearchResultsList extends React.Component {
         let dom = <React.Fragment>
         
             <Grid item xs={12}>
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} elevation={3}>
                     <Table size="small">
                         <TableBody>
                         

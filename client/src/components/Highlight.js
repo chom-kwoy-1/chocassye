@@ -48,6 +48,7 @@ const HANGUL_REGEX = /((?:ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|�
 
 const TONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(L|H|R|)(?![^<]*>)/g;
 
+const UNTONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(?![^<]*>)/g;
 
 export function invert_mapping(mapping) {
     if (mapping.length === 0) {
@@ -182,6 +183,14 @@ export function toText(sentence) {
         function (match) {
             return "";
         });
+    
+    [sentence, mapping] = replace_and_map(
+        sentence, TONED_SYLLABLE_REGEX,
+        function (_, syllable) {
+            return syllable;
+        },
+        mapping
+    );
     
     return [sentence, mapping];
 }
