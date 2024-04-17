@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { Database, aql } = require("arangojs");
-const YaleHangul = require('./client/src/components/YaleToHangul');
+const YaleHangul = require('./YaleToHangul');
 
 
 // create app
