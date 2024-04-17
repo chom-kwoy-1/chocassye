@@ -34,10 +34,21 @@ function add_file(collection, book_collection, file, xml) {
         throw new Error("parse failed: " + errorNode.innerHTML);
     }
 
+    file = file.normalize('NFKC')
     let filename = path.parse(file).name;
+    let year_string = null;
+    if (!path.parse(file).dir.includes("unknown") && !path.parse(file).dir.includes("sktot")) {
+        let splits = filename.split('_');
+        filename = splits.splice(1).join(' ');
+        year_string = splits[0];
+    }
+    filename = filename.split('_').join(' ');
+
     let doc = xml.documentElement;
 
-    let year_string = find_year(doc).normalize('NFKC');
+    if (year_string === null) {
+        year_string = find_year(doc).normalize('NFKC');
+    }
     let ys_norm = year_string.replace(/\[[^\]]*\]/g, '').replace(/\([^\)]*\)/g, '');
 
     let year = null;
@@ -83,6 +94,16 @@ function add_file(collection, book_collection, file, xml) {
         year = parseInt(ys_norm.slice(0, 2)) * 100 + 50;
         year_start = year - 50;
         year_end = year + 49;
+    }
+    else if (ys_norm.match(/^[0-9][0-9][0-9]-$/) !== null ||
+             ys_norm.match(/^[0-9][0-9][0-9]-년$/) !== null ||
+             ys_norm.match(/^[0-9][0-9][0-9]\?$/) !== null ||
+             ys_norm.match(/^[0-9][0-9][0-9]\?년$/) !== null ||
+             ys_norm.match(/^[0-9][0-9][0-9]X$/) !== null ||
+             ys_norm.match(/^[0-9][0-9][0-9]X년$/) !== null) {
+        year = parseInt(ys_norm.slice(0, 3)) * 10 + 5;
+        year_start = year - 5;
+        year_end = year + 4;
     }
     else {
         year = parseInt(ys_norm.slice(0, 4));
@@ -204,9 +225,10 @@ function populate_db() {
         const DOMParser = dom.window.DOMParser;
         const parser = new DOMParser;
 
-        const result = promisify(glob)("data/**/*.xml")
+        const result = promisify(glob)("data/*/*.xml")
         .then(async (files) => {
             console.log("total", files.length, "files");
+            console.dir(files, {depth: null, 'maxArrayLength': null});
 
             let promises = [];
             for (let [i, file] of files.entries()) {
