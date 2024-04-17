@@ -233,7 +233,7 @@ function populate_db() {
         const DOMParser = dom.window.DOMParser;
         const parser = new DOMParser;
 
-        const result = promisify(glob)("data/15C/*.xml")
+        const result = promisify(glob)("data/*/*.xml")
         .then(async (files) => {
             console.log("total", files.length, "files");
             console.dir(files, {depth: null, 'maxArrayLength': null});
