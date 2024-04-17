@@ -13,7 +13,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Gugyeol','함초롬돋움 LVT','HCR Dotum LVT','함초롬돋움','HCR Dotum', 'Source Han Sans KR','본고딕','Source Han Sans K','본고딕 KR', 'NanumBarunGothic YetHangul','나눔바른고딕 옛한글', 'Noto Sans CJK KR', 'sans-serif'",
+    fontFamily: "'Gugyeol','Source Han Sans KR','Source Han Sans K', 'Noto Sans CJK KR', 'NanumBarunGothic YetHangul','나눔바른고딕 옛한글', '함초롬돋움 LVT','HCR Dotum LVT','함초롬돋움','HCR Dotum', '본고딕','본고딕 KR', 'sans-serif'",
   },
 });
 
