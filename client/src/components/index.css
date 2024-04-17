@@ -240,6 +240,7 @@ footer {
     color: grey;
     font-size: 9pt;
     user-select: none;
+    white-space: nowrap;
 }
 
 .sourceSentence .pageNum::before {
