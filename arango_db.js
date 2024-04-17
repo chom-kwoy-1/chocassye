@@ -15,15 +15,59 @@ function uni(str) {
 
 
 function find_year(doc) {
-    let year_elem = doc.querySelector('meta year');
+    let year_elem = doc.querySelectorAll('meta year');
     if (year_elem !== null) {
-        return uni(year_elem.attributes.n.value).trim();
+        if (year_elem.attributes !== undefined && year_elem.attributes.n !== undefined) {
+            return uni(year_elem.attributes.n.value).trim();
+        }
     }
     year_elem = doc.querySelector('teiHeader date');
     if (year_elem !== null) {
         return uni(year_elem.textContent).trim();
     }
 
+    return null;
+}
+
+function findAttributions(doc) {
+    let respStmts = doc.querySelectorAll('teiHeader respStmt');
+    let attributions = [];
+    for (let respStmt of respStmts) {
+        let resp = respStmt.querySelector('resp');
+        let name = respStmt.querySelector('name');
+        if (name !== null && uni(name.textContent).trim() !== '') {
+            attributions.push({
+                role: resp? uni(resp.textContent).trim() : null,
+                name: uni(name.textContent).trim(),
+            });
+        }
+    }
+    return attributions;
+}
+
+function findBibl(doc) {
+    let notesStmt = doc.querySelector('teiHeader notesStmt');
+    if (notesStmt !== null) {
+        let bibl = notesStmt.querySelector('bibl');
+        if (bibl !== null) {
+            let infos = [];
+            for (let child of bibl.children) {
+                if (child.tagName !== 'date' && child.tagName !== 'year') {
+                    if (uni(child.textContent).trim() !== '') {
+                        infos.push(uni(child.textContent).trim());
+                    }
+                }
+            }
+            return infos.join('; ')
+        }
+    }
+    let meta = doc.querySelector('meta');
+    if (meta !== null) {
+        let photograph = meta.querySelectorAll('photograph');
+        if (photograph.length > 0) {
+            return [...photograph].map((p) => uni(p.textContent).trim()).join(', ');
+        }
+    }
     return null;
 }
 
@@ -118,7 +162,20 @@ function add_file(collection, book_collection, file, xml) {
     
     let has_tone_tag = doc.querySelector('meta > has-tone');
     let has_tone = (has_tone_tag && has_tone_tag.attributes.value.value);
-    
+
+    let attributions = findAttributions(doc);
+    let bibliography = findBibl(doc);
+
+    let book_details = {
+        filename: filename,
+        year: year,
+        year_start: year_start,
+        year_end: year_end,
+        year_string: year_string,
+        attributions: attributions,
+        bibliography: bibliography,
+    };
+
     let elements = doc.querySelectorAll(
         ':not(meta):not(titleStmt):not(bibl) > sent,' +
         ':not(meta):not(titleStmt):not(bibl) > mark,' +
@@ -130,14 +187,6 @@ function add_file(collection, book_collection, file, xml) {
     );
     console.log(`${filename}: ${elements.length} sentences selected.`);
     let sentences = [];
-
-    let book_details = {
-        filename: filename,
-        year: year,
-        year_start: year_start,
-        year_end: year_end,
-        year_string: year_string,
-    };
 
     // iterate over sentences
     let index = 0;
@@ -155,6 +204,7 @@ function add_file(collection, book_collection, file, xml) {
                 type: type,
                 number_in_book: index
             });
+            index += 1;
         }
         else if (sentence.tagName === "page") {
             let attr = sentence.attributes;
@@ -198,13 +248,13 @@ function add_file(collection, book_collection, file, xml) {
                     number_in_book: index,
                     hasImages: hasImages,
                 });
+                index += 1;
             } catch (error) {
                 console.error(filename, " Error:", error, uni(sentence.textContent));
                 throw error;
             }
         }
 
-        index += 1;
     }
 
     return Promise.all([

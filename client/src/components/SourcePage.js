@@ -41,7 +41,12 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     border: 0,
   },
 }));
-
+const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
+    // hide last border
+    '&:last-child td, &:last-child th': {
+        border: 0,
+    },
+}));
 
 const allowList = ['mark', 'abbr', 'span'];
 
@@ -113,12 +118,18 @@ class SourcePage extends React.Component {
     
     render() {
         if (this.props.result.data === null) {
-            return (
-                <div>
-                    <h1>{this.props.bookName}</h1>
-                    Loading...
-                </div>
-            );
+            return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+                <Grid item xs={12}>
+                    <Box>
+                        <Typography
+                            variant='h5'
+                            component='span'
+                            sx={{
+                                fontWeight: 500
+                            }}>{this.props.bookName}</Typography>
+                    </Box>
+                </Grid>
+            </Grid>
         }
 
         let hl = this.props.highlightWord ?? "NULL";
@@ -142,6 +153,55 @@ class SourcePage extends React.Component {
                         &ensp;
                         <span>{this.props.result.data.year_string}</span>
                     </Box>
+                </Grid>
+
+                {/* Bibliography and attributions */}
+                <Grid item xs={10} sm={8} lg={6} mx="auto">
+                    <TableContainer component={Paper} elevation={1}>
+                        <Table size="small">
+                            <TableBody>
+                                {this.props.result.data.bibliography === "" ? null :
+                                <StyledTableRow>
+                                    <StyledTableCell>
+                                        <Typography color={"textSecondary"}>
+                                            {this.props.t("Source")}
+                                        </Typography>
+                                    </StyledTableCell>
+                                    <StyledTableCell>
+                                            {this.props.result.data.bibliography}
+                                    </StyledTableCell>
+                                </StyledTableRow>}
+                                {this.props.result.data.attributions.length === 0 ? null :
+                                <StyledTableRow>
+                                    <StyledTableCell>
+                                        <Typography color={"textSecondary"}>
+                                            {this.props.t("Attributions")}
+                                        </Typography>
+                                    </StyledTableCell>
+                                    <StyledTableCell>
+                                        <TableContainer component={Paper} elevation={0}>
+                                            <Table size="small">
+                                                <TableBody>
+                                                    {this.props.result.data.attributions.map((attribution, i) => (
+                                                        <NonAlternatingTableRow key={i}>
+                                                            <StyledTableCell>
+                                                                <Typography color={"textSecondary"}>
+                                                                    {attribution.role}
+                                                                </Typography>
+                                                            </StyledTableCell>
+                                                            <StyledTableCell>
+                                                                {attribution.name}
+                                                            </StyledTableCell>
+                                                        </NonAlternatingTableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </TableContainer>
+                                    </StyledTableCell>
+                                </StyledTableRow>}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </Grid>
                 
                 <Grid item xs={12}>

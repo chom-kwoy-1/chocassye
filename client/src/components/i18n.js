@@ -44,6 +44,8 @@ const resources = {
       "startend-detail-1": "To find a sentence that <strong>starts with</strong> a certain phrase, prepend a <strong>‘^’</strong> (caret) to the query string.",
       "startend-detail-2": "To find a sentence that <strong>ends with</strong> a certain phrase, append a <strong>‘$’</strong> (dollar sign) to the query string.",
       "Exclude Chinese": "Exclude Chinese",
+      "Source": "Source",
+      "Attributions": "Attributions",
     }
   },
   ko: {
@@ -86,6 +88,8 @@ const resources = {
       "startend-detail-1": "<strong>‘^’</strong> (캐럿) 기호를 검색어 맨 앞에 붙이면 그 문자열로 시작하는 문장만 검색됩니다.",
       "startend-detail-2": "<strong>‘$’</strong> (달러) 기호를 검색어 맨 뒤에 붙이면 그 문자열로 끝나는 문장만 검색됩니다.",
       "Exclude Chinese": "한문 숨기기",
+      "Source": "출처 서지정보",
+      "Attributions": "입력 및 교정",
     }
   }
 };
@@ -96,7 +100,7 @@ i18n
   .use(LanguageDetector)
   .init({
     resources,
-    //lng: "ko", // language to use, more information here: https://www.i18next.com/overview/configuration-options#languages-namespaces-resources
+    // lng: "ko", // language to use, more information here: https://www.i18next.com/overview/configuration-options#languages-namespaces-resources
     // you can use the i18n.changeLanguage function to change the language manually: https://www.i18next.com/overview/api#changelanguage
     // if you're using a language detector, do not define the lng option
 

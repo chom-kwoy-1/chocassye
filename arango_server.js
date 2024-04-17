@@ -204,6 +204,8 @@ app.get('/api/source', (req, res) => {
         let data = {
             name: result.rows[0].filename,
             year_string: result.rows[0].year_string,
+            bibliography: result.rows[0].bibliography,
+            attributions: result.rows[0].attributions,
             sentences: result.rows,
             count: result.count,
         };
