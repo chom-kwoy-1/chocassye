@@ -92,13 +92,19 @@ footer {
     background-color: #ddf;
 }
 
-.searchEntry .sentence {
+.sentence .sourceWrapper {
+    color: #333;
 }
 
-.searchEntry .source {
-    margin-left: 20px;
-    color: grey;
+.sentence .source {
+    color: #333;
     white-space: nowrap;
+    border: none;
+    text-decoration: none;
+}
+
+.sentence .source:hover {
+    border-bottom: 2px dashed #333;
 }
 
 .dividerBottom {

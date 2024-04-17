@@ -1,8 +1,9 @@
 import React from 'react';
 import './index.css';
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom";
 import ReactPaginate from 'react-paginate';
+import { highlight } from './Highlight';
 
 
 async function postData(url = '', data = {}) {
@@ -20,61 +21,8 @@ async function postData(url = '', data = {}) {
     return response.json();
 }
 
-function escapeRegex(string) {
-    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
 
 class SearchResults extends React.Component {
-    highlight(sentence, searchTerm) {
-        if (this.props.romanize) {
-            let regexp = new RegExp(escapeRegex(searchTerm), 'g');
-            let match;
-
-            let dom = [];
-            let last_idx = 0;
-            while ((match = regexp.exec(sentence)) !== null) {
-                let start = match.index;
-                let end = regexp.lastIndex;
-                dom.push(<span>{sentence.slice(last_idx, start)}</span>);
-                dom.push(<span className="highlight">{sentence.slice(start, end)}</span>);
-                last_idx = end;
-            }
-            dom.push(<span>{sentence.slice(last_idx)}</span>);
-
-            return (
-                <span>{dom}</span>
-            );
-        }
-        else {
-            let { result, index_map, next_index_map } = yale_to_hangul(sentence, true);
-
-            let regexp = new RegExp(escapeRegex(searchTerm), 'g');
-            let match;
-
-            let dom = [];
-            let last_idx = 0;
-            while ((match = regexp.exec(sentence)) !== null) {
-                let start = index_map[match.index];
-                let end = next_index_map[regexp.lastIndex];
-                if (last_idx < end) {
-                    if (last_idx < start) {
-                        dom.push(<span key={last_idx} abc={last_idx}>{result.slice(last_idx, start)}</span>);
-                    }
-                    if (start < end) {
-                        dom.push(<span key={start} abc={start} className="highlight">{result.slice(start, end)}</span>);
-                    }
-                    last_idx = end;
-                }
-            }
-            if (last_idx < result.length) {
-                dom.push(<span key={last_idx} abc={last_idx}>{result.slice(last_idx)}</span>);
-            }
-
-            return (
-                <span>{dom}</span>
-            );
-        }
-    }
 
     render() {
         console.log(this.props.results);
@@ -83,13 +31,16 @@ class SearchResults extends React.Component {
             <span key={i + "s"} className="sentence">
                 {book.sentences.map((s, i) => (
                     <div key={i}>
-                        <span>{this.highlight(s.text, this.props.resultTerm)}</span>
-                        <span>&lang;{book.name}:{s.page}&rang;</span>
+                        <span>{highlight(s.text, this.props.romanize, this.props.resultTerm)}</span>
+                        <span className="sourceWrapper">
+                            &lang;
+                            <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
+                                {book.name}:{s.page}
+                            </Link>
+                            &rang;
+                        </span>
                     </div>
                 ))}
-                {/*<Link to={`/source?name=${s.source_name}&n=${s.number_in_source}`} className="source">
-                    {s.source_name}:{s.page}
-                </Link>*/}
             </span>
         ])
     }

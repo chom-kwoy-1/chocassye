@@ -23,10 +23,6 @@ db.useDatabase('etym_db');
 const server = app.listen(port, () => console.log(`Listening on port ${port}`));
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
-// Handles any requests that don't match the ones above
-app.get('*', (req,res) =>{
-    res.sendFile(path.join(__dirname, '/client/build/index.html'));
-});
 
 
 app.post('/api/search', (req, res) => {
@@ -77,7 +73,6 @@ app.post('/api/search', (req, res) => {
         }
     })
     .then((result) => {
-        console.log(result);
         res.send({
             status: "success",
             total_rows: result.count,
@@ -88,26 +83,31 @@ app.post('/api/search', (req, res) => {
 });
 
 app.get('/api/source', (req, res) => {
-    db_all(
-        `SELECT
-            sentence,
-            page,
-            number_in_source,
-            type,
-            lang,
-            page,
-            number_in_page,
-            mark
-        FROM examples JOIN sources ON examples.source_id = sources.rowid
-        WHERE sources.name = ?
-        ORDER BY examples.number_in_source
-        LIMIT ?
-        OFFSET ?`,
-        [req.query.name, 100, req.query.number_in_source]
-    ).then(rows => {
+    let n = req.query.number_in_source;
+    const PAGE = 20;
+    let start = Math.floor(n / PAGE) * PAGE;
+    let end = start + PAGE;
+    db.query(aql`
+        FOR d IN doc_view
+            FILTER d.filename == ${req.query.name}
+            LET sentences = ( // subquery start
+                FOR s IN d.sentences
+                FILTER ${start} <= s.number_in_book && s.number_in_book <= ${end}
+                SORT s.number_in_book ASC
+                RETURN s
+            ) // subquery end
+            RETURN {
+                name: d.filename,
+                sentences: sentences,
+            }`)
+    .then(async (cursor) => {
+        let rows = await cursor.map(item => item);
+        return rows[0];
+    })
+    .then(row => {
         res.send({
             status: "success",
-            sentences: rows
+            data: row
         });
     })
     .catch(err => {
@@ -118,6 +118,11 @@ app.get('/api/source', (req, res) => {
         });
     });
 
+});
+
+// Handles any requests that don't match the ones above
+app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname, '/client/build/index.html'));
 });
 
 process.on('SIGINT', () => {
