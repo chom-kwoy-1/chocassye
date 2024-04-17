@@ -3,97 +3,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database(':memory:');
+const db = new sqlite3.Database('db/database.sqlite3');
 
 const glob = require("glob");
-const xml2js = require('xml2js');
-const xmldom = require('xmldom');
-const fs = require('fs');
 const promisify = require('util').promisify;
-
-
-// initialize db
-db.serialize(async () => {
-    db.run(`CREATE TABLE lemmas (
-        id INTEGER PRIMARY KEY,
-        lemma TEXT NOT NULL
-    )`);
-    db.run(`CREATE TABLE definitions (
-        id INTEGER PRIMARY KEY,
-        desc TEXT DEFAULT '',
-        lemma_id INTEGER NOT NULL,
-        def_index INTEGER NOT NULL,
-        FOREIGN KEY(lemma_id) REFERENCES lemmas(id)
-    )`);
-
-    var stmt = db.prepare('INSERT INTO lemmas (lemma) VALUES (?)');
-    stmt.run('-no.ni.ngi.ta');
-    stmt.finalize();
-
-    var stmt = db.prepare('INSERT INTO definitions (desc, lemma_id, def_index) VALUES (?, ?, ?)');
-    stmt.run('Processive indicative polite declarative sentence ending.', 1, 0);
-    stmt.finalize();
-
-    db.run(`CREATE TABLE examples(
-        id INTEGER PRIMARY KEY,
-        sentence TEXT NOT NULL
-    )`);
-    db.run(`CREATE VIRTUAL TABLE fts_examples USING fts5(
-        sentence,
-        content='examples',
-        content_rowid='id'
-    )`);
-    db.run(`CREATE TRIGGER tbl_ai AFTER INSERT ON examples BEGIN
-        INSERT INTO fts_examples(rowid, sentence) VALUES (new.rowid, new.sentence);
-    END`);
-    db.run(`CREATE TRIGGER tbl_ad AFTER DELETE ON examples BEGIN
-        INSERT INTO fts_examples(rowid, sentence) VALUES ('delete', old.rowid, old.sentence);
-    END`);
-    db.run(`CREATE TRIGGER tbl_au AFTER UPDATE ON examples BEGIN
-        INSERT INTO fts_examples(rowid, sentence) VALUES ('delete', old.rowid, old.sentence);
-        INSERT INTO fts_examples(rowid, sentence) VALUES (new.rowid, new.sentence);
-    END`);
-
-    console.log("parsing xml files");
-
-    await promisify(glob)("**/*.xml")
-    .then(async (files) => {
-        const parser = new xml2js.Parser({ attrkey: "ATTR" });
-
-        let promises = [];
-        for (let file of files) {
-            let promise = promisify(fs.readFile)(file, "utf8")
-            .then((data) => {
-                function manageXmlParseError(msg, errorLevel, errorLog) {
-                    if (errorLevel > 0) {
-                        console.log(errorLevel, file, msg);
-                    }
-                }
-
-                const domparser = new xmldom.DOMParser({
-                    errorHandler: {
-                        warning: (msg) => {manageXmlParseError(msg, 1)},
-                        error: (msg) => {manageXmlParseError(msg, 2)},
-                        fatalError: (msg) => {manageXmlParseError(msg, 3)},
-                    }
-                });
-                data = domparser.parseFromString(data, "text/xml");
-                return promisify(parser.parseString)(data);
-            })
-            .then((xml) => {
-                // console.log(xml);
-            })
-            .catch((err) => {
-                console.log(file, err.message);
-            });
-            promises.push(promise);
-        }
-
-        return Promise.all(promises);
-    });
-
-    console.log("finished initializing db.");
-});
+const YaleHangul = require('./client/src/components/YaleToHangul');
 
 
 function db_get(sql, values) {
@@ -120,6 +34,18 @@ function db_all(sql, values) {
     });
 }
 
+function db_run(sql, values) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, values, function (err) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(this);
+            }
+        });
+    });
+}
+
 
 // start listening
 const server = app.listen(port, () => console.log(`Listening on port ${port}`));
@@ -127,14 +53,14 @@ app.use(express.json())
 
 app.get('/api/lemma', (req, res) => {
     let lemma = db_get(
-        `SELECT lemmas.id, lemmas.lemma
-        FROM lemmas WHERE lemmas.id = ?`,
+        `SELECT lemmas.rowid, lemmas.lemma
+        FROM lemmas WHERE lemmas.rowid = ?`,
         [req.query.id]
     );
     let definitions = db_all(
-        `SELECT definitions.id, desc, def_index
-        FROM lemmas INNER JOIN definitions ON lemmas.id = definitions.lemma_id
-        WHERE lemmas.id = ?
+        `SELECT definitions.rowid, desc, def_index
+        FROM lemmas INNER JOIN definitions ON lemmas.rowid = definitions.lemma_id
+        WHERE lemmas.rowid = ?
         ORDER BY definitions.def_index`,
         [req.query.id]
     );
@@ -144,7 +70,7 @@ app.get('/api/lemma', (req, res) => {
         [lemma, definitions] = values;
         res.send({
             status: "success",
-            id: lemma.id,
+            id: lemma.rowid,
             name: lemma.lemma,
             definitions: definitions
         });
@@ -163,14 +89,12 @@ app.post('/api/add_def', (req, res) => {
     db.serialize(() => {
         db.run(`UPDATE definitions SET def_index = def_index + 1 WHERE def_index >= ?`,
                [req.body.position]);
-        db.run(`INSERT INTO definitions(lemma_id, def_index) VALUES (?, ?)`,
-               [req.body.lemma_id, req.body.position]);
-        db_get(`SELECT id FROM definitions WHERE def_index = ?`,
-               [req.body.position])
-        .then(row => {
+        db_run(`INSERT INTO definitions(lemma_id, def_index) VALUES (?, ?)`,
+               [req.body.lemma_id, req.body.position])
+        .then(stmt => {
             res.send({
                 status: "success",
-                id: row.id
+                id: stmt.lastID
             });
         })
         .catch(error => {
@@ -186,7 +110,7 @@ app.post('/api/add_def', (req, res) => {
 app.post('/api/update_def', (req, res) => {
     console.log(req.body);
     db.serialize(() => {
-        db.run(`UPDATE definitions SET desc = ? WHERE id = ?`,
+        db.run(`UPDATE definitions SET desc = ? WHERE rowid = ?`,
                [req.body.desc, req.body.def_id]);
         res.send({
             status: "success",
@@ -197,12 +121,102 @@ app.post('/api/update_def', (req, res) => {
 app.post('/api/remove_def', (req, res) => {
     console.log(req.body);
     db.serialize(() => {
-        db.run(`DELETE FROM definitions WHERE id = ?`,
+        db.run(`DELETE FROM definitions WHERE rowid = ?`,
                [req.body.def_id]);
         res.send({
             status: "success",
         });
     });
+});
+
+app.post('/api/search', (req, res) => {
+    let text = YaleHangul.hangul_to_yale(req.body.term);
+    console.log(text);
+
+    if (text === '**') {
+        res.send({
+            status: "success",
+            total_rows: 0,
+            sentences: []
+        });
+        return;
+    }
+
+    let N = 20;
+
+    db_all(
+        `SELECT
+            examples.rowid AS rowid,
+            examples.sentence AS sentence,
+            sources.name AS source_name,
+            type,
+            lang,
+            page,
+            number_in_page,
+            rank,
+            count(*) OVER() AS total_rows
+        FROM ((fts_examples JOIN examples ON fts_examples.rowid = examples.rowid)
+              JOIN sources ON examples.source_id = sources.rowid)
+        WHERE fts_examples.sentence GLOB ?
+        ORDER BY rank
+        LIMIT ? OFFSET ?`, [text, N, (req.body.page - 1) * N]
+    ).then((rows) => {
+        let total_rows = 0;
+        if (rows.length > 0) {
+            total_rows = rows[0].total_rows;
+        }
+
+        // remove 'total_rows' column
+        for (let row of rows) {
+            delete row.total_rows;
+        }
+
+        res.send({
+            status: "success",
+            total_rows: total_rows,
+            sentences: rows
+        });
+    }).catch(err => {
+        res.send({
+            status: "error",
+            msg: err.message
+        });
+    });
+
+});
+
+app.get('/api/source', (req, res) => {
+    console.log(req.query);
+
+    db_all(
+        `SELECT
+            sentence,
+            page,
+            number_in_source,
+            type,
+            lang,
+            page,
+            number_in_page,
+            mark
+        FROM examples JOIN sources ON examples.source_id = sources.rowid
+        WHERE sources.name = ?
+        ORDER BY examples.number_in_source
+        LIMIT ?
+        OFFSET ?`,
+        [req.query.name, 100, 0]
+    ).then(rows => {
+        res.send({
+            status: "success",
+            sentences: rows
+        });
+    })
+    .catch(err => {
+        res.send({
+            status: "error",
+            msg: err.message
+        });
+    });
+
 });
 
 process.on('SIGINT', () => {

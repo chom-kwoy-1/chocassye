@@ -1,6 +1,15 @@
 body {
-  font: 14px 'Source Han Sans KR', 'Noto Sans CJK KR', '함초롬돋움 LVT','HCR Dotum LVT','함초롬바탕 LVT', 'HCR Batang LVT','본고딕','Source Han Sans K','본고딕 KR','NanumBarunGothic YetHangul', '나눔바른고딕 옛한글','나눔명조 옛한글','NanumMyeongjo YetHangul','은 바탕','Un Batang','돋움 옛한글', 'Dotum Old Hangul','바탕 옛한글','Batang Old Hangul','굴림 옛한글','NewGulim Old Hangul','궁서 옛한글', 'Gungsuh Old Hangul','맑은 고딕','Malgun Gothic','함초롬돋움','HCR Dotum','함초롬바탕','HCR Batang', 'Code2000', sans-serif;
-  margin: 20px;
+    font: 14px 'Source Han Sans KR', 'Noto Sans CJK KR', '함초롬돋움 LVT','HCR Dotum LVT','함초롬바탕 LVT', 'HCR Batang LVT','본고딕','Source Han Sans K','본고딕 KR','NanumBarunGothic YetHangul', '나눔바른고딕 옛한글','나눔명조 옛한글','NanumMyeongjo YetHangul','은 바탕','Un Batang','돋움 옛한글', 'Dotum Old Hangul','바탕 옛한글','Batang Old Hangul','굴림 옛한글','NewGulim Old Hangul','궁서 옛한글', 'Gungsuh Old Hangul','맑은 고딕','Malgun Gothic','함초롬돋움','HCR Dotum','함초롬바탕','HCR Batang', 'Code2000', sans-serif;
+    margin: 0;
+    background-color: #ddd;
+}
+
+main {
+    padding: 20px;
+    max-width: 1024px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #fff;
 }
 
 .add_definition {
@@ -30,4 +39,151 @@ body {
 
 .lemma .yale {
     font-style: italic;
+}
+
+.preview {
+    font-size: 20pt;
+}
+
+header {
+    background-color: black;
+    color: white;
+    padding: 10px;
+    font-size: 15pt;
+}
+
+
+footer {
+    background-color: black;
+    color: white;
+    padding: 10px;
+}
+
+.searchEntry {
+    display: flex;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.searchEntry:nth-child(odd) {
+    background-color: #ddd;
+}
+
+.searchEntry:hover {
+    background-color: #ddf;
+}
+
+.searchEntry .sentence {
+    flex-grow: 1;
+}
+
+.searchEntry .source {
+    margin-left: 20px;
+    color: grey;
+    white-space: nowrap;
+}
+
+.dividerBottom {
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+
+.dividerTop {
+    border-top: 1px solid black;
+    margin-top: 10px;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pager .pagelinkArrow {
+    margin-left: 2px;
+    margin-right: 2px;
+    text-decoration: none;
+}
+
+.pager .pagelink {
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+    min-width: 15px;
+    text-decoration: none;
+    border-bottom: 1px dotted black;
+    text-align: center;
+}
+
+.pager .curpage {
+    display: inline-block;
+    margin-left: 2px;
+    margin-right: 2px;
+    font-weight: bolder;
+    min-width: 15px;
+    text-align: center;
+}
+
+.sourceSentence {
+    display: flex;
+    line-height: 30pt;
+}
+
+.sourceSentence.sentence_type_title {
+    line-height: 40pt;
+}
+
+.sourceSentence:nth-child(odd) {
+    background-color: #eee;
+}
+
+.sourceSentence .text {
+    font-size: 15pt;
+    flex-grow: 1;
+}
+
+.sourceSentence.sentence_lang_chi .text {
+    color: #000099;
+}
+
+.sourceSentence.sentence_type_title .text {
+    font-size: 20pt;
+    text-align: center;
+}
+
+.sourceSentence[class*="sentence_type_anno"] .text {
+    font-size: 13pt;
+    padding-left: 20pt;
+}
+
+.sourceSentence .pageNum {
+    color: grey;
+    font-size: 9pt;
+}
+
+.sourceSentence .pageNum::before {
+    content: "(";
+}
+
+.sourceSentence .pageNum::after {
+    content: ")";
+}
+
+.sourceMark {
+    text-align: center;
+    padding: 10px;
+}
+
+.sourceMark:nth-child(odd) {
+    background-color: #eee;
+}
+
+.sourceMark span {
+    font-size: 15pt;
+    color: white;
+    background-color: black;
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 20px;
 }

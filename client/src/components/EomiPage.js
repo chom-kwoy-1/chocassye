@@ -1,6 +1,6 @@
 import React from 'react';
 import './index.css';
-import yale_to_hangul from './YaleToHangul';
+import { yale_to_hangul } from './YaleToHangul';
 
 
 class AddDefinition extends React.Component {

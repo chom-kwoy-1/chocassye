@@ -5,7 +5,7 @@ class App extends React.Component {
         return (
             <div>
                 <header>
-                    Header
+                    ᄎᆞ자쎠
                 </header>
 
                 <main>
@@ -13,7 +13,7 @@ class App extends React.Component {
                 </main>
 
                 <footer>
-                    Footer
+                    Search Engine
                 </footer>
             </div>
         );
