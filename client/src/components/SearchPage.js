@@ -151,7 +151,8 @@ class SearchResultsList extends React.Component {
                                                     sentence.html ?? sentence.text,
                                                     this.props.resultTerm,
                                                     match_ids_in_sentence,
-                                                    footnotes
+                                                    footnotes,
+                                                    this.props.romanize,
                                                 )}
                                                 allowList={['mark', 'span', 'a']}
                                                 allowAttributes={true}
@@ -244,10 +245,10 @@ function pageImagePreview(page, imageURL, t) {
     </React.Fragment>;
 }
 
-function highlight(text, searchTerm, match_ids, footnotes) {
+function highlight(text, searchTerm, match_ids, footnotes, romanize) {
     
     // Into HTML for display
-    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, footnotes);
+    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, footnotes, romanize);
     
     // Find matches
     let hlRegex = searchTerm2Regex(searchTerm);
