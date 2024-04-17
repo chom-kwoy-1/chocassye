@@ -38,7 +38,7 @@ class SourcePage extends React.Component {
         let hl = this.props.highlightWord
 
         const PAGE = 20;
-        let pageCount = 100; // TODO: get number of pages from server
+        let pageCount = Math.ceil(this.props.result.data.count / PAGE);
 
         let n = this.props.numberInSource;
         let page = Math.floor(n / PAGE);
@@ -59,7 +59,7 @@ class SourcePage extends React.Component {
                     nextLabel="▶"
                     previousLabel="◀"
                     pageCount={pageCount}
-                    initialPage={page}
+                    forcePage={page}
                     disableInitialCallback={true}
                     onPageChange={(event) => {
                         let newPage = event.selected;

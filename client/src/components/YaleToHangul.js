@@ -293,7 +293,7 @@ export function hangul_to_yale(string) {
             wasHangul = true;
         }
         else {
-            if (wasHangul && ch !== '.' && ch !== ' ') {
+            if (wasHangul && ch !== '.' && ch !== ' ' && ch !== '$') {
                 result += '.';
             }
             result += ch;

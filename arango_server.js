@@ -100,9 +100,11 @@ app.get('/api/source', (req, res) => {
                 SORT s.number_in_book ASC
                 RETURN s
             ) // subquery end
+            LET count = LENGTH(d.sentences)
             RETURN {
                 name: d.filename,
                 sentences: sentences,
+                count: count
             }`)
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);

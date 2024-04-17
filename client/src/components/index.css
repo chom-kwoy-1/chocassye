@@ -197,6 +197,8 @@ footer {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
+    padding: 0;
 }
 
 .paginator li {
@@ -207,7 +209,7 @@ footer {
     display: inline-block;
     margin-left: 2px;
     margin-right: 2px;
-    min-width: 15px;
+    min-width: 20px;
     text-decoration: none;
     border-bottom: 1px dotted black;
     text-align: center;
@@ -219,6 +221,7 @@ footer {
     margin-left: 2px;
     margin-right: 2px;
     text-decoration: none;
+    border-bottom: none;
 }
 
 .paginator .disabled {
