@@ -107,7 +107,7 @@ function load_source(bookName, numberInSource, resultFunc) {
 function SoucePageWrapper(props) {
     let [searchParams, setSearchParams] = useSearchParams();
     let bookName = searchParams.get("name");
-    let numberInSource = searchParams.get("n");
+    let numberInSource = searchParams.get("n") ?? 0;
     let highlightWord = searchParams.get("hl");
     let [result, setResult] = React.useState({
         data: null,

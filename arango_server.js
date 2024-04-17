@@ -38,10 +38,47 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
 
 
+app.post('/api/doc_suggest', (req, res) => {
+    let doc = req.body.doc;
+    console.log(`suggest doc=${doc} ip=${req.socket.remoteAddress}`);
+
+    let query = aql`
+        LET doc_pattern = ${'%' + doc + '%'}
+        FOR d IN doc_view
+            FILTER d.filename LIKE doc_pattern
+            LET year = d.year == null? 9999: d.year
+            SORT year ASC
+            LIMIT 0, 10
+            RETURN {
+                name: d.filename,
+                year: d.year,
+                year_start: d.year_start,
+                year_end: d.year_end,
+                year_string: d.year_string
+            }
+    `;
+
+    db.query(query, {fullCount: true})
+    .then(async (cursor) => {
+        let rows = await cursor.map(item => item);
+        return {
+            count: cursor.extra.stats.fullCount,
+            rows: rows
+        }
+    })
+    .then((result) => {
+        res.send({
+            status: "success",
+            total_rows: result.count,
+            results: result.rows
+        });
+    });
+});
+
 app.post('/api/search', (req, res) => {
     let text = req.body.term;
     let doc = req.body.doc;
-    console.log(`text=${text} doc=${doc} ip=${req.socket.remoteAddress}`);
+    console.log(`search text=${text} doc=${doc} ip=${req.socket.remoteAddress}`);
 
     if (text === '%%') {
         res.send({

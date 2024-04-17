@@ -489,3 +489,44 @@ footer {
 h2 {
     border-bottom: 1px solid black;
 }
+
+.autoCompleteBox {
+    position: relative;
+
+}
+
+.suggestionsBox {
+    border: 1px solid black;
+    border-top: none;
+    position: absolute;
+    z-index: 100;
+    width: 100%;
+    background-color: white;
+    filter: drop-shadow(0px 0px 3px grey);
+    display: none;
+}
+
+input:focus + .suggestionsBox {
+    display: inherit;
+}
+
+.suggestionsBox:hover {
+    display: inherit;
+}
+
+.suggestionItem {
+    cursor: default;
+    padding: 2px;
+    display: block;
+    color: inherit;
+    text-decoration: inherit;
+}
+
+.suggestionItem:hover {
+    background-color: #FEB7B3;
+}
+
+input {
+    font: inherit;
+    font-size: 10pt;
+}

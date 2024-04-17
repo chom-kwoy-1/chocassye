@@ -181,13 +181,21 @@ class SearchPage extends React.Component {
                     />
                     <button onClick={(e) => this.props.onRefresh(e)}>{this.props.t("Search")}</button>
 
-                    <input
-                        type="text"
-                        value={doc}
-                        placeholder={this.props.t("document name...")}
-                        onChange={(event) => this.handleDocChange(event)}
-                        style={{float: 'right'}}
-                    />
+                    <div className="autoCompleteBox" style={{float: 'right'}}>
+                        <input
+                            type="text"
+                            value={doc}
+                            placeholder={this.props.t("document name...")}
+                            onChange={(event) => this.handleDocChange(event)}
+                        />
+                        <div className='suggestionsBox'>
+                            {this.props.docSuggestions.result.map((doc, i) =>
+                                <Link to={`/source?name=${doc.name}`} key={i} className='suggestionItem'>
+                                    {doc.name} ({doc.year_string})
+                                </Link>
+                            )}
+                        </div>
+                    </div>
                 </form>
 
 
@@ -284,8 +292,8 @@ class SearchPage extends React.Component {
 }
 
 
-function search(word, doc, page, func) {
-    let term = hangul_to_yale(word.normalize("NFKD"));
+function search(word, doc, page, callback) {
+    let term = hangul_to_yale(word);
 
     let prefix = "%";
     let suffix = "%";
@@ -298,7 +306,7 @@ function search(word, doc, page, func) {
         suffix = "";
     }
     term = "".concat(prefix, term, suffix);
-    console.log(term);
+    console.log("Search:", term);
 
     postData('/api/search', {
         term: term,
@@ -306,14 +314,29 @@ function search(word, doc, page, func) {
         page: page
     }).then((result) => {
         if (result.status === 'success') {
-            func(result.results, result.total_rows);
+            callback(result.results, result.total_rows);
         } else {
-            func([], 0);
+            callback([], 0);
         }
     })
     .catch((err) => {
         console.log(err);
-        func([], 0);
+        callback([], 0);
+    });
+}
+
+function suggest(doc, callback) {
+    postData('/api/doc_suggest', { doc: doc })
+    .then((result) => {
+        if (result.status === 'success') {
+            callback(result.results, result.total_rows);
+        } else {
+            callback([], 0);
+        }
+    })
+    .catch((err) => {
+        console.log(err);
+        callback([], 0);
     });
 }
 
@@ -331,7 +354,12 @@ function SearchPageWrapper(props) {
         result_term: "",
         loaded: false
     });
+    let [docSuggestions, setDocSuggestions] = React.useState({
+        result: [],
+        num_results: 0
+    });
 
+    const isInited = React.useRef(false);
     const prevResult = React.useRef(result);
     const prevTerm = React.useRef(term);
     const prevDoc = React.useRef(doc);
@@ -366,22 +394,44 @@ function SearchPageWrapper(props) {
         []
     );
 
-    React.useEffect(() => {
-        prevPage.current = page;
-        return refresh(prevTerm.current, prevDoc.current, page);
-    }, [page, refresh]);
+    const suggest_doc = React.useCallback(
+        (doc) => {
+            let active = true;
+
+            console.log("Suggest for", doc);
+
+            suggest(doc, (result, num_results) => {
+                if (active) {
+                    setDocSuggestions({
+                        result: result,
+                        num_results: num_results
+                    });
+                }
+            });
+
+            return () => {
+                active = false;
+            }
+        },
+        []
+    );
 
     React.useEffect(() => {
-        prevTerm.current = term;
-        if (term.length > 4) {
-            return refresh(term, prevDoc.current, prevPage.current);
+        if (!isInited.current || // if first call
+            (hangul_to_yale(term).length > 5 && prevTerm.current !== term) || // or current term has changed
+            prevPage.current !== page) // or current page has changed
+        {
+            isInited.current = true;
+            prevPage.current = page;
+            prevTerm.current = term;
+            return refresh(term, prevDoc.current, page);
         }
-    }, [term, refresh]);
+    }, [term, page, refresh]);
 
     React.useEffect(() => {
         prevDoc.current = doc;
-        //return refresh(prevTerm.current, doc, prevPage.current);
-    }, [doc, refresh]);
+        return suggest_doc(doc);
+    }, [doc, suggest_doc]);
 
     React.useEffect(() => {
         // scroll to top
@@ -393,9 +443,9 @@ function SearchPageWrapper(props) {
         prevResult.current = result;
     }, [result]);
 
-    function clickSubmit(e) {
+    function forceRefresh(e) {
         e.preventDefault();
-        return refresh(prevTerm.current, prevDoc.current, prevPage.current)
+        return refresh(term, doc, page);
     }
 
     return (
@@ -406,7 +456,8 @@ function SearchPageWrapper(props) {
             resultTerm={result.result_term}
             loaded={result.loaded}
             setSearchParams={setSearchParams}
-            onRefresh={clickSubmit}
+            onRefresh={forceRefresh}
+            docSuggestions={docSuggestions}
             t={t}
         />
     );
