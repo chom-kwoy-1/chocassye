@@ -71,13 +71,7 @@ function findBibl(doc) {
     return null;
 }
 
-
-function add_file(collection, book_collection, file, xml) {
-    const errorNode = xml.querySelector('parsererror');
-    if (errorNode) {
-        throw new Error("parse failed: " + errorNode.innerHTML);
-    }
-
+function year_and_bookname_from_filename(file) {
     file = file.normalize('NFKC')
     let filename = path.parse(file).name;
     let year_string = null;
@@ -87,18 +81,23 @@ function add_file(collection, book_collection, file, xml) {
         year_string = splits[0];
     }
     filename = filename.split('_').join(' ');
+    return {filename: filename, year_string: year_string};
+}
 
-    let doc = xml.documentElement;
+function add_txt_file(collection, book_collection, file, data) {
+    let {filename, year_string} = year_and_bookname_from_filename(file);
 
-    // check if doc has hasImages attribute
-    let hasImages = (
-        doc.attributes.hasImages !== undefined &&
-        doc.attributes.hasImages.value === 'true'
-    );
+    // for each line
+    for (const line of data.split('\n')) {
+        // trim line
+        let line = line.trim();
+        // parse line as single xml tag
 
-    if (year_string === null) {
-        year_string = find_year(doc).normalize('NFKC');
+
     }
+}
+
+function parse_year_string(year_string) {
     let ys_norm = year_string.replace(/\[[^\]]*\]/g, '').replace(/\([^\)]*\)/g, '');
 
     let year = null;
@@ -134,23 +133,23 @@ function add_file(collection, book_collection, file, xml) {
         year_end = year + 49;
     }
     else if (ys_norm.match(/^[0-9][0-9]--$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]--년$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]\?$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]\?\?$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]\?\?년$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]X$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]XX$/) !== null ||
-             ys_norm.match(/^[0-9][0-9]XX년$/) !== null) {
+        ys_norm.match(/^[0-9][0-9]--년$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]\?$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]\?\?$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]\?\?년$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]X$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]XX$/) !== null ||
+        ys_norm.match(/^[0-9][0-9]XX년$/) !== null) {
         year = parseInt(ys_norm.slice(0, 2)) * 100 + 50;
         year_start = year - 50;
         year_end = year + 49;
     }
     else if (ys_norm.match(/^[0-9][0-9][0-9]-$/) !== null ||
-             ys_norm.match(/^[0-9][0-9][0-9]-년$/) !== null ||
-             ys_norm.match(/^[0-9][0-9][0-9]\?$/) !== null ||
-             ys_norm.match(/^[0-9][0-9][0-9]\?년$/) !== null ||
-             ys_norm.match(/^[0-9][0-9][0-9]X$/) !== null ||
-             ys_norm.match(/^[0-9][0-9][0-9]X년$/) !== null) {
+        ys_norm.match(/^[0-9][0-9][0-9]-년$/) !== null ||
+        ys_norm.match(/^[0-9][0-9][0-9]\?$/) !== null ||
+        ys_norm.match(/^[0-9][0-9][0-9]\?년$/) !== null ||
+        ys_norm.match(/^[0-9][0-9][0-9]X$/) !== null ||
+        ys_norm.match(/^[0-9][0-9][0-9]X년$/) !== null) {
         year = parseInt(ys_norm.slice(0, 3)) * 10 + 5;
         year_start = year - 5;
         year_end = year + 4;
@@ -159,6 +158,30 @@ function add_file(collection, book_collection, file, xml) {
         year = parseInt(ys_norm.slice(0, 4));
         year_start = year_end = year;
     }
+
+    return {year: year, year_start: year_start, year_end: year_end};
+}
+
+function add_file(collection, book_collection, file, xml) {
+    const errorNode = xml.querySelector('parsererror');
+    if (errorNode) {
+        throw new Error("parse failed: " + errorNode.innerHTML);
+    }
+
+    let {filename, year_string} = year_and_bookname_from_filename(file);
+
+    let doc = xml.documentElement;
+
+    // check if doc has hasImages attribute
+    let hasImages = (
+        doc.attributes.hasImages !== undefined &&
+        doc.attributes.hasImages.value === 'true'
+    );
+
+    if (year_string === null) {
+        year_string = find_year(doc).normalize('NFKC');
+    }
+    let {year, year_start, year_end} = parse_year_string(year_string);
     
     let has_tone_tag = doc.querySelector('meta > has-tone');
     let has_tone = (has_tone_tag && has_tone_tag.attributes.value.value);
@@ -298,13 +321,30 @@ function populate_db() {
         const DOMParser = dom.window.DOMParser;
         const parser = new DOMParser;
 
-        const result = promisify(glob)("data/*/*.xml")
-        .then(async (files) => {
-            console.log("total", files.length, "files");
-            console.dir(files, {depth: null, 'maxArrayLength': null});
+        const result = Promise.all([
+            promisify(glob)("data/*/*.xml"),
+            promisify(glob)("data/*/*.txt"),
+        ]).then(async ([xmlFiles, txtFiles]) => {
+            console.log("total", xmlFiles.length, "files");
+            console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
 
             let promises = [];
-            for (let [i, file] of files.entries()) {
+
+            for (let [i, file] of txtFiles.entries()) {
+                promises.push(promisify(fs.readFile)(file, "utf8")
+                .then((data) => {
+                    data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function(ch) {
+                        return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
+                    });
+                    return data;
+                })
+                .then((data) => add_txt_file(collection, book_collection, file, data))
+                .catch((err) => {
+                    console.error(i, "ERROR", file, err.stack);
+                }));
+            }
+
+            for (let [i, file] of xmlFiles.entries()) {
                 promises.push(promisify(fs.readFile)(file, "utf8")
                 .then((data) => {
                     data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function(ch) {

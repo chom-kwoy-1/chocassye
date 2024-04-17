@@ -58,7 +58,7 @@ import {
     yellow,
 } from '@mui/material/colors';
 import {IMAGE_BASE_URL} from "./config";
-
+import { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 
 const highlightColors = [
     orange, pink, indigo,     
@@ -166,16 +166,18 @@ class SearchResultsList extends React.Component {
                                                     {sentence.page === null? book.name : `${book.name}:`}
                                                 </Link>
                                                 {sentence.hasImages && sentence.page !== '' ?
-                                                    sentence.page.split('-').map((page, i) =>
-                                                        <Tooltip title={this.props.t("Image for page", { page: page })}>
+                                                    sentence.page.split('-').map((page, i) => {
+                                                        const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
+                                                        return <ImageTooltip title={pageImagePreview(page, imageURL, this.props.t)}
+                                                                             placement="right">
                                                             <a className="pageNum"
                                                                style={{color: '#888', textDecoration: 'underline'}}
-                                                               href={IMAGE_BASE_URL + book.name + '/' + page + '.jpg'}
+                                                               href={imageURL}
                                                                target="blank"
                                                                key={i}>{page}</a>
                                                             {i < sentence.page.split('-').length - 1? "-" : null}
-                                                        </Tooltip>) : (sentence.page !== '' ? sentence.page : null)
-                                                    }
+                                                        </ImageTooltip>
+                                                    }) : (sentence.page !== '' ? sentence.page : null)}
                                                 &rang;
                                             </span>
 
@@ -206,6 +208,38 @@ class SearchResultsList extends React.Component {
             
         </React.Fragment>;
     }
+}
+
+
+const ImageTooltip = styled(({ className, ...props }) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+        backgroundColor: '#f5f5f9',
+        color: 'rgba(0, 0, 0, 0.87)',
+        maxWidth: window.innerWidth * 0.3,
+        fontSize: theme.typography.pxToRem(12),
+        border: '1px solid #dadde9',
+    },
+}));
+
+
+function pageImagePreview(page, imageURL, t) {
+    return <React.Fragment>
+        <Grid container>
+            <Grid item xs={12}>
+                <img src={imageURL}
+                     alt={t("Image for page", { page: page })}
+                     height={window.innerHeight - 50}
+                     width={window.innerWidth - 50}
+                     style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
+                />
+            </Grid>
+            <Grid item xs={12}>
+                {t("Image for page", { page: page })}
+            </Grid>
+        </Grid>
+    </React.Fragment>;
 }
 
 function highlight(text, searchTerm, match_ids, footnotes) {
