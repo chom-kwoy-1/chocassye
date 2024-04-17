@@ -138,7 +138,7 @@ const INITIAL_HANGUL_TO_YALE = {
 };
 
 
-function yale_to_hangul(string, get_index_map=false) {
+export function yale_to_hangul(string, get_index_map=false) {
     let result = "";
     let index_map = {};
     let next_index_map = {};
@@ -275,7 +275,7 @@ function yale_to_hangul(string, get_index_map=false) {
     return result;
 }
 
-function hangul_to_yale(string) {
+export function hangul_to_yale(string) {
     let result = "";
     let wasHangul = false;
 
@@ -299,4 +299,3 @@ function hangul_to_yale(string) {
     return result;
 }
 
-module.exports = { yale_to_hangul, hangul_to_yale };
