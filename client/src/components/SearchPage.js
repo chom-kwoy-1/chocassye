@@ -2,7 +2,6 @@ import React from 'react';
 import './index.css';
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import ReactPaginate from 'react-paginate';
 import { 
     searchTerm2Regex, 
     toDisplayHTML,
@@ -21,8 +20,28 @@ import Histogram from './Histogram';
 import {
     TextField, Button, Grid, Autocomplete,
     CircularProgress, Typography, FormControlLabel,
-    Checkbox, Box, Stack, Pagination, Chip, Paper, ListItem, Backdrop
+    Checkbox, Box, Pagination, Paper,
+    Backdrop, TableContainer, Table, Chip, 
+    TableBody, TableRow, TableCell,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { tableCellClasses } from '@mui/material/TableCell';
+import { 
+    orange, pink, indigo,     
+    cyan, lightGreen, amber,      
+    red, deepPurple, lightBlue,  
+    green, yellow, deepOrange,
+    purple, blue, teal, lime, 
+} from '@mui/material/colors';
+
+
+const highlightColors = [
+    orange, pink, indigo,     
+    cyan, lightGreen, amber,      
+    red, deepPurple, lightBlue,  
+    green, yellow, deepOrange,
+    purple, blue, teal, lime, 
+].map((x) => x['A100']);
 
 
 async function postData(url = '', data = {}) {
@@ -44,6 +63,27 @@ async function postData(url = '', data = {}) {
 const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_,i) => arr.map(a => a[i]));
 
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
+
+
 class SearchResultsList extends React.Component {
 
     constructor(props) {
@@ -55,64 +95,74 @@ class SearchResultsList extends React.Component {
         let footnotes = [];
         
         let dom = <React.Fragment>
-            <div className="loadingWrapper">
+        
+            <Grid item xs={12}>
+                <TableContainer component={Paper}>
+                    <Table size="small">
+                        <TableBody>
+                        
+                        {/* For each book */}
+                        {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
+                            <StyledTableRow key={i}>
+
+                                {/* Year column */}
+                                <StyledTableCell component="th" scope="row" sx={{verticalAlign: 'top'}}>
+                                    {book.year ?? "-"}
+                                </StyledTableCell>
+
+                                {/* Sentences column */}
+                                <StyledTableCell>
+
+                                    {/* For each sentence */}
+                                    {zip(book.sentences, match_ids_in_book)
+                                    .map(([sentence, match_ids_in_sentence], i) =>
+                                        <Grid item key={i}>
+
+                                            {/* Highlighted sentence */}
+                                            <Interweave
+                                                content={highlight(
+                                                    sentence.html ?? sentence.text,
+                                                    this.props.resultTerm,
+                                                    match_ids_in_sentence,
+                                                    footnotes
+                                                )}
+                                                allowList={['mark', 'span', 'a']}
+                                                allowAttributes={true}
+                                            />&#8203;
+                                            
+                                            {/* Add source link */}
+                                            <span style={{color: '#888'}}>
+                                                &lang;
+                                                <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
+                                                    {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
+                                                </Link>
+                                                &rang;
+                                            </span>
+
+                                        </Grid>
+                                    )}
+
+                                </StyledTableCell>
+
+                            </StyledTableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Grid>
             
-                {/* For each book */}
-                {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
-                    <React.Fragment key={i}>
-
-                        {/* Year column */}
-                        <span className="year"><div>{book.year ?? "-"}</div></span>
-
-                        {/* Sentences column */}
-                        <span className="sentence">
-
-                            {/* For each sentence */}
-                            {zip(book.sentences, match_ids_in_book)
-                            .map(([sentence, match_ids_in_sentence], i) =>
-                                <div key={i}>
-
-                                    {/* Highlighted sentence */}
-                                    <Interweave
-                                        content={highlight(
-                                            sentence.html ?? sentence.text,
-                                            this.props.resultTerm,
-                                            match_ids_in_sentence,
-                                            footnotes
-                                        )}
-                                        allowList={['mark', 'span', 'a']}
-                                        allowAttributes={true}
-                                    />&#8203;
-                                    
-                                    {/* Add source link */}
-                                    <span className="sourceWrapper">
-                                        &lang;
-                                        <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
-                                            {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
-                                        </Link>
-                                        &rang;
-                                    </span>
-
-                                </div>
-                            )}
-
-                        </span>
-
-                    </React.Fragment>
+            <Grid item xs={12} container alignItems="flex-start" spacing={1.5} className="searchResultsList">
+                {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
+                
+                {/* Show footnotes */}
+                {footnotes.map((footnote, i) => 
+                    <div key={i} className="footnoteContent">
+                        <a className="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
+                        &nbsp;
+                        {footnote}
+                    </div>
                 )}
-
-            </div>
-            
-            {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
-            
-            {/* Show footnotes */}
-            {footnotes.map((footnote, i) => 
-                <div key={i} className="footnoteContent">
-                    <a className="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
-                    &nbsp;
-                    {footnote}
-                </div>
-            )}
+            </Grid>
             
         </React.Fragment>;
         
@@ -144,7 +194,7 @@ function highlight(text, searchTerm, match_ids, footnotes) {
     match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
     
     // Add highlights
-    let html = addHighlights(displayHTML, match_ranges, match_ids);
+    let html = addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
     
     return html;
 }
@@ -268,47 +318,37 @@ class SearchResults extends React.Component {
             />
             
             {/* Show highlight match legend */}
-            <Grid item xs={12}>
-                <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    spacing={2}>
-                    <Paper
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            listStyle: 'none',
-                            p: 0,
-                            m: 0,
-                        }}
-                        elevation={0}
-                        component="ul">
-                        {uniqueMatches.map((part, i) =>
-                            <ListItem key={i} sx={{py: .5, pl: 0, pr: 1}}>
-                                <Chip label={part} onDelete={() => null} clickable>
-                                    {/*<span
-                                        className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                                        onClick={(event) => {this.toggleMatch(event, i)}}>
-                                        <span className={"".concat("colorShower s", i)}></span>
-                                        <span className="matchLegendWord">{part}</span>
-                                    </span>*/}
-                                </Chip>
-                            </ListItem>
-                        )}
-                    </Paper>
-                    
-                    <FormControlLabel
-                        control={<Checkbox size="small" sx={{py: 0}} />} 
-                        label={
-                            <Typography sx={{fontSize: "1em"}}>
-                                {this.props.t("Romanization")}
-                            </Typography>
-                        }
-                        checked={this.props.romanize}
-                        onChange={(event) => this.props.handleRomanizeChange(event)}
-                    />
-                </Stack>
+            <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
+                {uniqueMatches.map((part, i) =>
+                    <Grid key={i} item xs="auto">
+                        <Chip 
+                            label={part} 
+                            sx={{backgroundColor: highlightColors[i % highlightColors.length]}}
+                            size="small" 
+                            onDelete={() => null} 
+                            clickable>
+                            {/*<span
+                                className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                                onClick={(event) => {this.toggleMatch(event, i)}}>
+                                <span className={"".concat("colorShower s", i)}></span>
+                                <span className="matchLegendWord">{part}</span>
+                            </span>*/}
+                        </Chip>
+                    </Grid>
+                )}
+            </Grid>
+            
+            <Grid item sm="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>
+                <FormControlLabel
+                    control={<Checkbox size="small" sx={{py: 0}} />} 
+                    label={
+                        <Typography sx={{fontSize: "1em"}}>
+                            {this.props.t("Romanization")}
+                        </Typography>
+                    }
+                    checked={this.props.romanize}
+                    onChange={(event) => this.props.handleRomanizeChange(event)}
+                />
             </Grid>
             
             {/* Pager on top */}
@@ -340,18 +380,16 @@ class SearchResults extends React.Component {
                 }
             </Grid>
             
-            <Grid item xs={12}>
-                <SearchResultsList
-                    filteredResults={filtered_results_list}
-                    romanize={this.props.romanize}
-                    ignoreSep={this.props.ignoreSep}
-                    resultTerm={this.props.resultTerm}
-                    t={this.props.t}
-                />
-            </Grid>
+            <SearchResultsList
+                filteredResults={filtered_results_list}
+                romanize={this.props.romanize}
+                ignoreSep={this.props.ignoreSep}
+                resultTerm={this.props.resultTerm}
+                t={this.props.t}
+            />
 
             {/* Pager on bottom */}
-            <Grid item xs={12}>
+            <Grid item xs={12} my={1}>
                 <Box
                     display="flex"
                     justifyContent="center"
@@ -379,12 +417,15 @@ function arePropsEqual(oldProps, newProps) {
     //console.log("Begin comparison");
     let equal = true;
     for (let key of Object.keys(oldProps)) {
+        if (key === 't' || key === 'handleRomanizeChange') {
+            continue;
+        }
         equal &&= Object.is(oldProps[key], newProps[key]);
         if (!Object.is(oldProps[key], newProps[key])) {
             //console.log(key, Object.is(oldProps[key], newProps[key]), oldProps[key], newProps[key]);
         }
     }
-    console.log("Props equal=", equal);
+    //console.log("Props equal=", equal);
     return equal;
 }
 
@@ -409,6 +450,12 @@ class DocSelector extends React.Component {
         }
     }
     
+    handleDocChange(ev, value, reason) {
+        if (reason === 'input') {
+            this.props.handleDocChange(value);
+        }
+    }
+    
     render() {
         let docCandLoading = !this.props.docSuggestions.loaded;
         
@@ -422,7 +469,7 @@ class DocSelector extends React.Component {
             loading={docCandLoading}
             freeSolo
             onChange={(ev, value, reason) => this.handleChange(ev, value, reason)}
-            onInputChange={(ev) => this.props.handleDocChange(ev)}
+            onInputChange={(ev, value, reason) => this.handleDocChange(ev, value, reason)}
             onKeyDown={(ev) => this.handleKeyDown(ev)}
             filterOptions={(x) => x}
             inputValue={this.props.doc}
@@ -472,8 +519,7 @@ class SearchPage extends React.Component {
         this.setSearchParams({term: searchTerm});
     }
 
-    handleDocChange(event) {
-        let doc = event.target.value;
+    handleDocChange(doc) {
         this.setSearchParams({doc: doc});
     }
 
@@ -507,7 +553,6 @@ class SearchPage extends React.Component {
     render() {
         console.log("SearchPage rerender");
         let searchTerm = this.props.term;
-        let doc = this.props.doc;
         
         return (
             <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">

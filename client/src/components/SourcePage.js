@@ -13,7 +13,36 @@ import {
 import ReactPaginate from 'react-paginate';
 import { Interweave } from 'interweave';
 import { useTranslation } from 'react-i18next';
-import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
+import {
+    TextField, Button, Grid, Autocomplete,
+    CircularProgress, Typography, FormControlLabel,
+    Checkbox, Box, Pagination, Paper,
+    Backdrop, TableContainer, Table, Chip
+    , TableBody, TableRow, TableCell,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { tableCellClasses } from '@mui/material/TableCell';
+
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
 
 
 const allowList = ['mark', 'abbr', 'span'];
@@ -47,10 +76,18 @@ function showSentence(sentence, highlight_term, i) {
     let html = addHighlights(displayHTML, match_ranges);
     
     return (
-        <div key={i} className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
-            <Interweave className="text" content={html} allowList={allowList} allowAttributes={true} />
-            <span className="pageNum">{sentence.page}</span>
-        </div>
+        <StyledTableRow key={i}>
+            <StyledTableCell className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
+                <Typography
+                    component='span'
+                    sx={{fontSize: "1.3em"}}>
+                    <Interweave className="text" content={html} allowList={allowList} allowAttributes={true} />
+                </Typography>
+            </StyledTableCell>
+            <StyledTableCell align="right">
+                <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>({sentence.page})</span>
+            </StyledTableCell>
+        </StyledTableRow>
     );
 }
 
@@ -88,74 +125,101 @@ class SourcePage extends React.Component {
         let page = Math.floor(n / PAGE);
         
         return (
-            <React.Fragment>
-                <div>
-                    <h1 className="docname">{this.props.bookName}</h1>
-                    <span className="yearstring">{this.props.result.data.year_string}</span>
-                </div>
+            <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+                <Grid item xs={12}>
+                    <Box>
+                        <Typography 
+                            variant='h5' 
+                            component='span'
+                            sx={{
+                                fontWeight: 500
+                            }}>{this.props.bookName}</Typography>
+                        &ensp;
+                        <span>{this.props.result.data.year_string}</span>
+                    </Box>
+                </Grid>
                 
-                <span>
-                    <input
-                        type="checkbox"
-                        id="except_chinese_checkbox"
+                <Grid item xs={12}>
+                    <FormControlLabel
+                        control={<Checkbox size="small" sx={{py: 0}} />} 
+                        label={
+                            <Typography sx={{fontSize: "1em"}}>
+                                {this.props.t("Exclude Chinese")}
+                            </Typography>
+                        }
                         checked={this.props.excludeChinese}
                         onChange={(event) => this.handleExcludeChineseChange(event)}
                     />
-                    <label htmlFor="except_chinese_checkbox">{this.props.t("Exclude Chinese")}</label>
-                </span>
+                </Grid>
                 
                 {/* Pager */}
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel={this.props.t("nextpage")}
-                    previousLabel={this.props.t("prevpage")}
-                    pageCount={pageCount}
-                    forcePage={page}
-                    disableInitialCallback={true}
-                    onPageChange={(event) => {
-                        let newPage = event.selected;
-                        let newN = this.props.numberInSource;
-                        if (newPage !== page) {
-                            newN = newPage * PAGE;
-                        }
-                        this.props.setSearchParams({
-                            name: this.props.bookName,
-                            n: newN,
-                            hl: this.props.highlightWord
-                        });
-                    }}
-                />
-                
-                <div>
-                    {this.props.result.data.sentences.map(
-                        (sentence, i) => showSentence(sentence, hl, i)
-                    )}
-                </div>
+                <Grid item xs={12}>
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center">
+                        <Pagination 
+                            color="primary"
+                            count={pageCount}
+                            siblingCount={2}
+                            boundaryCount={2}
+                            page={page + 1}
+                            onChange={(_, newPage) => {
+                                newPage = newPage - 1;
+                                let newN = this.props.numberInSource;
+                                if (newPage !== page) {
+                                    newN = newPage * PAGE;
+                                }
+                                this.props.setSearchParams({
+                                    name: this.props.bookName,
+                                    n: newN,
+                                    hl: this.props.highlightWord
+                                });
+                            }}
+                        />
+                    </Box>
+                </Grid>
 
+                <Grid item xs={12}>
+                    <TableContainer component={Paper}>
+                        <Table size="small">
+                            <TableBody>
+                                {this.props.result.data.sentences.map(
+                                    (sentence, i) => showSentence(sentence, hl, i)
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Grid>
+                
                 {/* Pager */}
-                <ReactPaginate
-                    className="paginator"
-                    pageRangeDisplayed={10}
-                    nextLabel={this.props.t("nextpage")}
-                    previousLabel={this.props.t("prevpage")}
-                    pageCount={pageCount}
-                    forcePage={page}
-                    disableInitialCallback={true}
-                    onPageChange={(event) => {
-                        let newPage = event.selected;
-                        let newN = this.props.numberInSource;
-                        if (newPage !== page) {
-                            newN = newPage * PAGE;
-                        }
-                        this.props.setSearchParams({
-                            name: this.props.bookName,
-                            n: newN,
-                            hl: this.props.highlightWord
-                        });
-                    }}
-                />
-            </React.Fragment>
+                <Grid item xs={12} my={1}>
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center">
+                        <Pagination 
+                            color="primary"
+                            count={pageCount}
+                            siblingCount={2}
+                            boundaryCount={2}
+                            page={page + 1}
+                            onChange={(_, newPage) => {
+                                newPage = newPage - 1;
+                                let newN = this.props.numberInSource;
+                                if (newPage !== page) {
+                                    newN = newPage * PAGE;
+                                }
+                                this.props.setSearchParams({
+                                    name: this.props.bookName,
+                                    n: newN,
+                                    hl: this.props.highlightWord
+                                });
+                            }}
+                        />
+                    </Box>
+                </Grid>
+            </Grid>
         );
     }
 }

@@ -160,8 +160,8 @@ class App extends React.Component {
                     </Container>
                 </AppBar>
 
-                <Container maxWidth="lg" sx={{ mb: 4 }}>
-                    <Paper variant="outlined" sx={{ my: { xs: 3, md: 4 }, p: { xs: 2, md: 3 } }}>
+                <Container maxWidth="lg" sx={{ mb: 4, px: { xs: 0.2, sm: 2 } }}>
+                    <Paper variant="outlined" sx={{ my: { xs: 2, md: 4 }, p: { xs: 1, md: 3 } }}>
                         {this.props.children}
                     </Paper>
                 </Container>

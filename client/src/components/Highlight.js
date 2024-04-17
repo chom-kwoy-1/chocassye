@@ -329,20 +329,20 @@ export function removeOverlappingRanges(match_ranges, max_length) {
     return match_ranges_unique;
 }
 
-export function addHighlights(displayHTML, match_ranges, highlight_colors=null) {
+export function addHighlights(displayHTML, match_ranges, highlightIds=null, highlightColors=null) {
     let output = "";
     let last_idx = 0;
     let hl_idx = 0;
     for (let range of match_ranges) {
         output += displayHTML.slice(last_idx, range[0]);
-
-        let highlight_class = ["highlight"];
-        if (highlight_colors !== null) {
-            highlight_class.push('s'+highlight_colors[hl_idx]);
+        
+        let color = '#ffff00';
+        if (highlightIds !== null && highlightColors !== null) {
+            let colorIdx = highlightIds[hl_idx];
+            color = highlightColors[colorIdx % highlightColors.length];
         }
-        let mark_class = highlight_class.join(' ');
         let mark_text = displayHTML.slice(range[0], range[1]);
-        output += `<mark class="${mark_class}">${mark_text}</mark>`;
+        output += `<mark style="background-color: ${color};">${mark_text}</mark>`;
         
         hl_idx += 1;
         last_idx = range[1];

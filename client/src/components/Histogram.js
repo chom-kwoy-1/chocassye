@@ -38,7 +38,8 @@ export default class Histogram extends React.Component {
                                         borderLeft: year === BEGIN? 0 : 1.5,
                                         borderColor: 'text.secondary',
                                         zIndex: 100,
-                                        pointerEvents: "none"
+                                        pointerEvents: "none",
+                                        fontSize: "0.9em",
                                     }}
                                     minHeight="50px">
                                     {year}
@@ -50,7 +51,7 @@ export default class Histogram extends React.Component {
                         {this.props.data.map((decade, i) => {
                             let percentage = (decade.period - BEGIN) / (END - BEGIN) * 100;
                             let left = percentage + "%";
-                            let width = (100 / ((END - BEGIN) / 10)) + "%";
+                            let width = (100 / ((END - BEGIN) / 10)) * 1.01 + "%";
                             let opacity = decade.num_hits / median_hits + 0.1;
                             let tooltip = this.props.t('number decade', { decade: decade.period }) + ': '
                                         + this.props.t('number Results', { numResults: decade.num_hits });
@@ -67,9 +68,7 @@ export default class Histogram extends React.Component {
                                         bgcolor: 'secondary.main',
                                         opacity: opacity,
                                         cursor: 'pointer',
-                                        borderLeft: 1,
                                         borderColor: 'text.disabled',
-                                        boxSizing: 'border-box'
                                     }}
                                     position="absolute"
                                     left={left}
