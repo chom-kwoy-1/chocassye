@@ -78,6 +78,9 @@ app.post('/api/search', (req, res) => {
     let doc = req.body.doc;
     let excludeModern = req.body.excludeModern === "yes";
     let ignoreSep = req.body.ignoreSep === "yes";
+    // FIXME: set ignoreSep to false for now
+    ignoreSep = false;
+
     console.log(`search text=${text} doc=${doc} exMod=${excludeModern} igSep=${ignoreSep} ip=${req.socket.remoteAddress}`);
 
     let N = 50;
