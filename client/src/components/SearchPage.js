@@ -331,7 +331,8 @@ class SearchPage extends React.Component {
         this.props.setSearchParams({
             term: this.props.term,
             doc: this.props.doc,
-            page: page
+            page: page,
+            excludeModern: this.props.excludeModern
         });
     }
 
