@@ -133,7 +133,7 @@ class SearchPage extends React.Component {
                 <div className="dividerBottom"></div>
                 <div className="loadingWrapper">
                     <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                    {this.props.result.length === 0? <div>No match</div> :
+                    {this.props.result.length === 0? [<div></div>, <div>No match</div>] :
                      <SearchResults
                          results={this.props.result}
                          romanize={this.state.romanize}
