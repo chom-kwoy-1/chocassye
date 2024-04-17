@@ -646,7 +646,7 @@ span[data-tone] {
     margin-top: 10%;
 }
 
-span[data-tone]::before {
+span[data-tone]::after {
     position: absolute;
     width: 200%;
     text-align: center;
@@ -658,23 +658,23 @@ span[data-tone]::before {
     color: #666;
 }
 
-span[data-tone="H"]::before {
+span[data-tone="H"]::after {
     content: "•";
 }
 
-span[data-tone="R"]::before {
+span[data-tone="R"]::after {
     content: "••";
 }
 
-span[orig-tag="uncertain-tone"] > span[data-tone="L"]::before {
+span[orig-tag="uncertain-tone"] > span[data-tone="L"]::after {
     content: "[ ]";
     color: #840B0B;
 }
-span[orig-tag="uncertain-tone"] > span[data-tone="H"]::before {
+span[orig-tag="uncertain-tone"] > span[data-tone="H"]::after {
     content: "[•]";
     color: #840B0B;
 }
-span[orig-tag="uncertain-tone"] > span[data-tone="R"]::before {
+span[orig-tag="uncertain-tone"] > span[data-tone="R"]::after {
     content: "[••]";
     color: #840B0B;
 }
