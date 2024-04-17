@@ -104,6 +104,9 @@ function HowToPageWrapper(props) {
                         <td>W</td>
                     </tr>
                     <tr>
+                        <th>ㅅ</th>
+                        <th>ㅈ</th>
+                        <th>ㅊ</th>
                         <th>ᄼ</th>
                         <th>ᄽ</th>
                         <th>ᅎ</th>
@@ -118,6 +121,9 @@ function HowToPageWrapper(props) {
                         <th>( )</th>
                     </tr>
                     <tr>
+                        <td>s</td>
+                        <td>c</td>
+                        <td>ch</td>
                         <td>s/</td>
                         <td>ss/</td>
                         <td>c/</td>
