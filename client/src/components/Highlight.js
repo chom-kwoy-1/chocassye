@@ -5,10 +5,15 @@ function escapeRegex(string) {
     return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
+function serializeTextNode(text) {
+    return new XMLSerializer().serializeToString(document.createTextNode(text));
+}
+
 export function highlight(sentences, romanize, searchTerm,
                           return_highlighted_parts=false,
                           highlight_colors=null,
-                          transformText=null) {
+                          transformText=null,
+                          inline=false) {
     if (searchTerm === null) {
         searchTerm = "NULL";
     }
@@ -65,57 +70,83 @@ export function highlight(sentences, romanize, searchTerm,
                 let start = match.index;
                 let end = regexp.lastIndex;
 
-                dom.push(<span key={last_idx}>{transformText(sentence.slice(last_idx, start))}</span>);
+                dom.push(transformText(sentence.slice(last_idx, start)));
 
                 let highlighted_part = sentence.slice(start, end);
                 let highlight_class = ["highlight"];
                 if (highlight_colors !== null) {
                     highlight_class.push('s'+highlight_colors[hl_idx]);
                 }
-                dom.push(<span key={start} className={highlight_class.join(' ')}>{transformText(highlighted_part)}</span>);
+
+                let mark_class = highlight_class.join(' ');
+                let mark_text = serializeTextNode(transformText(highlighted_part));
+                dom.push(`<mark class=${mark_class}>${mark_text}</mark>`);
                 highlighted_parts.push(highlighted_part);
                 hl_idx += 1;
 
                 last_idx = end;
             }
-            dom.push(<span key={last_idx}>{transformText(sentence.slice(last_idx))}</span>);
+            dom.push(transformText(sentence.slice(last_idx)));
         }
     }
     else {
 
         for (let sentence of sentences) {
 
-            if (typeof sentence !== 'string') {
-                dom.push(sentence);
-            }
-            else {
-                let { result, index_map, next_index_map } = yale_to_hangul(sentence, true);
+            let splits = sentence.split(inline? /(<[^>]*>z)/ : /(<[^>]*>|\[|\])/);
 
-                let match;
+            for (let string of splits) {
 
-                let last_idx = 0;
-                while ((match = regexp.exec(sentence)) !== null) {
-                    let start = index_map[match.index];
-                    let end = next_index_map[regexp.lastIndex];
-                    if (last_idx < end) {
-                        if (last_idx < start) {
-                            dom.push(<span key={last_idx}>{transformText(result.slice(last_idx, start))}</span>);
-                        }
-                        if (start < end) {
-                            let highlighted_part = result.slice(start, end);
-                            let highlight_class = ["highlight"];
-                            if (highlight_colors !== null) {
-                                highlight_class.push('s'+highlight_colors[hl_idx]);
-                            }
-                            dom.push(<span key={start} className={highlight_class.join(' ')}>{transformText(highlighted_part)}</span>);
-                            highlighted_parts.push(highlighted_part);
-                            hl_idx += 1;
-                        }
-                        last_idx = end;
-                    }
+                if (string.match(/^<!--[^>]*-->$/)) {
+                    dom.push(yale_to_hangul(string));
                 }
-                if (last_idx < result.length) {
-                    dom.push(<span key={last_idx}>{transformText(result.slice(last_idx))}</span>);
+                else if (!inline && string == '[') {
+                    dom.push(`<span orig-tag="anno">`);
+                }
+                else if (!inline && string == ']') {
+                    dom.push(`</span>`);
+                }
+                else if (string.match(/^<[^>]*>$/) !== null) {
+                    dom.push(string.replace(/^<(\/)?([^>]*)>$/, (_, closing, tag) => {
+                        if (closing) {
+                            return "</span>";
+                        }
+                        return `<span orig-tag=${tag}>`;
+                    }));
+                }
+                else {
+                    let { result, index_map, next_index_map } = yale_to_hangul(string, true);
+
+                    let match;
+
+                    let last_idx = 0;
+                    while ((match = regexp.exec(string)) !== null) {
+                        let start = index_map[match.index];
+                        let end = next_index_map[regexp.lastIndex];
+                        if (last_idx < end) {
+                            if (last_idx < start) {
+                                dom.push(transformText(result.slice(last_idx, start)));
+                            }
+                            if (start < end) {
+                                let highlighted_part = result.slice(start, end);
+                                let highlight_class = ["highlight"];
+                                if (highlight_colors !== null) {
+                                    highlight_class.push('s'+highlight_colors[hl_idx]);
+                                }
+
+                                let mark_class = highlight_class.join(' ');
+                                let mark_text = serializeTextNode(transformText(highlighted_part));
+                                dom.push(`<mark class="${mark_class}">${mark_text}</mark>`);
+
+                                highlighted_parts.push(highlighted_part);
+                                hl_idx += 1;
+                            }
+                            last_idx = end;
+                        }
+                    }
+                    if (last_idx < result.length) {
+                        dom.push(transformText(result.slice(last_idx)));
+                    }
                 }
             }
         }
@@ -124,7 +155,5 @@ export function highlight(sentences, romanize, searchTerm,
     if (return_highlighted_parts) {
         return highlighted_parts;
     }
-    return (
-        <span>{dom}</span>
-    );
+    return dom.join('');
 }

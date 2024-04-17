@@ -27,6 +27,7 @@ const YALE_TO_HANGUL_INITIAL_CONSONANTS = {
     'ps': '\u1121',
     'psk': '\u1122',
     'pst': '\u1123',
+    'psc': '\u1126',
     'pc': '\u1127',
     'pth': '\u1129',
     'W': '\u112b',
@@ -41,6 +42,18 @@ const YALE_TO_HANGUL_INITIAL_CONSONANTS = {
     'q': '\u1159',
 
     'ng': '\u114c',
+
+    's/': '\u113C',
+    'ss/': '\u113D',
+    'c/': '\u114E',
+    'cc/': '\u114F',
+    'ch/': '\u1154',
+
+    's\\': '\u113E',
+    'ss\\': '\u113F',
+    'c\\': '\u1150',
+    'cc\\': '\u1151',
+    'ch\\': '\u1155',
 
     '`': '\u115f',
 };

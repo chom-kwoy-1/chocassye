@@ -6,6 +6,7 @@ import ReactPaginate from 'react-paginate';
 import { highlight } from './Highlight';
 import './i18n';
 import { useTranslation } from 'react-i18next';
+import { Interweave } from 'interweave';
 
 
 async function postData(url = '', data = {}) {
@@ -64,12 +65,8 @@ class SearchResults extends React.Component {
 
     render() {
         console.log("Rerender  SearchResults!!!");
-        console.log(this.props.results);
 
-        let page = this.props.page;
-
-        const N = this.props.pageN;
-        let num_pages = Math.ceil(this.props.numResults / N);
+        let num_pages = Math.ceil(this.props.numResults / this.props.pageN);
 
         // Determine highlight colors
         let highlighted_parts = [];
@@ -77,7 +74,15 @@ class SearchResults extends React.Component {
         for (const book of this.props.results) {
             let book_parts = [];
             for (const s of book.sentences) {
-                let parts = highlight(s.text, this.props.romanize, this.props.resultTerm, true);
+                let parts = highlight(
+                    s.text,
+                    this.props.romanize,
+                    this.props.resultTerm,
+                    true,
+                    null,
+                    null,
+                    true
+                );
                 book_parts.push(parts);
             }
             highlighted_parts.push(book_parts);
@@ -114,15 +119,18 @@ class SearchResults extends React.Component {
         }).map(([book, book_unique_idxs], i) => [
             <span key={"".concat(i, "y")} className="year"><div>{book.year ?? "-"}</div></span>,
             <span key={"".concat(i, "s")} className="sentence">
-                {book.sentences.map((s, j) => (
-                    <div key={j}>
-                        <span>{highlight(
-                            s.text,
-                            this.props.romanize,
-                            this.props.resultTerm,
-                            false,
-                            book_unique_idxs[j]
-                        )}</span>
+                {book.sentences.map((s, j) => {
+                    let html = highlight(
+                        s.text,
+                        this.props.romanize,
+                        this.props.resultTerm,
+                        false,
+                        book_unique_idxs[j],
+                        null,
+                        true
+                    );
+                    return <div key={j}>
+                        <Interweave content={html} allowList={['mark']} />
                         <span className="sourceWrapper">
                             &lang;
                             <Link to={`/source?name=${book.name}&n=${s.number_in_book}&hl=${this.props.resultTerm}`} className="source">
@@ -130,8 +138,8 @@ class SearchResults extends React.Component {
                             </Link>
                             &rang;
                         </span>
-                    </div>
-                ))}
+                    </div>;
+                })}
             </span>
         ]);
 
@@ -163,7 +171,7 @@ class SearchResults extends React.Component {
                     nextLabel="▶"
                     previousLabel="◀"
                     pageCount={num_pages}
-                    forcePage={page - 1}
+                    forcePage={this.props.page - 1}
                     onPageChange={(event) => {
                         this.props.setPage(event.selected + 1);
                     }}
@@ -185,7 +193,7 @@ class SearchResults extends React.Component {
                     nextLabel="▶"
                     previousLabel="◀"
                     pageCount={num_pages}
-                    forcePage={page - 1}
+                    forcePage={this.props.page - 1}
                     onPageChange={(event) => {
                         this.props.setPage(event.selected + 1);
                     }}
@@ -247,7 +255,7 @@ class SearchPage extends React.Component {
         let doc = this.props.doc;
 
         return (
-            <div>
+            <React.Fragment>
                 <form onSubmit={(e) => this.props.onRefresh(e)}>
                     <input
                         type="text"
@@ -307,7 +315,7 @@ class SearchPage extends React.Component {
                     loaded={this.props.loaded}
                     t={this.props.t}
                 />
-            </div>
+            </React.Fragment>
         );
     }
 }

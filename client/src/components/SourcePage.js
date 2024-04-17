@@ -1,16 +1,20 @@
 import React from 'react';
 import './index.css';
-import { yale_to_hangul } from './YaleToHangul';
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { highlight } from './Highlight';
 import ReactPaginate from 'react-paginate';
 import { addHintToGugyeol } from './Gugyeol'
+import { Interweave } from 'interweave';
+
+
+const allowList = ['mark', 'abbr', 'span'];
 
 
 function showSentence(sentence, highlight_term, i) {
+    let html = highlight(sentence.html, false, highlight_term, false, null, addHintToGugyeol);
     return (
         <div key={i} className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
-            <span className="text">{highlight(sentence.text, false, highlight_term, false, null, addHintToGugyeol)}</span>
+            <Interweave className="text" content={html} allowList={allowList} allowAttributes={true} />
             <span className="pageNum">{sentence.page}</span>
         </div>
     );
@@ -45,7 +49,7 @@ class SourcePage extends React.Component {
         let page = Math.floor(n / PAGE);
 
         return (
-            <div>
+            <React.Fragment>
                 <div>
                     <h1 className="docname">{this.props.bookName}</h1>
                     <span className="yearstring">{this.props.result.data.year_string}</span>
@@ -76,7 +80,7 @@ class SourcePage extends React.Component {
                         });
                     }}
                 />
-            </div>
+            </React.Fragment>
         );
     }
 }
@@ -89,7 +93,6 @@ function load_source(bookName, numberInSource, resultFunc) {
     }))
     .then((res) => res.json())
     .then((result) => {
-        console.log(result);
         if (result.status === 'success') {
             resultFunc(result.data);
         }

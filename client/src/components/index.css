@@ -569,3 +569,7 @@ abbr[data-title]:focus::after {
   padding: 4px 5px;
   line-height: 1.2;
 }
+
+span[orig-tag="anno"] {
+    font-size: 12pt;
+}
