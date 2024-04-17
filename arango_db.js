@@ -239,7 +239,7 @@ function add_file(collection, book_collection, file, xml) {
             try {
                 let html = uni(sentence.innerHTML);
                 html = hangul_to_yale(html, has_tone);
-                let text = uni(sentence.textContent);
+                let text = uni(sentence.textContent.trim());
                 let text_with_tone = null;
                 if (has_tone) {
                     text_with_tone = hangul_to_yale(text, true);

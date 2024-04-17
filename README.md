@@ -7,9 +7,18 @@ Contributions welcome!
 node arango_db.js
 ```
 
+## Run Development Server
+```bash
+node arango_server.js
+cd client
+npm start
+```
+
 ## Run Production Server
 ```bash
-PORT=80 SSL=ON node arango_server.js
+npm run build  # build the project
+sudo cp -rf build/* /var/www/html/  # copy the build to the serving directory
+PORT=80 SSL=ON node arango_server.js  # run the server
 ```
 
 ## Dump Database
