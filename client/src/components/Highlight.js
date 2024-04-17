@@ -62,6 +62,14 @@ export function invert_mapping(mapping) {
             ];
         }
     }
+    // ensure monotonicity
+    let last_mapping = 0;
+    for (let i = 0; i < inv_mapping.length; ++i) {
+        let begin = Math.min(inv_mapping[i][0], last_mapping);
+        let end = Math.max(inv_mapping[i][1], begin);
+        inv_mapping[i] = [begin, end];
+        last_mapping = end;
+    }
     return inv_mapping;
 }
 
@@ -150,7 +158,16 @@ export function replace_and_map(string, pattern, replace_func, prev_mapping=null
             ];
         }
     }
-
+    
+    // ensure monotonicity
+    let last_mapping = 0;
+    for (let i = 0; i < mapping.length; ++i) {
+        let begin = Math.min(mapping[i][0], last_mapping);
+        let end = Math.max(mapping[i][1], begin);
+        mapping[i] = [begin, end];
+        last_mapping = end;
+    }
+    
     return [string, mapping];
 }
 
@@ -199,7 +216,7 @@ export function toDisplayHTML(sentence) {
         },
         mapping
     );
-
+    
     // replace [] with <span> anno tags
     [sentence, mapping] = replace_and_map(
         sentence, /(\[|\])/g,

@@ -172,8 +172,6 @@ function highlight(text, searchTerm, match_ids) {
     // Remove overlapping ranges
     match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
     
-    console.log(match_ids);
-    
     // Add highlights
     let html = addHighlights(displayHTML, match_ranges, match_ids);
     
