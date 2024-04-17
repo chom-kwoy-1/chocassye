@@ -62,7 +62,8 @@ function AboutWrapper(props) {
 
     <div className='paragraph'>
         <ul>
-            <li><a href="https://됬.xyz/oko/" target="blank">온라인 옛한글 입력기</a></li>
+            <li><a href="https://됬.xyz/old-hangul-ime/" target="blank">온라인 옛한글 입력기</a></li>
+            <li><a href="https://blog.됬.xyz/" target="blank">ᄎᆞᆷ괴로운 블로그 (개발자의 블로그)</a></li>
         </ul>
     </div>
 
