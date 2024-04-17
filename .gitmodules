@@ -1,0 +1,3 @@
+[submodule "chocassye-corpus"]
+	path = chocassye-corpus
+	url = git@github.com:chom-kwoy/chocassye-corpus.git
