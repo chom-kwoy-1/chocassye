@@ -8,7 +8,7 @@ const GUGYEOL_REGEX = /([恨捨\uf681\uf686\uf687\uf68c\uf690\uf693\uf695\uf696\
 
 export function addHintToGugyeol(sentence) {
     let result = reactStringReplace(sentence, GUGYEOL_REGEX, function (ch, i) {
-        return <abbr key={i} title={GUGYEOL_READINGS[ch]}>{ch}</abbr>;
+        return <abbr key={i} data-title={GUGYEOL_READINGS[ch]} tabindex="0">{ch}</abbr>;
     });
     return result;
 }
