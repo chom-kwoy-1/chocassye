@@ -109,7 +109,10 @@ function add_file(collection, book_collection, file, xml) {
         year = parseInt(ys_norm.slice(0, 4));
         year_start = year_end = year;
     }
-
+    
+    let has_tone_tag = doc.querySelector('meta > has-tone');
+    let has_tone = (has_tone_tag && has_tone_tag.attributes.value.value);
+    
     let elements = doc.querySelectorAll(
         ':not(meta):not(titleStmt):not(bibl) > sent,' +
         ':not(meta):not(titleStmt):not(bibl) > mark,' +
@@ -148,9 +151,13 @@ function add_file(collection, book_collection, file, xml) {
         else {
             try {
                 let html = uni(sentence.innerHTML);
-                html = hangul_to_yale(html);
+                html = hangul_to_yale(html, has_tone);
                 let text = uni(sentence.textContent);
-                text = hangul_to_yale(text);
+                let text_with_tone = null;
+                if (has_tone) {
+                    text_with_tone = hangul_to_yale(text, true);
+                }
+                text = hangul_to_yale(text, false);
 
                 let attr = sentence.attributes;
                 let page = attr.page === undefined? null : uni(attr.page.value.trim());
@@ -167,6 +174,7 @@ function add_file(collection, book_collection, file, xml) {
                     ...book_details,
                     date: Date(),
                     text: text,
+                    text_with_tone: text_with_tone,
                     html: html,
                     type: type,
                     lang: lang,
@@ -225,7 +233,7 @@ function populate_db() {
         const DOMParser = dom.window.DOMParser;
         const parser = new DOMParser;
 
-        const result = promisify(glob)("data/*/*.xml")
+        const result = promisify(glob)("data/15C/*.xml")
         .then(async (files) => {
             console.log("total", files.length, "files");
             console.dir(files, {depth: null, 'maxArrayLength': null});

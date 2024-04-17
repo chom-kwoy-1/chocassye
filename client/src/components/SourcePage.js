@@ -11,9 +11,29 @@ import { useTranslation } from 'react-i18next';
 const allowList = ['mark', 'abbr', 'span'];
 
 
+const HANGUL_REGEX = /((?:ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᅟ)(?:ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)(?:ᆨ|ᆪ|ᆫ|ᆮ|ᆯ|ᆰ|ᆱ|ᆲ|ᆳ|ᆷ|ᆸ|ᆹ|ᆺ|ᆼ|ᇆ|ᇇ|ᇈ|ᇌ|ᇗ|ᇙ|ᇜ|ᇝ|ᇟ|ᇢ|ᇦ|ᇫ|ᇰ|ᇹ|ᇱ|))(〮|〯|)/g;
+
+
 function showSentence(sentence, highlight_term, i) {
     let text = sentence.html ?? sentence.text;
-    let html = highlight(text, false, highlight_term, false, null, addHintToGugyeol);
+    
+    function toDisplayForm(sentence) {
+        sentence = sentence.replace(HANGUL_REGEX, function(match, syllable, tone) {
+            if (tone === '') {
+                return `<span data-tone="L">${syllable}</span>`;
+            }
+            else if (tone === '\u302e') {
+                return `<span data-tone="H">${syllable}<span is-tone>${tone}</span></span>`;
+            }
+            else if (tone === '\u302f') {
+                return `<span data-tone="R">${syllable}<span is-tone>${tone}</span></span>`;
+            }
+        });
+        sentence = addHintToGugyeol(sentence);
+        return sentence;
+    };
+    
+    let html = highlight(text, false, highlight_term, false, null, toDisplayForm);
     return (
         <div key={i} className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
             <Interweave className="text" content={html} allowList={allowList} allowAttributes={true} />

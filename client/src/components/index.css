@@ -230,7 +230,8 @@ footer {
     text-align: center;
 }
 
-.sourceSentence[class*="sentence_type_anno"] .text {
+.sourceSentence[class*="sentence_type_anno"] .text,
+.sourceSentence[class*="sentence_type_note"] .text {
     font-size: 13pt;
     padding-left: 20pt;
 }
@@ -238,6 +239,7 @@ footer {
 .sourceSentence .pageNum {
     color: grey;
     font-size: 9pt;
+    user-select: none;
 }
 
 .sourceSentence .pageNum::before {
@@ -637,4 +639,56 @@ abbr[data-title]:focus::after,
 
 span[orig-tag="anno"] {
     font-size: 12pt;
+}
+
+span[data-tone] {
+    position: relative;
+    margin-top: 10%;
+}
+
+span[data-tone]::before {
+    position: absolute;
+    width: 200%;
+    text-align: center;
+    font-size: 0.6em;
+    line-height: 1.0;
+    transform: translate(-50%, -50%);
+    top: 0;
+    left: 50%;
+    color: #666;
+}
+
+span[data-tone="H"]::before {
+    content: "•";
+}
+
+span[data-tone="R"]::before {
+    content: "••";
+}
+
+span[orig-tag="uncertain-tone"] > span[data-tone="L"]::before {
+    content: "[ ]";
+    color: #840B0B;
+}
+span[orig-tag="uncertain-tone"] > span[data-tone="H"]::before {
+    content: "[•]";
+    color: #840B0B;
+}
+span[orig-tag="uncertain-tone"] > span[data-tone="R"]::before {
+    content: "[••]";
+    color: #840B0B;
+}
+
+
+span[is-tone]::before {
+    content: "\00200c";
+}
+
+span[is-tone] {
+    width: 0.001px;
+    display: inline-block;
+}
+
+span[is-tone] {
+    opacity: 0;
 }

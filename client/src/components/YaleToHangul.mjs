@@ -145,7 +145,13 @@ const YALE_TO_HANGUL_VOWELS = {
     'yway': '\u1185',
 };
 
-const COMPATIBILITY_FORMS = {
+const YALE_TO_HANGUL_TONE_MARKS = {
+    'L': '',
+    'H': '\u302e',
+    'R': '\u302f',
+};
+
+const TO_COMPATIBLITY_CONS = {
     'ᄀ': 'ㄱ',
     'ᄁ': 'ㄲ',
     'ᆪ': 'ㄳ',
@@ -176,27 +182,6 @@ const COMPATIBILITY_FORMS = {
     'ᄐ': 'ㅌ',
     'ᄑ': 'ㅍ',
     'ᄒ': 'ㅎ',
-    'ᅡ': 'ㅏ',
-    'ᅢ': 'ㅐ',
-    'ᅣ': 'ㅑ',
-    'ᅤ': 'ㅒ',
-    'ᅥ': 'ㅓ',
-    'ᅦ': 'ㅔ',
-    'ᅧ': 'ㅕ',
-    'ᅨ': 'ㅖ',
-    'ᅩ': 'ㅗ',
-    'ᅪ': 'ㅘ',
-    'ᅫ': 'ㅙ',
-    'ᅬ': 'ㅚ',
-    'ᅭ': 'ㅛ',
-    'ᅮ': 'ㅜ',
-    'ᅯ': 'ㅝ',
-    'ᅰ': 'ㅞ',
-    'ᅱ': 'ㅟ',
-    'ᅲ': 'ㅠ',
-    'ᅳ': 'ㅡ',
-    'ᅴ': 'ㅢ',
-    'ᅵ': 'ㅣ',
     'ᄔ': 'ㅥ',
     'ᄕ': 'ㅦ',
     'ᇇ': 'ㅧ',
@@ -231,6 +216,30 @@ const COMPATIBILITY_FORMS = {
     'ᅗ': 'ㆄ',
     'ᅘ': 'ㆅ',
     'ᅙ': 'ㆆ',
+};
+
+const TO_COMPATIBILITY_VOWELS = {
+    'ᅡ': 'ㅏ',
+    'ᅢ': 'ㅐ',
+    'ᅣ': 'ㅑ',
+    'ᅤ': 'ㅒ',
+    'ᅥ': 'ㅓ',
+    'ᅦ': 'ㅔ',
+    'ᅧ': 'ㅕ',
+    'ᅨ': 'ㅖ',
+    'ᅩ': 'ㅗ',
+    'ᅪ': 'ㅘ',
+    'ᅫ': 'ㅙ',
+    'ᅬ': 'ㅚ',
+    'ᅭ': 'ㅛ',
+    'ᅮ': 'ㅜ',
+    'ᅯ': 'ㅝ',
+    'ᅰ': 'ㅞ',
+    'ᅱ': 'ㅟ',
+    'ᅲ': 'ㅠ',
+    'ᅳ': 'ㅡ',
+    'ᅴ': 'ㅢ',
+    'ᅵ': 'ㅣ',
     'ᆄ': 'ㆇ',
     'ᆅ': 'ㆈ',
     'ᆈ': 'ㆉ',
@@ -239,7 +248,12 @@ const COMPATIBILITY_FORMS = {
     'ᆔ': 'ㆌ',
     'ᆞ': 'ㆍ',
     'ᆡ': 'ㆎ',
-}
+};
+
+const TO_COMPATIBILITY_FORM = {
+    ...TO_COMPATIBLITY_CONS,
+    ...TO_COMPATIBILITY_VOWELS,
+};
 
 function inv(obj) {
     return Object.fromEntries(Object.entries(obj).map(a => a.reverse()));
@@ -248,19 +262,34 @@ function inv(obj) {
 const HANGUL_TO_YALE = {
     ...inv(YALE_TO_HANGUL_INITIAL_CONSONANTS),
     ...inv(YALE_TO_HANGUL_VOWELS),
-    ...inv(YALE_TO_HANGUL_FINAL_CONSONANTS)
+    ...inv(YALE_TO_HANGUL_FINAL_CONSONANTS),
+    '\u302e': 'H',
+    '\u302f': 'R',
 };
 
 const INITIAL_HANGUL_TO_YALE = {
     ...inv(YALE_TO_HANGUL_INITIAL_CONSONANTS),
 };
 
+const VOWEL_HANGUL_TO_YALE = {
+    ...inv(YALE_TO_HANGUL_VOWELS),
+};
+
+const FROM_COMPATIBILITY_FORM = {
+    ...inv(TO_COMPATIBILITY_FORM),
+};
+
 const VOWELS_RE = /(ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)/g;
 const CONS_RE = /psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`/g;
 const INDEP_CONS_RE = /(ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄦ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᄼ|ᄽ|ᅎ|ᅏ|ᅔ|ᄾ|ᄿ|ᅐ|ᅑ|ᅕ|ᅟ)(?!ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)/g;
+const COMPAT_CONS_RE = /ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㆇ|ㆈ|ㆉ|ㆊ|ㆋ|ㆌ|ㆍ|ㆎ/g;
 
 
 function normalize_string(string) {
+    string = string.replace(COMPAT_CONS_RE, function(ch) {
+        return '\u115f' + ch;
+    });
+    
     string = string.normalize('NFKD');
 
     let conv_string = "";
@@ -303,10 +332,10 @@ export function yale_to_hangul(string, get_index_map=false) {
         else {
             // Consonant cluster
             let max_prefix_len = Math.min(3, split.length - 1);
-            if (split_idx == 0) {
+            if (split_idx === 0) {
                 max_prefix_len = 0;
             }
-            else if (split_idx == splits.length - 1) {
+            else if (split_idx === splits.length - 1) {
                 max_prefix_len = Math.min(3, split.length)
             }
 
@@ -323,6 +352,15 @@ export function yale_to_hangul(string, get_index_map=false) {
                     found_prefix = true;
                     break
                 }
+            }
+            
+            let has_tone_mark = false;
+            let tone_mark = '';
+            if (remaining.length > 0 && ['L', 'H', 'R'].includes(remaining[0])) {
+                tone_mark = YALE_TO_HANGUL_TONE_MARKS[remaining[0]];
+                remaining = remaining.slice(1);
+                has_tone_mark = true;
+                prefix_len += 1;
             }
 
             let found_suffix = false;
@@ -349,7 +387,7 @@ export function yale_to_hangul(string, get_index_map=false) {
                 index_map[input_idx + i] = syllable_begin_pos;
             }
 
-            syllable_begin_pos = result.length + (found_prefix? 1 : 0);
+            syllable_begin_pos = result.length + prefix.length + tone_mark.length;
 
             let i = prefix_len;
             let middle_part_output = "";
@@ -396,9 +434,10 @@ export function yale_to_hangul(string, get_index_map=false) {
                 index_map[input_idx + i] = syllable_begin_pos;
                 i += 1;
             }
-
+            
             let output = (
                 prefix
+                + tone_mark
                 + middle_part_output
                 + suffix
             );
@@ -419,7 +458,7 @@ export function yale_to_hangul(string, get_index_map=false) {
     let to_next_index = {};
     let last_output_index = 0;
     for (let i = 0; i < string.length; ++i) {
-        if (last_output_index != index_map[i]) {
+        if (last_output_index !== index_map[i]) {
             to_next_index[last_output_index] = index_map[i];
             last_output_index = index_map[i];
         }
@@ -429,7 +468,7 @@ export function yale_to_hangul(string, get_index_map=false) {
     let next_index_map = {};
     last_output_index = 0;
     for (let i = 0; i < string.length; ++i) {
-        if (index_map[i] != last_output_index) {
+        if (index_map[i] !== last_output_index) {
             next_index_map[i] = index_map[i];
         } else {
             next_index_map[i] = to_next_index[index_map[i]];
@@ -440,8 +479,8 @@ export function yale_to_hangul(string, get_index_map=false) {
 
     // replace freestanding consonants with compatibility forms
     result = result.replace(INDEP_CONS_RE, (_, p1) => {
-        if (COMPATIBILITY_FORMS.hasOwnProperty(p1)) {
-            return COMPATIBILITY_FORMS[p1];
+        if (TO_COMPATIBILITY_FORM.hasOwnProperty(p1)) {
+            return TO_COMPATIBILITY_FORM[p1];
         }
         return p1;
     });
@@ -462,30 +501,47 @@ export function yale_to_hangul(string, get_index_map=false) {
 }
 
 
-export function hangul_to_yale(string) {
+export function hangul_to_yale(string, tone_all=false) {
     let result = "";
     let wasHangul = false;
+    let hadTone = false;
+    let hadVowel = false;
 
     string = normalize_string(string);
 
     for (let ch of string) {
         if (HANGUL_TO_YALE.hasOwnProperty(ch)) {
             if (wasHangul && INITIAL_HANGUL_TO_YALE.hasOwnProperty(ch)) {
+                if (tone_all && !hadTone) {
+                    result += 'L';
+                }
                 result += '.';
+                hadVowel = false;
             }
-
-            result += HANGUL_TO_YALE[ch];
+            hadTone = (ch === '\u302e' || ch === '\u302f');
+            if (VOWEL_HANGUL_TO_YALE.hasOwnProperty(ch)) {
+                hadVowel = true;
+            }
+            
+            if (!hadTone || (tone_all && hadTone)) {
+                result += HANGUL_TO_YALE[ch];
+            }
             wasHangul = true;
         }
         else {
-            if (wasHangul && ch !== '.' && ch !== ' ' && ch !== '$') {
-                result += '.';
+            if (tone_all && wasHangul && !hadTone && hadVowel) {
+                result += 'L';
             }
             result += ch;
             wasHangul = false;
+            hadVowel = false;
         }
     }
 
+    if (tone_all && wasHangul && !hadTone) {
+        result += 'L';
+    }
+        
     return result;
 }
 

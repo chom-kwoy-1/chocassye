@@ -52,22 +52,22 @@ class SearchResultsList extends React.Component {
             this.props.results,
             match_ids
         )
-        .filter(
-            ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
-                !match_ids_in_book.flat().every(
-                    id => this.props.disabledMatches.has(id)
-                )
-        )
+        //.filter(
+        //    ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
+        //        !match_ids_in_book.flat().every(
+        //            id => this.props.disabledMatches.has(id)
+        //        )
+        //)
         .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
 
             let sentences_and_indices =
-                zip(book.sentences, match_ids_in_book)
-                .filter(
-                    ([_, match_ids_in_sentence]) =>
-                        !match_ids_in_sentence.every(
-                            id => this.props.disabledMatches.has(id)
-                        )
-                );
+                zip(book.sentences, match_ids_in_book);
+                //.filter(
+                //    ([_, match_ids_in_sentence]) =>
+                //        !match_ids_in_sentence.every(
+                //            id => this.props.disabledMatches.has(id)
+                //        )
+                //);
 
             let [sentences, indices] = zip(...sentences_and_indices);
 
@@ -121,8 +121,8 @@ class SearchResultsList extends React.Component {
                                         true
                                     )}
                                     allowList={['mark']}
-                                />&thinsp;
-
+                                />&#8203;
+                                
                                 {/* Add source link */}
                                 <span className="sourceWrapper">
                                     &lang;

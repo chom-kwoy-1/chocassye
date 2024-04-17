@@ -102,7 +102,10 @@ app.post('/api/search', (req, res) => {
         LET doc_pattern = ${'%' + doc + '%'}
         LET results = (
         FOR s IN doc_view
-            SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), ${ignoreSep? "no_space" : "identity"})
+            SEARCH ANALYZER(
+                (LIKE(s.text, query) OR LIKE(s.text_with_tone, query))
+                AND LIKE(s.filename, doc_pattern),
+                ${ignoreSep? "no_space" : "identity"})
             FILTER ${!excludeModern} OR ((s.lang NOT IN ["mod", "modern translation", "pho"]) AND (s.lang NOT LIKE "%역"))
             RETURN s
         )
