@@ -97,10 +97,13 @@ footer {
 
 .loadingWrapper {
     position: relative;
-    min-height: 100px;
 
     display: grid;
     grid-template-columns: min-content auto;
+}
+
+.tableWrapper {
+    overflow-x: auto;
 }
 
 .loadingWrapper .year {
@@ -124,8 +127,8 @@ footer {
     padding-bottom: 5px;
 }
 
-.loadingWrapper > span:nth-child(4n+1),
-.loadingWrapper > span:nth-child(4n) {
+.loadingWrapper > span:nth-child(4n),
+.loadingWrapper > span:nth-child(4n+1) {
     background-color: #ddd;
 }
 
@@ -716,4 +719,8 @@ span[is-tone] {
     position: relative;
     z-index: -100;
     opacity: 0;
+}
+
+.jamotable td {
+    text-align: center;
 }

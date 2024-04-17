@@ -47,63 +47,10 @@ class SearchResultsList extends React.Component {
 
     render() {
 
-        // Array(book)[Array(sentence)[Array(matches)[int]]]
-        let match_ids = this.props.matches.map(
-            (matches_in_book) => matches_in_book.map(
-                (matches_in_sentence) => matches_in_sentence.map(
-                    (match) => this.props.uniqueMatches.indexOf(match)
-                )
-            )
-        );
-
-        let filtered_results_list = zip(
-            this.props.results,
-            match_ids
-        )
-        //.filter(
-        //    ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
-        //        !match_ids_in_book.flat().every(
-        //            id => this.props.disabledMatches.has(id)
-        //        )
-        //)
-        .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
-
-            let sentences_and_indices =
-                zip(book.sentences, match_ids_in_book);
-                //.filter(
-                //    ([_, match_ids_in_sentence]) =>
-                //        !match_ids_in_sentence.every(
-                //            id => this.props.disabledMatches.has(id)
-                //        )
-                //);
-
-            let [sentences, indices] = zip(...sentences_and_indices);
-
-            return [{...book, sentences: sentences}, indices];
-        });
-
-        // Construct HTML for results list
-        if (filtered_results_list.length === 0) {
-            return <React.Fragment>
-
-                {/* Year column */}
-                <div>{/* Empty div for 'year' column */}</div>
-
-                {/* Sentences column */}
-                {this.props.loaded?
-                    <div>
-                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                        <HowToPageWrapper title=""/>
-                    </div>
-                    : this.props.t('number Results', { numResults: filtered_results_list.length })}
-
-            </React.Fragment>;
-        }
-
         return <React.Fragment>
 
             {/* For each book */}
-            {filtered_results_list.map(([book, match_ids_in_book], i) =>
+            {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
                 <React.Fragment key={i}>
 
                     {/* Year column */}
@@ -252,6 +199,41 @@ class SearchResults extends React.Component {
         // List of unique matches in current page
         let uniqueMatches = [...new Set(matches.flat(2))];
 
+        // Array(book)[Array(sentence)[Array(matches)[int]]]
+        let match_ids = matches.map(
+            (matches_in_book) => matches_in_book.map(
+                (matches_in_sentence) => matches_in_sentence.map(
+                    (match) => uniqueMatches.indexOf(match)
+                )
+            )
+        );
+
+        let filtered_results_list = zip(
+            this.props.results,
+            match_ids
+        )
+        //.filter(
+        //    ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
+        //        !match_ids_in_book.flat().every(
+        //            id => this.props.disabledMatches.has(id)
+        //        )
+        //)
+        .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
+
+            let sentences_and_indices =
+                zip(book.sentences, match_ids_in_book);
+                //.filter(
+                //    ([_, match_ids_in_sentence]) =>
+                //        !match_ids_in_sentence.every(
+                //            id => this.props.disabledMatches.has(id)
+                //        )
+                //);
+
+            let [sentences, indices] = zip(...sentences_and_indices);
+
+            return [{...book, sentences: sentences}, indices];
+        });
+
         return <React.Fragment>
 
             <Histogram
@@ -305,13 +287,19 @@ class SearchResults extends React.Component {
 
             {/* Results area */}
             <div className="dividerBottom"></div>
+            {filtered_results_list.length > 0?
+                null:
+                this.props.loaded?
+                    <div>
+                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                        <HowToPageWrapper title=""/>
+                    </div>
+                    : this.props.t('number Results', { numResults: this.props.results.length })
+            }
             <div className="loadingWrapper">
                 <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
                 <SearchResultsList
-                    matches={matches}
-                    uniqueMatches={uniqueMatches}
-                    disabledMatches={this.state.disabledMatches}
-                    results={this.props.results}
+                    filteredResults={filtered_results_list}
                     loaded={this.props.loaded}
                     romanize={this.props.romanize}
                     ignoreSep={this.props.ignoreSep}

@@ -65,7 +65,8 @@ function HowToPageWrapper(props) {
                  </li>
              </ul>
              <Trans i18nKey="The chart below shows" />
-
+            
+            <div className='tableWrapper'>
             <table className='jamotable'>
                 <tbody>
                     <tr>
@@ -198,6 +199,7 @@ function HowToPageWrapper(props) {
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <h2>{t('Advanced Usage')}</h2>
