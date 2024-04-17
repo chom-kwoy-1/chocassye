@@ -7,6 +7,8 @@ import http from "http";
 import https from "https";
 import fs from "fs";
 
+const __dirname = path.resolve();
+
 // create app
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,7 +35,7 @@ if (process.env.SSL === "ON") {
 
 
 app.use(express.json())
-app.use(express.static("./client/build"));
+app.use(express.static(path.join(__dirname, "client/build")));
 
 
 app.post('/api/search', (req, res) => {
@@ -140,7 +142,7 @@ app.get('/api/source', (req, res) => {
 
 // Handles any requests that don't match the ones above
 app.get('*', (req,res) =>{
-    res.sendFile('./client/build/index.html');
+    res.sendFile(path.join(__dirname, '/client/build/index.html'));
 });
 
 process.on('SIGINT', () => {
