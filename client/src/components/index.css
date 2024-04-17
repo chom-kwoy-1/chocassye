@@ -4,6 +4,12 @@
     unicode-range: U+E000-F8FF; /* PUA */
 }
 
+@font-face {
+    font-family: 'Noto Sans CJK KR';
+    src: local('Noto Sans CJK KR'),
+         url(./fonts/NotoSansKR-VariableFont_wght.woff2) format('woff2');
+}
+
 @media print
 {
     header { display: none !important; }
@@ -13,7 +19,10 @@
 }
 
 body {
-    font: 14px 'Gugyeol', 'Source Han Sans KR', 'Noto Sans CJK KR', '함초롬돋움 LVT','HCR Dotum LVT','함초롬바탕 LVT', 'HCR Batang LVT','본고딕','Source Han Sans K','본고딕 KR','NanumBarunGothic YetHangul', '나눔바른고딕 옛한글','나눔명조 옛한글','NanumMyeongjo YetHangul','은 바탕','Un Batang','돋움 옛한글', 'Dotum Old Hangul','바탕 옛한글','Batang Old Hangul','굴림 옛한글','NewGulim Old Hangul','궁서 옛한글', 'Gungsuh Old Hangul','맑은 고딕','Malgun Gothic','함초롬돋움','HCR Dotum','함초롬바탕','HCR Batang', 'Code2000', sans-serif;
+    font: 14px 'Gugyeol','함초롬돋움 LVT','HCR Dotum LVT','함초롬돋움','HCR Dotum',
+               'Source Han Sans KR','본고딕','Source Han Sans K','본고딕 KR',
+               'NanumBarunGothic YetHangul','나눔바른고딕 옛한글',
+               'Noto Sans CJK KR', sans-serif;
     margin: 0;
     background-color: #ddd;
 }
