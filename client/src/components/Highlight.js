@@ -10,6 +10,8 @@ export function highlight(sentence, romanize, searchTerm) {
         searchTerm = "NULL";
     }
 
+    searchTerm = hangul_to_yale(searchTerm);
+
     let prefix = "";
     let suffix = "";
     if (searchTerm.startsWith('^')) {
