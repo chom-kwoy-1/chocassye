@@ -32,6 +32,10 @@ a {
     text-decoration: inherit;
 }
 
+a.sourceLink:visited {
+    color: darkorange;
+}
+
 span[orig-tag="anno"] {
     font-size: smaller;
 }

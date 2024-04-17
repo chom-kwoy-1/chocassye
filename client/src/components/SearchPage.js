@@ -160,20 +160,23 @@ class SearchResultsList extends React.Component {
                                             {/* Add source link */}
                                             <span style={{color: '#888'}}>
                                                 &lang;
-                                                <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
-                                                    {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
+                                                <Link className="sourceLink"
+                                                      to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`}
+                                                      style={{textDecoration: "underline dotted lightgrey"}}>
+                                                    {sentence.page === null? book.name : `${book.name}:`}
                                                 </Link>
-                                                &rang;
                                                 {sentence.hasImages && sentence.page !== '' ?
                                                     sentence.page.split('-').map((page, i) =>
-                                                        <Tooltip title={page}>
+                                                        <Tooltip title={this.props.t("Image for page", { page: page })}>
                                                             <a className="pageNum"
-                                                               style={{color: '#888', userSelect: 'none', textDecoration: 'underline'}}
+                                                               style={{color: '#888', textDecoration: 'underline'}}
                                                                href={IMAGE_BASE_URL + book.name + '/' + page + '.jpg'}
                                                                target="blank"
-                                                               key={i}>🖼️</a>
-                                                        </Tooltip>):
-                                                    null}
+                                                               key={i}>{page}</a>
+                                                            {i < sentence.page.split('-').length - 1? "-" : null}
+                                                        </Tooltip>) : (sentence.page !== '' ? sentence.page : null)
+                                                    }
+                                                &rang;
                                             </span>
 
                                         </Grid>

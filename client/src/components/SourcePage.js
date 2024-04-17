@@ -16,7 +16,7 @@ import {
     Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
     TableContainer, Table, TableBody,
-    TableRow, TableCell,
+    TableRow, TableCell, Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { tableCellClasses } from '@mui/material/TableCell';
@@ -52,7 +52,7 @@ const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
 const allowList = ['mark', 'abbr', 'span'];
 
 
-function showSentence(bookname, sentence, highlight_term, i) {
+function showSentence(bookname, sentence, highlight_term, t, i) {
     let text = sentence.html ?? sentence.text;
     
     // Into HTML for display
@@ -89,14 +89,19 @@ function showSentence(bookname, sentence, highlight_term, i) {
                 </Typography>
             </StyledTableCell>
             <StyledTableCell align="right">
-                {sentence.hasImages && sentence.page !== '' ?
-                    <a className="pageNum"
-                       style={{color: '#888', userSelect: 'none', textDecoration: 'underline'}}
-                       href={IMAGE_BASE_URL + bookname + '/' + sentence.page + '.jpg'}
-                       target="blank"
-                    >(️{sentence.page})</a>:
-                    <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>({sentence.page})</span>
-                }
+                <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>
+                    ({sentence.hasImages && sentence.page !== '' ?
+                        sentence.page.split('-').map((page, i) =>
+                            <Tooltip title={t("Image for page", { page: page })}>
+                                <a className="pageNum"
+                                   style={{color: '#888', textDecoration: 'underline'}}
+                                   href={IMAGE_BASE_URL + bookname + '/' + page + '.jpg'}
+                                   target="blank"
+                                   key={i}>{page}</a>
+                                {i < sentence.page.split('-').length - 1? "-" : null}
+                            </Tooltip>) : sentence.page
+                    })
+                </span>
             </StyledTableCell>
         </StyledTableRow>
     );
@@ -251,7 +256,7 @@ class SourcePage extends React.Component {
                         <Table size="small">
                             <TableBody>
                                 {this.props.result.data.sentences.map(
-                                    (sentence, i) => showSentence(this.props.bookName, sentence, hl, i)
+                                    (sentence, i) => showSentence(this.props.bookName, sentence, hl, this.props.t, i)
                                 )}
                             </TableBody>
                         </Table>

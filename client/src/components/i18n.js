@@ -46,6 +46,7 @@ const resources = {
       "Exclude Chinese": "Exclude Chinese",
       "Source": "Source",
       "Attributions": "Attributions",
+      "Image for page": "Image for {page}",
     }
   },
   ko: {
@@ -90,6 +91,7 @@ const resources = {
       "Exclude Chinese": "한문 숨기기",
       "Source": "출처 서지정보",
       "Attributions": "입력 및 교정",
+      "Image for page": "{page} 원문사진",
     }
   }
 };
