@@ -34,8 +34,8 @@ import {
     TableContainer,
     TableRow,
     TextField,
-    Typography,
     Tooltip,
+    Typography,
 } from '@mui/material';
 import {styled} from '@mui/material/styles';
 import {tableCellClasses} from '@mui/material/TableCell';
@@ -58,7 +58,7 @@ import {
     yellow,
 } from '@mui/material/colors';
 import {IMAGE_BASE_URL} from "./config";
-import { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
+import {tooltipClasses} from '@mui/material/Tooltip';
 
 const highlightColors = [
     orange, pink, indigo,     
@@ -169,13 +169,15 @@ class SearchResultsList extends React.Component {
                                                     sentence.page.split('-').map((page, i) => {
                                                         const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
                                                         return <ImageTooltip title={pageImagePreview(page, imageURL, this.props.t)}
-                                                                             placement="right">
-                                                            <a className="pageNum"
-                                                               style={{color: '#888', textDecoration: 'underline'}}
-                                                               href={imageURL}
-                                                               target="blank"
-                                                               key={i}>{page}</a>
-                                                            {i < sentence.page.split('-').length - 1? "-" : null}
+                                                                             placement="right" key={i}>
+                                                            <span>
+                                                                <a className="pageNum"
+                                                                   style={{color: '#888', textDecoration: 'underline'}}
+                                                                   href={imageURL}
+                                                                   target="blank"
+                                                                   key={i}>{page}</a>
+                                                                {i < sentence.page.split('-').length - 1? "-" : null}
+                                                            </span>
                                                         </ImageTooltip>
                                                     }) : (sentence.page !== '' ? sentence.page : null)}
                                                 &rang;
@@ -847,50 +849,41 @@ function SearchPageWrapper(props) {
 
     const refresh = React.useCallback(
         (term, doc, page, excludeModern, ignoreSep) => {
-            let active = true;
-
-            if (page !== 1 && (
-                prevTerm.current !== term ||
-                prevDoc.current !== doc ||
-                prevExcludeModern.current !== excludeModern)) {
-                
-                console.log("setSearchParams");
+            if (isInited.current && prevPage.current === page && page !== 1) {
                 setSearchParams({
                     page: "1",
-                    term: term,
-                    doc: doc,
-                    excludeModern: excludeModern,
-                    ignoreSep: ignoreSep,
+                    term: prevTerm.current,
+                    doc: prevDoc.current,
+                    excludeModern: prevExcludeModern.current,
+                    ignoreSep: prevIgnoreSep.current,
+                });
+            } else {
+                let active = true;
+
+                setResult({
+                    ...prevResult.current,
+                    loaded: false
                 });
 
-                page = 1;
-            }
-
-            setResult({
-                ...prevResult.current,
-                loaded: false
-            });
-
-            search(
-                term, doc, page, excludeModern, ignoreSep,
-                async (result, num_results, histogram, page_N) => {
-                    if (active) {
-                        console.log("setResult");
-                        // sleep for 1 second
-                        setResult({
-                            result: result,
-                            num_results: num_results,
-                            page_N: page_N,
-                            histogram: histogram,
-                            result_term: term,
-                            loaded: true
-                        });
+                search(
+                    term, doc, page, excludeModern, ignoreSep,
+                    async (result, num_results, histogram, page_N) => {
+                        if (active) {
+                            setResult({
+                                result: result,
+                                num_results: num_results,
+                                page_N: page_N,
+                                histogram: histogram,
+                                result_term: term,
+                                loaded: true
+                            });
+                        }
                     }
-                }
-            );
+                );
 
-            return () => {
-                active = false;
+                return () => {
+                    active = false;
+                }
             }
         },
         [setSearchParams, setResult],
@@ -922,27 +915,91 @@ function SearchPageWrapper(props) {
         []
     );
 
+    const ENABLE_SEARCH_AS_YOU_TYPE = false;
     React.useEffect(async () => {
-        if (!isInited.current || // if first call
-            (hangul_to_yale(term).length > 5 && prevTerm.current !== term) || // or current term has changed
-            prevPage.current !== page ||   // or current page has changed
-            prevExcludeModern.current !== excludeModern ||
-            prevIgnoreSep.current !== ignoreSep)
-        {
-            await new Promise(r => setTimeout(r, 1));
-            const results = refresh(term, prevDoc.current, page, excludeModern, ignoreSep);
+        if (prevTerm.current !== term) {
+            if (ENABLE_SEARCH_AS_YOU_TYPE) {
+                const result = refresh(
+                    term,
+                    prevDoc.current,
+                    prevPage.current,
+                    prevExcludeModern.current,
+                    prevIgnoreSep.current
+                );
+                isInited.current = true;
+                prevTerm.current = term;
+                return result;
+            }
+            else {
+                prevTerm.current = term;
+            }
+        }
+    }, [term]);
 
+    React.useEffect(async () => {
+        if (prevPage.current !== page || !isInited.current) {
+            console.log("Page changed: ", prevPage.current, " -> ", page);
+            const result = refresh(
+                prevTerm.current,
+                prevDoc.current,
+                page,
+                prevExcludeModern.current,
+                prevIgnoreSep.current
+            );
             isInited.current = true;
             prevPage.current = page;
-            prevTerm.current = term;
-            prevDoc.current = doc;
-
-            prevExcludeModern.current = excludeModern;
-            prevIgnoreSep.current = ignoreSep;
-
-            return results;
+            return result;
         }
-    }, [term, page, doc, excludeModern, ignoreSep, refresh]);
+    }, [page]);
+    React.useEffect(async () => {
+        if (prevDoc.current !== doc) {
+            console.log("Doc changed: ", prevDoc.current, " -> ", doc);
+            if (ENABLE_SEARCH_AS_YOU_TYPE) {
+                const result = refresh(
+                    prevTerm.current,
+                    doc,
+                    prevPage.current,
+                    prevExcludeModern.current,
+                    prevIgnoreSep.current
+                );
+                isInited.current = true;
+                prevDoc.current = doc;
+                return result;
+            } else {
+                prevDoc.current = doc;
+            }
+        }
+    }, [doc]);
+    React.useEffect(async () => {
+        if (prevExcludeModern.current !== excludeModern) {
+            console.log("Exclude modern changed: ", prevExcludeModern.current, " -> ", excludeModern);
+            const result = refresh(
+                prevTerm.current,
+                prevDoc.current,
+                prevPage.current,
+                excludeModern,
+                prevIgnoreSep.current
+            );
+            isInited.current = true;
+            prevExcludeModern.current = excludeModern;
+            return result;
+        }
+    }, [excludeModern]);
+    React.useEffect(async () => {
+        if (prevIgnoreSep.current !== ignoreSep) {
+            console.log("Ignore separator changed: ", prevIgnoreSep.current, " -> ", ignoreSep);
+            const result = refresh(
+                prevTerm.current,
+                prevDoc.current,
+                prevPage.current,
+                prevExcludeModern.current,
+                ignoreSep
+            );
+            isInited.current = true;
+            prevIgnoreSep.current = ignoreSep;
+            return result;
+        }
+    }, [ignoreSep]);
 
     React.useEffect(() => {
         return suggest_doc(doc);
