@@ -236,6 +236,9 @@ class SearchResults extends React.Component {
                     ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
                 ];
                 
+                console.log(text);
+                console.log(toTextIgnoreTone(text));
+                
                 // Remove overlapping ranges
                 match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
                 

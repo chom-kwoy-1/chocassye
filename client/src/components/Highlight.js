@@ -217,6 +217,18 @@ export function toDisplayHTML(sentence) {
         mapping
     );
     
+    // replace opening/closing custom tags with span
+    [sentence, mapping] = replace_and_map(
+        sentence, /<(\/)?([^>]*)>/g,
+        function (_, closing, tag) {
+            if (closing) {
+                return "</span>";
+            }
+            return `<span orig-tag=${tag}>`;
+        },
+        mapping
+    );
+    
     // replace [] with <span> anno tags
     [sentence, mapping] = replace_and_map(
         sentence, /(\[|\])/g,
@@ -227,18 +239,6 @@ export function toDisplayHTML(sentence) {
             else {
                 return `</span>`;
             }
-        },
-        mapping
-    );
-    
-    // replace opening/closing custom tags with span
-    [sentence, mapping] = replace_and_map(
-        sentence, /<(\/)?([^>]*)>/g,
-        function (_, closing, tag) {
-            if (closing) {
-                return "</span>";
-            }
-            return `<span orig-tag=${tag}>`;
         },
         mapping
     );
