@@ -13,11 +13,10 @@ const port = process.env.PORT || 5000;
 
 // initialize db
 const db = new Database({
-    url: 'http://127.0.0.1:8529'
+    url: 'http://127.0.0.1:8529',
+    databaseName: "etym_db",
+    auth: { username: "root", password: "" },
 });
-console.log(db);
-db.useBasicAuth('root', '');
-db.useDatabase('etym_db');
 
 
 // start listening

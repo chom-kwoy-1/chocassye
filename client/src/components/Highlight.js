@@ -9,8 +9,27 @@ export function highlight(sentence, romanize, searchTerm) {
     if (searchTerm === null) {
         searchTerm = "NULL";
     }
+
+    let prefix = "";
+    let suffix = "";
+    if (searchTerm.startsWith('^')) {
+        searchTerm = searchTerm.slice(1);
+        prefix = "^";
+    }
+    if (searchTerm.endsWith('$')) {
+        searchTerm = searchTerm.slice(0, searchTerm.length - 1);
+        suffix = "$";
+    }
+
+    let reSearchTerm = [];
+    for (let part of searchTerm.split('%')) {
+        reSearchTerm.push(escapeRegex(part));
+    }
+    reSearchTerm = reSearchTerm.join('.+');
+
+    let regexp = new RegExp(prefix + reSearchTerm + suffix, 'g');
+
     if (romanize) {
-        let regexp = new RegExp(escapeRegex(searchTerm), 'g');
         let match;
 
         let dom = [];
@@ -31,7 +50,6 @@ export function highlight(sentence, romanize, searchTerm) {
     else {
         let { result, index_map, next_index_map } = yale_to_hangul(sentence, true);
 
-        let regexp = new RegExp(escapeRegex(searchTerm), 'g');
         let match;
 
         let dom = [];

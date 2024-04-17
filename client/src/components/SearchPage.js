@@ -146,7 +146,7 @@ function search(word, page, func) {
     let suffix = "%";
     if (term.startsWith('^')) {
         term = term.slice(1);
-        suffix = "";
+        prefix = "";
     }
     if (term.endsWith('$')) {
         term = term.slice(0, term.length - 1);
