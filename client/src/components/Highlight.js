@@ -100,10 +100,10 @@ export function highlight(sentences, romanize, searchTerm,
                 if (string.match(/^<!--[^>]*-->$/)) {
                     dom.push(yale_to_hangul(string));
                 }
-                else if (!inline && string == '[') {
+                else if (!inline && string === '[') {
                     dom.push(`<span orig-tag="anno">`);
                 }
-                else if (!inline && string == ']') {
+                else if (!inline && string === ']') {
                     dom.push(`</span>`);
                 }
                 else if (string.match(/^<[^>]*>$/) !== null) {

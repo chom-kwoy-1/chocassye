@@ -431,7 +431,7 @@ function SearchPageWrapper(props) {
                 }
             }
         },
-        []
+        [setSearchParams]
     );
 
     const suggest_doc = React.useCallback(
@@ -465,7 +465,7 @@ function SearchPageWrapper(props) {
             prevDoc.current = doc;
             return refresh(term, prevDoc.current, page);
         }
-    }, [term, page, refresh]);
+    }, [term, page, doc, refresh]);
 
     React.useEffect(() => {
         return suggest_doc(doc);
