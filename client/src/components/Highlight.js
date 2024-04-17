@@ -50,7 +50,7 @@ const TONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|
 
 
 export function invert_mapping(mapping) {
-    if (mapping.length == 0) {
+    if (mapping.length === 0) {
         return [];
     }
     let inv_mapping = Array(mapping[mapping.length - 1][1]);
@@ -212,7 +212,7 @@ export function toDisplayHTML(sentence) {
 
     // yale to hangul (ignoring tags)
     [sentence, mapping] = replace_and_map(
-        sentence, /([^>\[\]]+)(?![^<]*>)/g,
+        sentence, /([^>[\]]+)(?![^<]*>)/g,
         function (match) {
             let { result, mapping } = yale_to_hangul(match, true);
             return [result, mapping];

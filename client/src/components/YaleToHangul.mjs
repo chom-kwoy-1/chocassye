@@ -275,10 +275,6 @@ const VOWEL_HANGUL_TO_YALE = {
     ...inv(YALE_TO_HANGUL_VOWELS),
 };
 
-const FROM_COMPATIBILITY_FORM = {
-    ...inv(TO_COMPATIBILITY_FORM),
-};
-
 const VOWELS_RE = /(ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)/g;
 const CONS_RE = /psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`/g;
 const INDEP_CONS_RE = /(ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄦ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᄼ|ᄽ|ᅎ|ᅏ|ᅔ|ᄾ|ᄿ|ᅐ|ᅑ|ᅕ|ᅟ)(?!ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)/g;
@@ -341,7 +337,6 @@ export function yale_to_hangul(string, get_index_map=false) {
 
             let remaining = split;
 
-            let found_prefix = false;
             let prefix_len = max_prefix_len;
             let prefix = '';
             for (; prefix_len >= 1; --prefix_len) {
@@ -349,17 +344,14 @@ export function yale_to_hangul(string, get_index_map=false) {
                 if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(part)) {
                     prefix = YALE_TO_HANGUL_FINAL_CONSONANTS[part];
                     remaining = remaining.slice(prefix_len);
-                    found_prefix = true;
                     break
                 }
             }
             
-            let has_tone_mark = false;
             let tone_mark = '';
             if (remaining.length > 0 && ['L', 'H', 'R'].includes(remaining[0])) {
                 tone_mark = YALE_TO_HANGUL_TONE_MARKS[remaining[0]];
                 remaining = remaining.slice(1);
-                has_tone_mark = true;
                 prefix_len += 1;
             }
 
