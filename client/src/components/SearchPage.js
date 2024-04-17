@@ -357,7 +357,7 @@ class SearchPage extends React.Component {
 
 
                 <div className="preview">{yale_to_hangul(searchTerm)}</div>
-                <div>
+                <div className="resultsAndRomCheckBox">
                     <span className="numResults">
                         {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
                         {

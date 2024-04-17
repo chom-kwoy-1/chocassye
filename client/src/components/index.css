@@ -60,6 +60,10 @@ main.bottom {
     font-size: 20pt;
 }
 
+.resultsAndRomCheckBox {
+    display: flow-root;
+}
+
 header {
     background-color: black;
     color: white;
