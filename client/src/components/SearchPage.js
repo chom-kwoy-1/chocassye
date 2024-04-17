@@ -141,7 +141,16 @@ class SearchPage extends React.Component {
 
 function search(word, page, func) {
     let term = hangul_to_yale(word.normalize("NFKD"));
-    term = '%'+term+'%';
+
+    let prefix = "%";
+    let suffix = "%";
+    if (term.startsWith('^')) {
+        suffix = "";
+    }
+    if (term.endsWith('$')) {
+        suffix = "";
+    }
+    term = prefix + term + suffix;
 
     postData('/api/search', {
         term: term,

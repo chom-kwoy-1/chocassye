@@ -2,7 +2,7 @@
   "name": "etym-eomi",
   "version": "1.0.0",
   "description": "",
-  "main": "solr_db.js",
+  "main": "arango_server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "arangojs": "^8.4.0",
     "express": "^4.17.2",
     "glob": "^7.2.0",
     "jsdom": "^19.0.0",

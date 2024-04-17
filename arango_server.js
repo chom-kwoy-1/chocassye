@@ -15,6 +15,7 @@ const port = process.env.PORT || 5000;
 const db = new Database({
     url: 'http://127.0.0.1:8529'
 });
+console.log(db);
 db.useBasicAuth('root', '');
 db.useDatabase('etym_db');
 
