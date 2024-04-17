@@ -59,13 +59,32 @@ footer {
     padding: 10px;
 }
 
-.searchEntry {
-    display: flex;
+.loadingWrapper {
+    position: relative;
+    min-height: 100px;
+
+    display: grid;
+    grid-template-columns: min-content auto;
+}
+
+.loadingWrapper .year {
+    padding-right: 10px;
+    color: grey;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis "..";
+    max-width: 80px;
+    text-align: center;
+    user-select: none;
+}
+
+.loadingWrapper > span {
     padding-top: 5px;
     padding-bottom: 5px;
 }
 
-.searchEntry:nth-child(odd) {
+.loadingWrapper > span:nth-child(4n+1),
+.loadingWrapper > span:nth-child(4n) {
     background-color: #ddd;
 }
 
@@ -74,7 +93,6 @@ footer {
 }
 
 .searchEntry .sentence {
-    flex-grow: 1;
 }
 
 .searchEntry .source {
@@ -185,6 +203,10 @@ footer {
     text-decoration: none;
 }
 
+.paginator .disabled {
+    display: none;
+}
+
 .paginator li.selected a {
     border: none;
     display: inline-block;
@@ -195,9 +217,6 @@ footer {
     text-align: center;
 }
 
-.loadingWrapper {
-    position: relative;
-}
 
 .loading {
     position: absolute;
@@ -211,4 +230,18 @@ footer {
     justify-content: center;
     align-items: center;
     font-size: 30pt;
+    opacity: 100%;
+    transition: opacity .25s ease-in-out;
+}
+
+.loading.loaded {
+    opacity: 0%;
+    display: none;
+    animation: fade-in 1s;
+    animation-fill-mode: forwards;
+}
+
+.highlight{
+    background-color: pink;
+    font-weight: bold;
 }

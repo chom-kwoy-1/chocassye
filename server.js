@@ -147,23 +147,27 @@ app.post('/api/search', (req, res) => {
     console.log(typeof(text), typeof(N), typeof((req.body.page - 1) * N));
     console.log(text, N, req.body.page);
 
-    db_all(
-        `SELECT
-            examples.rowid AS rowid,
-            examples.sentence AS sentence,
-            sources.name AS source_name,
-            type,
-            lang,
-            page,
-            number_in_page,
-            rank,
-            count(*) OVER() AS total_rows
-        FROM ((fts_examples JOIN examples ON fts_examples.rowid = examples.rowid)
-              JOIN sources ON examples.source_id = sources.rowid)
-        WHERE fts_examples.sentence GLOB ?
-        ORDER BY rank
-        LIMIT ? OFFSET ?`, [text, N, (req.body.page - 1) * N]
-    ).then((rows) => {
+    new Promise(r => setTimeout(r, 0))
+    .then(() =>
+        db_all(
+            `SELECT
+                examples.rowid AS rowid,
+                examples.sentence AS sentence,
+                sources.name AS source_name,
+                sources.year AS source_year,
+                type,
+                lang,
+                page,
+                number_in_page,
+                number_in_source,
+                rank,
+                count(*) OVER() AS total_rows
+            FROM ((fts_examples JOIN examples ON fts_examples.rowid = examples.rowid)
+                JOIN sources ON examples.source_id = sources.rowid)
+            WHERE fts_examples.sentence GLOB ?
+            ORDER BY source_year, rank
+            LIMIT ? OFFSET ?`, [text, N, (req.body.page - 1) * N]
+    )).then((rows) => {
         let total_rows = 0;
         if (rows.length > 0) {
             total_rows = rows[0].total_rows;
@@ -190,17 +194,6 @@ app.post('/api/search', (req, res) => {
 });
 
 app.get('/api/source', (req, res) => {
-    console.log(req.query);
-    console.log(req.query.name, 100, req.query.name, req.query.page);
-
-
-    db_all(`SELECT  examples.page
-            FROM examples JOIN sources ON examples.source_id = sources.rowid
-            WHERE sources.name = ?`, [req.query.name])
-    .then(row => {
-        console.log(row);
-    });
-
     db_all(
         `SELECT
             sentence,
@@ -215,12 +208,8 @@ app.get('/api/source', (req, res) => {
         WHERE sources.name = ?
         ORDER BY examples.number_in_source
         LIMIT ?
-        OFFSET (
-            SELECT min(examples.number_in_source)
-            FROM examples JOIN sources ON examples.source_id = sources.rowid
-            WHERE sources.name = ? AND page = ?
-        )`,
-        [req.query.name, 100, req.query.name, req.query.page]
+        OFFSET ?`,
+        [req.query.name, 100, req.query.number_in_source]
     ).then(rows => {
         res.send({
             status: "success",

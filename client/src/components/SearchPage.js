@@ -20,20 +20,78 @@ async function postData(url = '', data = {}) {
     return response.json();
 }
 
+function escapeRegex(string) {
+    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 class SearchResults extends React.Component {
-    constructor(props) {
-        super(props);
+    highlight(sentence, searchTerm) {
+        if (this.props.romanize) {
+            let regexp = new RegExp(escapeRegex(searchTerm), 'g');
+            let match;
+
+            let dom = [];
+            let last_idx = 0;
+            while ((match = regexp.exec(sentence)) !== null) {
+                let start = match.index;
+                let end = regexp.lastIndex;
+                dom.push(<span>{sentence.slice(last_idx, start)}</span>);
+                dom.push(<span className="highlight">{sentence.slice(start, end)}</span>);
+                last_idx = end;
+            }
+            dom.push(<span>{sentence.slice(last_idx)}</span>);
+
+            return (
+                <span>{dom}</span>
+            );
+        }
+        else {
+            let { result, index_map, next_index_map } = yale_to_hangul(sentence, true);
+
+            let regexp = new RegExp(escapeRegex(searchTerm), 'g');
+            let match;
+
+            let dom = [];
+            let last_idx = 0;
+            while ((match = regexp.exec(sentence)) !== null) {
+                let start = index_map[match.index];
+                let end = next_index_map[regexp.lastIndex];
+                if (last_idx < end) {
+                    if (last_idx < start) {
+                        dom.push(<span key={last_idx} abc={last_idx}>{result.slice(last_idx, start)}</span>);
+                    }
+                    if (start < end) {
+                        dom.push(<span key={start} abc={start} className="highlight">{result.slice(start, end)}</span>);
+                    }
+                    last_idx = end;
+                }
+            }
+            if (last_idx < result.length) {
+                dom.push(<span key={last_idx} abc={last_idx}>{result.slice(last_idx)}</span>);
+            }
+
+            return (
+                <span>{dom}</span>
+            );
+        }
     }
 
     render() {
-        return this.props.sentences.map((s, i) => (
-            <div key={i} className="searchEntry">
-                <span className="sentence">{this.props.romanize? s.sentence : yale_to_hangul(s.sentence)}</span>
-                <Link to={`/source?name=${s.source_name}&page=${s.page}`} className="source">
+        console.log(this.props.results);
+        return this.props.results.map((book, i) => [
+            <span key={i + "y"} className="year">{book.year ?? "-"}</span>,
+            <span key={i + "s"} className="sentence">
+                {book.sentences.map((s, i) => (
+                    <div key={i}>
+                        <span>{this.highlight(s.text, this.props.resultTerm)}</span>
+                        <span>&lang;{book.name}:{s.page}&rang;</span>
+                    </div>
+                ))}
+                {/*<Link to={`/source?name=${s.source_name}&n=${s.number_in_source}`} className="source">
                     {s.source_name}:{s.page}
-                </Link>
-            </div>
-        ))
+                </Link>*/}
+            </span>
+        ])
     }
 }
 
@@ -90,9 +148,13 @@ class SearchPage extends React.Component {
                 {/* Results area */}
                 <div className="dividerBottom"></div>
                 <div className="loadingWrapper">
-                    {this.props.loaded? <div></div> : <div className="loading">Loading...</div>}
-                    {this.props.result.length === 0? <div>No match</div>
-                        : <SearchResults sentences={this.props.result} romanize={this.state.romanize} />}
+                    <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
+                    {this.props.result.length === 0? <div>No match</div> :
+                     <SearchResults
+                         results={this.props.result}
+                         romanize={this.state.romanize}
+                         resultTerm={this.props.resultTerm}
+                     />}
                 </div>
                 <div className="dividerTop"></div>
 
@@ -118,14 +180,15 @@ class SearchPage extends React.Component {
 
 function search(word, page, func) {
     let term = hangul_to_yale(word.normalize("NFKD"));
+    term = '%'+term+'%';
 
     postData('/api/search', {
-        term: '*'+term+'*',
+        term: term,
         page: page
     }).then((result) => {
         if (result.status === 'success') {
             console.log(result);
-            func(result.sentences, result.total_rows);
+            func(result.results, result.total_rows);
         } else {
             console.log(result);
             func([], 0);
@@ -142,19 +205,28 @@ function SearchPageWrapper(props) {
     let [searchParams, setSearchParams] = useSearchParams();
     let page = parseInt(searchParams.get('page') ?? '1');
     let term = searchParams.get('term') ?? "";
-    let [result, setResult] = React.useState([]);
-    let [numResults, setNumResults] = React.useState(0);
-    let [loaded, setLoaded] = React.useState(false);
+    let [result, setResult] = React.useState({
+        result: [],
+        num_results: 0,
+        result_term: "",
+        loaded: false
+    });
 
     function refresh() {
         let active = true;
-        setLoaded(false);
+        setResult({
+            ...result,
+            loaded: false
+        });
 
         search(term, page, (result, num_results) => {
             if (active) {
-                setResult(result);
-                setNumResults(num_results);
-                setLoaded(true);
+                setResult({
+                    result: result,
+                    num_results: num_results,
+                    result_term: term,
+                    loaded: true
+                });
             }
         });
 
@@ -164,14 +236,15 @@ function SearchPageWrapper(props) {
     }
 
     React.useEffect(() => {
-        console.log("term/page changed", term, page);
         return refresh();
     }, [term, page]);
 
     return <SearchPage {...props}
-        loaded={loaded}
         page={page} term={term}
-        result={result} numResults={numResults}
+        result={result.result}
+        numResults={result.num_results}
+        resultTerm={result.result_term}
+        loaded={result.loaded}
         setSearchParams={setSearchParams}
         onRefresh={refresh}
     />;

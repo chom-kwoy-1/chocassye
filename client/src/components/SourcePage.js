@@ -27,10 +27,10 @@ class SourcePage extends React.Component {
     constructor(props) {
         super(props);
         let name = props.searchParams.get("name");
-        let page = props.searchParams.get("page");
+        let n = props.searchParams.get("n");
         this.state = {
             name: name,
-            page: page,
+            n: n,
             sentences: []
         };
     }
@@ -38,15 +38,22 @@ class SourcePage extends React.Component {
     componentDidMount() {
         fetch("/api/source?" + new URLSearchParams({
             name: this.state.name,
-            page: this.state.page
+            number_in_source: this.state.n
         }))
         .then(res => res.json())
         .then((result) => {
-            console.log(result);
-            this.setState({
-                ...this.state,
-                sentences: result.sentences
-            });
+            if (result.status === 'success') {
+                this.setState({
+                    ...this.state,
+                    sentences: result.sentences
+                });
+            }
+            else {
+                console.log(result);
+            }
+        })
+        .catch(err => {
+            console.log(err);
         });
     }
 

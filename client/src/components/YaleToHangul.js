@@ -123,15 +123,6 @@ const YALE_TO_HANGUL_VOWELS = {
     'yuy': '\u1194'
 };
 
-const YALE_TO_HANGUL_INITIALS = {
-    ...YALE_TO_HANGUL_INITIAL_CONSONANTS,
-    ...YALE_TO_HANGUL_VOWELS
-};
-const YALE_TO_HANGUL_FINALS = {
-    ...YALE_TO_HANGUL_FINAL_CONSONANTS,
-    ...YALE_TO_HANGUL_VOWELS
-};
-
 function inv(obj) {
     return Object.fromEntries(Object.entries(obj).map(a => a.reverse()));
 }
@@ -147,54 +138,148 @@ const INITIAL_HANGUL_TO_YALE = {
 };
 
 
-function yale_to_hangul(string) {
+function yale_to_hangul(string, get_index_map=false) {
     let result = "";
+    let index_map = {};
+    let next_index_map = {};
+
+    let wasLastInitial = false;
     let wasLastVowel = false;
+    let wasLastFinal = true;
+
+    let lastBlock = "";
+    let curBlock = "";
+
+    string = string + ".";
+
+    let last_i = 0;
     for (let i = 0; i < string.length;) {
         let skip = false;
+        let this_i = i;
 
         for (let l = 3; l >= 1; --l) {
             if (i < string.length - l + 1) {
                 let ch = string.substring(i, i + l);
-                if (wasLastVowel) {
-                    if (YALE_TO_HANGUL_FINALS.hasOwnProperty(ch)) {
-                        result += YALE_TO_HANGUL_FINALS[ch]
-                        i += l;
 
-                        if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(ch)) {
-                            wasLastVowel = false;
-                        }
+                if (wasLastFinal) {
+                    if (YALE_TO_HANGUL_INITIAL_CONSONANTS.hasOwnProperty(ch)) {
+                        wasLastInitial = true;
+                        wasLastVowel = false;
+                        wasLastFinal = false;
+
+                        lastBlock = curBlock;
+                        curBlock = YALE_TO_HANGUL_INITIAL_CONSONANTS[ch];
+
                         skip = true;
+                        i += l;
+                        break;
+                    }
+                    else if (YALE_TO_HANGUL_VOWELS.hasOwnProperty(ch)) {
+                        wasLastInitial = false;
+                        wasLastVowel = true;
+                        wasLastFinal = false;
+
+                        lastBlock = curBlock;
+                        curBlock = '\u115f' + YALE_TO_HANGUL_VOWELS[ch];
+
+                        skip = true;
+                        i += l;
                         break;
                     }
                 }
-                else if (YALE_TO_HANGUL_INITIALS.hasOwnProperty(ch)) {
-                    result += YALE_TO_HANGUL_INITIALS[ch]
-                    i += l;
+                else if (wasLastVowel) {
+                    if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(ch)) {
+                        wasLastInitial = false;
+                        wasLastVowel = false;
+                        wasLastFinal = true;
 
-                    wasLastVowel = YALE_TO_HANGUL_VOWELS.hasOwnProperty(ch);
-                    skip = true;
-                    break;
+                        curBlock += YALE_TO_HANGUL_FINAL_CONSONANTS[ch];
+
+                        skip = true;
+                        i += l;
+                        break;
+                    }
+                    else if (YALE_TO_HANGUL_VOWELS.hasOwnProperty(ch)) {
+                        wasLastInitial = false;
+                        wasLastVowel = true;
+                        wasLastFinal = false;
+
+                        lastBlock = curBlock;
+                        curBlock = '\u115f' + YALE_TO_HANGUL_VOWELS[ch];
+
+                        skip = true;
+                        i += l;
+                        break;
+                    }
+                }
+                else if (wasLastInitial) {
+                    if (YALE_TO_HANGUL_FINAL_CONSONANTS.hasOwnProperty(ch)) {
+                        wasLastInitial = false;
+                        wasLastVowel = false;
+                        wasLastFinal = true;
+
+                        curBlock += '\u1160' + YALE_TO_HANGUL_FINAL_CONSONANTS[ch];
+
+                        skip = true;
+                        i += l;
+                        break;
+                    }
+                    else if (YALE_TO_HANGUL_VOWELS.hasOwnProperty(ch)) {
+                        wasLastInitial = false;
+                        wasLastVowel = true;
+                        wasLastFinal = false;
+
+                        curBlock += YALE_TO_HANGUL_VOWELS[ch];
+
+                        skip = true;
+                        i += l;
+                        break;
+                    }
                 }
             }
         }
 
-        if (skip) {
-            continue;
-        } else {
+        if (!skip) {
+            wasLastInitial = false;
             wasLastVowel = false;
-            if (string[i] !== '.') {
-                result += string[i];
-            }
+            wasLastFinal = true;
+
+            let ch = string[i] !== '.'? string[i] : '';
+            lastBlock = curBlock;
+            curBlock = ch;
+
             i += 1;
         }
+
+
+        if (lastBlock !== '') {
+            for (let j = last_i; j <= this_i; ++j) {
+                index_map[j] = result.length;
+                next_index_map[j] = j > last_i? result.length + lastBlock.length : result.length;
+            }
+            last_i = this_i;
+
+            result += lastBlock;
+        }
+        lastBlock = "";
     }
+
+    if (get_index_map) {
+        return {
+            result: result,
+            index_map: index_map,
+            next_index_map: next_index_map
+        }
+    }
+
     return result;
 }
 
 function hangul_to_yale(string) {
     let result = "";
     let wasHangul = false;
+
+    string = string.normalize('NFKD');
 
     for (let ch of string) {
         if (HANGUL_TO_YALE.hasOwnProperty(ch)) {

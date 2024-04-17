@@ -23,7 +23,8 @@ db.serialize(() => {
     )`);
 
     db.run(`CREATE TABLE sources(
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        year TEXT
     )`);
 
     // examples
@@ -84,8 +85,10 @@ function insert_db(sql, values) {
 
 function add_file(file, xml) {
     let filename = path.parse(file).name;
+    let year = xml.documentElement.querySelector('meta year').attributes.n.value.trim();
+    console.log(year);
 
-    return insert_db(`INSERT INTO sources (name) VALUES (?)`, [filename])
+    return insert_db(`INSERT INTO sources (name, year) VALUES (?, ?)`, [filename, year])
     .then(async (stmt) => {
         let source_id = stmt.lastID;
 
