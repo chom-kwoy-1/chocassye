@@ -529,4 +529,5 @@ input:focus + .suggestionsBox {
 input {
     font: inherit;
     font-size: 10pt;
+    max-width: 15em;
 }
