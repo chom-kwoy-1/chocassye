@@ -787,7 +787,7 @@ function SearchPageWrapper(props) {
                 
                 console.log("setSearchParams");
                 setSearchParams({
-                    page: 1,
+                    page: "1",
                     term: term,
                     doc: doc,
                     excludeModern: excludeModern,
@@ -858,6 +858,8 @@ function SearchPageWrapper(props) {
             prevExcludeModern.current !== excludeModern ||
             prevIgnoreSep.current !== ignoreSep)
         {
+            const results = refresh(term, prevDoc.current, page, excludeModern, ignoreSep);
+
             isInited.current = true;
             prevPage.current = page;
             prevTerm.current = term;
@@ -866,7 +868,7 @@ function SearchPageWrapper(props) {
             prevExcludeModern.current = excludeModern;
             prevIgnoreSep.current = ignoreSep;
 
-            return refresh(term, prevDoc.current, page, excludeModern, ignoreSep);
+            return results;
         }
     }, [term, page, doc, excludeModern, ignoreSep, refresh]);
 

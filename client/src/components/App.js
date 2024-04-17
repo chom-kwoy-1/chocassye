@@ -8,7 +8,7 @@ import {
     Typography, Box, IconButton, Menu,
     MenuItem, Paper
 } from '@mui/material';
-
+import i18next from 'i18next';
 import './i18n';
 
 
