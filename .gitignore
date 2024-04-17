@@ -6,3 +6,4 @@ db/*
 *.log
 dump/*
 .idea/*
+pages.txt
