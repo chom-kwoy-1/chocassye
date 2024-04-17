@@ -2,7 +2,7 @@
   "name": "etym-eomi",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "solr_db.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,10 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "arangojs": "^7.5.0",
     "express": "^4.17.2",
     "glob": "^7.2.0",
     "jsdom": "^19.0.0",
+    "log4js": "^6.7.1",
+    "solr-client": "^0.10.0-rc10",
     "sqlite3": "^5.0.2",
     "xml2js": "^0.4.23"
   }
