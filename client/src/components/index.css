@@ -160,6 +160,10 @@ footer {
     color: #000099;
 }
 
+.sourceSentence.sentence_lang_mod .text {
+    color: #955;
+}
+
 .sourceSentence.sentence_type_title .text {
     font-size: 20pt;
     text-align: center;
@@ -535,4 +539,10 @@ input {
     font: inherit;
     font-size: 10pt;
     max-width: 15em;
+}
+
+abbr {
+    border-bottom: 1px dotted grey;
+    text-decoration: none;
+    font-size: inherit;
 }

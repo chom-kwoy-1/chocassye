@@ -1,15 +1,16 @@
 import React from 'react';
 import './index.css';
 import { yale_to_hangul } from './YaleToHangul';
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { highlight } from './Highlight';
 import ReactPaginate from 'react-paginate';
+import { addHintToGugyeol } from './Gugyeol'
 
 
 function showSentence(sentence, highlight_term, i) {
     return (
         <div key={i} className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
-            <span className="text">{highlight(sentence.text, false, highlight_term)}</span>
+            <span className="text">{highlight(sentence.text, false, highlight_term, false, null, addHintToGugyeol)}</span>
             <span className="pageNum">{sentence.page}</span>
         </div>
     );
