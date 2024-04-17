@@ -206,7 +206,7 @@ export function toTextIgnoreTone(sentence) {
     return [sentence, mapping];
 }
 
-export function toDisplayHTML(sentence) {
+export function toDisplayHTML(sentence, comments=[]) {
     
     let mapping = null;
 
@@ -220,14 +220,28 @@ export function toDisplayHTML(sentence) {
         mapping
     );
     
+    // replace comments
+    [sentence, mapping] = replace_and_map(
+        sentence, /<!--([\s\S\n]*?)-->/g,
+        function (_, comment) {
+            comments.push(yale_to_hangul(comment));
+            let commentIdx = comments.length;
+            return `<a class="footnoteLink" id="notefrom${commentIdx}" href="#note${commentIdx}" data-footnotenum="${commentIdx}"></a>`;
+        },
+        mapping
+    );
+    
     // replace opening/closing custom tags with span
     [sentence, mapping] = replace_and_map(
-        sentence, /<(\/)?([^>]*)>/g,
-        function (_, closing, tag) {
+        sentence, /<(\/)?([^ >]*)[^>]*>/g,
+        function (match, closing, tag) {
+            if (tag === 'a') {
+                return match;  // skip footnotes
+            }
             if (closing) {
                 return "</span>";
             }
-            return `<span orig-tag=${tag}>`;
+            return `<span orig-tag="${tag}">`;
         },
         mapping
     );

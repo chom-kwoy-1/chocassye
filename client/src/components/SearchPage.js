@@ -46,60 +46,83 @@ class SearchResultsList extends React.Component {
     }
 
     render() {
+        
+        let footnotes = [];
+        
+        let dom = <React.Fragment>
+            <div className="loadingWrapper">
+            
+                <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
 
-        return <React.Fragment>
+                {/* For each book */}
+                {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
+                    <React.Fragment key={i}>
 
-            {/* For each book */}
-            {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
-                <React.Fragment key={i}>
+                        {/* Year column */}
+                        <span className="year"><div>{book.year ?? "-"}</div></span>
 
-                    {/* Year column */}
-                    <span className="year"><div>{book.year ?? "-"}</div></span>
+                        {/* Sentences column */}
+                        <span className="sentence">
 
-                    {/* Sentences column */}
-                    <span className="sentence">
+                            {/* For each sentence */}
+                            {zip(book.sentences, match_ids_in_book)
+                            .map(([sentence, match_ids_in_sentence], i) =>
+                                <div key={i}>
 
-                        {/* For each sentence */}
-                        {zip(book.sentences, match_ids_in_book)
-                         .map(([sentence, match_ids_in_sentence], i) =>
-                            <div key={i}>
+                                    {/* Highlighted sentence */}
+                                    <Interweave
+                                        content={highlight(
+                                            sentence.html ?? sentence.text,
+                                            this.props.resultTerm,
+                                            match_ids_in_sentence,
+                                            footnotes
+                                        )}
+                                        allowList={['mark', 'span', 'a']}
+                                        allowAttributes={true}
+                                    />&#8203;
+                                    
+                                    {/* Add source link */}
+                                    <span className="sourceWrapper">
+                                        &lang;
+                                        <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
+                                            {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
+                                        </Link>
+                                        &rang;
+                                    </span>
 
-                                {/* Highlighted sentence */}
-                                <Interweave
-                                    content={highlight(
-                                        sentence.html ?? sentence.text,
-                                        this.props.resultTerm,
-                                        match_ids_in_sentence
-                                    )}
-                                    allowList={['mark', 'span']}
-                                    allowAttributes={true}
-                                />&#8203;
-                                
-                                {/* Add source link */}
-                                <span className="sourceWrapper">
-                                    &lang;
-                                    <Link to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`} className="source">
-                                        {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
-                                    </Link>
-                                    &rang;
-                                </span>
+                                </div>
+                            )}
 
-                            </div>
-                        )}
+                        </span>
 
-                    </span>
+                    </React.Fragment>
+                )}
 
-                </React.Fragment>
+            </div>
+            
+            {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
+            
+            {/* Show footnotes */}
+            {footnotes.map((footnote, i) => 
+                <div key={i} className="footnoteContent">
+                    <a class="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
+                    &nbsp;
+                    {footnote}
+                </div>
             )}
-
+            
         </React.Fragment>;
+        
+        console.log(footnotes);
+        
+        return dom;
     }
 }
 
-function highlight(text, searchTerm, match_ids) {
+function highlight(text, searchTerm, match_ids, footnotes) {
     
     // Into HTML for display
-    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text);
+    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, footnotes);
     
     // Find matches
     let hlRegex = searchTerm2Regex(searchTerm);
@@ -296,17 +319,14 @@ class SearchResults extends React.Component {
                     </div>
                     : this.props.t('number Results', { numResults: this.props.results.length })
             }
-            <div className="loadingWrapper">
-                <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                <SearchResultsList
-                    filteredResults={filtered_results_list}
-                    loaded={this.props.loaded}
-                    romanize={this.props.romanize}
-                    ignoreSep={this.props.ignoreSep}
-                    resultTerm={this.props.resultTerm}
-                    t={this.props.t}
-                />
-            </div>
+            <SearchResultsList
+                filteredResults={filtered_results_list}
+                loaded={this.props.loaded}
+                romanize={this.props.romanize}
+                ignoreSep={this.props.ignoreSep}
+                resultTerm={this.props.resultTerm}
+                t={this.props.t}
+            />
             <div className="dividerTop"></div>
 
             {/* Pager on bottom */}

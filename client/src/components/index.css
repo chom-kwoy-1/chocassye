@@ -217,6 +217,12 @@ footer {
     margin-top: 10px;
 }
 
+.dividerFootnote {
+    border-top: 1px dashed grey;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
 .sourceSentence {
     display: flex;
     line-height: 30pt;
@@ -723,4 +729,20 @@ span[is-tone] {
 
 .jamotable td {
     text-align: center;
+}
+
+a.footnoteLink {
+    text-decoration: none;
+}
+
+.footnoteLink::after {
+    content: attr(data-footnotenum) ")";
+    position: relative;
+    top: -0.5em; 
+    font-size: 80%;
+}
+
+.footnoteContent {
+    font-size: 95%;
+    color: #222;
 }
