@@ -1,38 +1,63 @@
 import React from 'react';
 import './index.css';
-import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { 
-    searchTerm2Regex, 
-    toDisplayHTML,
+import {hangul_to_yale, yale_to_hangul} from './YaleToHangul';
+import {Link, useNavigate, useSearchParams} from "react-router-dom";
+import {
+    addHighlights,
     getMatchingRanges,
+    removeOverlappingRanges,
+    searchTerm2Regex,
+    toDisplayHTML,
     toText,
     toTextIgnoreTone,
-    removeOverlappingRanges,
-    addHighlights,
 } from './Highlight';
 import './i18n';
-import { useTranslation } from 'react-i18next';
-import { Interweave } from 'interweave';
+import {Trans, useTranslation} from 'react-i18next';
+import {Interweave} from 'interweave';
 import HowToPageWrapper from './HowToPage';
-import { Trans } from 'react-i18next';
 import Histogram from './Histogram';
 import {
-    TextField, Button, Grid, Autocomplete,
-    CircularProgress, Typography, FormControlLabel,
-    Checkbox, Box, Pagination, Paper,
-    Backdrop, TableContainer, Table, Chip, 
-    TableBody, TableRow, TableCell,
+    Autocomplete,
+    Backdrop,
+    Box,
+    Button,
+    Checkbox,
+    Chip,
+    CircularProgress,
+    FormControlLabel,
+    Grid,
+    Pagination,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow,
+    TextField,
+    Typography,
+    Tooltip,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { tableCellClasses } from '@mui/material/TableCell';
-import { 
-    orange, pink, indigo,     
-    cyan, lightGreen, amber,      
-    red, deepPurple, lightBlue,  
-    green, yellow, deepOrange,
-    purple, blue, teal, lime, 
+import {styled} from '@mui/material/styles';
+import {tableCellClasses} from '@mui/material/TableCell';
+import {
+    amber,
+    blue,
+    cyan,
+    deepOrange,
+    deepPurple,
+    green,
+    indigo,
+    lightBlue,
+    lightGreen,
+    lime,
+    orange,
+    pink,
+    purple,
+    red,
+    teal,
+    yellow,
 } from '@mui/material/colors';
+import {IMAGE_BASE_URL} from "./config";
 
 
 const highlightColors = [
@@ -94,7 +119,7 @@ class SearchResultsList extends React.Component {
         
         let footnotes = [];
         
-        let dom = <React.Fragment>
+        return <React.Fragment>
         
             <Grid item xs={12}>
                 <TableContainer component={Paper} elevation={3}>
@@ -139,6 +164,16 @@ class SearchResultsList extends React.Component {
                                                     {sentence.page === null? book.name : `${book.name}:${sentence.page}`}
                                                 </Link>
                                                 &rang;
+                                                {sentence.hasImages && sentence.page !== '' ?
+                                                    sentence.page.split('-').map((page, i) =>
+                                                        <Tooltip title={page}>
+                                                            <a className="pageNum"
+                                                               style={{color: '#888', userSelect: 'none', textDecoration: 'underline'}}
+                                                               href={IMAGE_BASE_URL + book.name + '/' + page + '.jpg'}
+                                                               target="blank"
+                                                               key={i}>🖼️</a>
+                                                        </Tooltip>):
+                                                    null}
                                             </span>
 
                                         </Grid>
@@ -167,8 +202,6 @@ class SearchResultsList extends React.Component {
             </Grid>
             
         </React.Fragment>;
-        
-        return dom;
     }
 }
 
@@ -196,9 +229,7 @@ function highlight(text, searchTerm, match_ids, footnotes) {
     match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
     
     // Add highlights
-    let html = addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
-    
-    return html;
+    return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
 }
 
 
@@ -412,6 +443,7 @@ class SearchResults extends React.Component {
 }
 
 const SearchResultsWrapper = React.memo(function SearchResultsWrapper(props) {
+    // measure time to render
     return <SearchResults {...props} />;
 }, arePropsEqual);
 
@@ -654,7 +686,7 @@ class SearchPage extends React.Component {
                 <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
                     <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
                         <Backdrop
-                            sx={{ 
+                            sx={{
                                 color: '#fff', 
                                 zIndex: (theme) => theme.zIndex.drawer + 1,
                                 position: 'absolute',
@@ -793,33 +825,35 @@ function SearchPageWrapper(props) {
                     excludeModern: excludeModern,
                     ignoreSep: ignoreSep,
                 });
+
+                page = 1;
             }
-            else {
-                setResult({
-                    ...prevResult.current,
-                    loaded: false
-                });
 
-                search(
-                    term, doc, page, excludeModern, ignoreSep,
-                    (result, num_results, histogram, page_N) => {
-                        if (active) {
-                            console.log("setResult");
-                            setResult({
-                                result: result,
-                                num_results: num_results,
-                                page_N: page_N,
-                                histogram: histogram,
-                                result_term: term,
-                                loaded: true
-                            });
-                        }
+            setResult({
+                ...prevResult.current,
+                loaded: false
+            });
+
+            search(
+                term, doc, page, excludeModern, ignoreSep,
+                async (result, num_results, histogram, page_N) => {
+                    if (active) {
+                        console.log("setResult");
+                        // sleep for 1 second
+                        setResult({
+                            result: result,
+                            num_results: num_results,
+                            page_N: page_N,
+                            histogram: histogram,
+                            result_term: term,
+                            loaded: true
+                        });
                     }
-                );
-
-                return () => {
-                    active = false;
                 }
+            );
+
+            return () => {
+                active = false;
             }
         },
         [setSearchParams, setResult],
@@ -851,13 +885,14 @@ function SearchPageWrapper(props) {
         []
     );
 
-    React.useEffect(() => {
+    React.useEffect(async () => {
         if (!isInited.current || // if first call
             (hangul_to_yale(term).length > 5 && prevTerm.current !== term) || // or current term has changed
             prevPage.current !== page ||   // or current page has changed
             prevExcludeModern.current !== excludeModern ||
             prevIgnoreSep.current !== ignoreSep)
         {
+            await new Promise(r => setTimeout(r, 1));
             const results = refresh(term, prevDoc.current, page, excludeModern, ignoreSep);
 
             isInited.current = true;
@@ -894,23 +929,26 @@ function SearchPageWrapper(props) {
         return refresh(term, doc, page, excludeModern, ignoreSep);
     }
 
-    return (
-        <SearchPage {...props}
-            page={page} term={term} doc={doc}
-            excludeModern={excludeModern} ignoreSep={ignoreSep}
-            result={result.result}
-            numResults={result.num_results}
-            resultTerm={result.result_term}
-            pageN={result.page_N}
-            histogram={result.histogram}
-            loaded={result.loaded}
-            setSearchParams={setSearchParams}
-            onRefresh={forceRefresh}
-            docSuggestions={docSuggestions}
-            navigate={navigate}
-            t={t}
-        />
-    );
+    const startTime = performance.now();
+    const dom = <SearchPage {...props}
+        page={page} term={term} doc={doc}
+        excludeModern={excludeModern} ignoreSep={ignoreSep}
+        result={result.result}
+        numResults={result.num_results}
+        resultTerm={result.result_term}
+        pageN={result.page_N}
+        histogram={result.histogram}
+        loaded={result.loaded}
+        setSearchParams={setSearchParams}
+        onRefresh={forceRefresh}
+        docSuggestions={docSuggestions}
+        navigate={navigate}
+        t={t}
+    />;
+    const endTime = performance.now();
+    console.log("SearchPage render time:", endTime - startTime);
+
+    return dom;
 }
 
 export default SearchPageWrapper;

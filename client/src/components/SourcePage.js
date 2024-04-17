@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { tableCellClasses } from '@mui/material/TableCell';
+import {IMAGE_BASE_URL} from "./config";
 
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -91,7 +92,7 @@ function showSentence(bookname, sentence, highlight_term, i) {
                 {sentence.hasImages && sentence.page !== '' ?
                     <a className="pageNum"
                        style={{color: '#888', userSelect: 'none', textDecoration: 'underline'}}
-                       href={'https://f004.backblazeb2.com/file/chocassye/scans/' + bookname + '/' + sentence.page + '.jpg'}
+                       href={IMAGE_BASE_URL + bookname + '/' + sentence.page + '.jpg'}
                        target="blank"
                     >(️{sentence.page})</a>:
                     <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>({sentence.page})</span>

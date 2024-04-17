@@ -86,6 +86,7 @@ class App extends React.Component {
                                     <Button sx={{ my: 2, color: 'white', display: 'block' }}>{this.props.t('About')}</Button>
                                 </Link>
                             </Box>
+
                             
                             {/* For small screens */}
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>

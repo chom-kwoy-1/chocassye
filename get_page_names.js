@@ -9,7 +9,8 @@ const db = new Database({
 });
 
 
-let doc = "훈몽자회 예산문고본";
+let doc = process.argv[2];
+console.log(doc);
 let query = aql`
     FOR s IN doc_view
         FILTER LIKE(s.filename, ${doc})
@@ -22,14 +23,16 @@ db.query(query)
     let pages = [];
     let last_page_name = null;
     for (let i = 0; i < result.length; i++) {
-        if (result[i].page !== '') {
+        if (result[i].page !== '' && result[i].page !== undefined) {
+            console.log(result[i].page);
             let cur_pages = result[i].page.split('-');
             for (let j = 1; j < cur_pages.length; j++) {
                 cur_pages[j] = cur_pages[0].split(/(\d+)/)[0] + cur_pages[j];
             }
             for (let cur_page of cur_pages) {
-                if (cur_page !== last_page_name)
+                if (!pages.includes(cur_page)) {
                     pages.push(cur_page);
+                }
                 last_page_name = cur_page;
             }
         }
