@@ -38,7 +38,7 @@ function HowToPageWrapper(props) {
                         <td>ho.Wo.za</td>
                     </tr>
                     <tr>
-                        <td>ho거든</td>
+                        <td>ho.거든</td>
                         <td>→</td>
                         <td>ᄒᆞ거든</td>
                         <td>ho.ke.tun</td>
@@ -66,8 +66,137 @@ function HowToPageWrapper(props) {
              </ul>
              <Trans i18nKey="The chart below shows" />
 
-            <table>
-                <tbody><tr><td>표 추가 예정</td></tr></tbody>
+            <table className='jamotable'>
+                <tbody>
+                    <tr>
+                        <th>ㄱ</th>
+                        <th>ㅋ</th>
+                        <th>ㆁ</th>
+                        <th>ㄴ</th>
+                        <th>ㄷ</th>
+                        <th>ㅌ</th>
+                        <th>ㅁ</th>
+                        <th>ㅂ</th>
+                        <th>ㅍ</th>
+                        <th>ㅇ</th>
+                        <th>ㅎ</th>
+                        <th>ㆆ</th>
+                        <th>ㄹ</th>
+                        <th>ㅿ</th>
+                        <th>ㅸ</th>
+                    </tr>
+                    <tr>
+                        <td>k</td>
+                        <td>kh</td>
+                        <td>ng</td>
+                        <td>n</td>
+                        <td>t</td>
+                        <td>th</td>
+                        <td>m</td>
+                        <td>p</td>
+                        <td>ph</td>
+                        <td>G</td>
+                        <td>h</td>
+                        <td>q</td>
+                        <td>l</td>
+                        <td>z</td>
+                        <td>W</td>
+                    </tr>
+                    <tr>
+                        <th>ᄼ</th>
+                        <th>ᄽ</th>
+                        <th>ᅎ</th>
+                        <th>ᅏ</th>
+                        <th>ᅔ</th>
+                        <th>ᄾ</th>
+                        <th>ᄿ</th>
+                        <th>ᅐ</th>
+                        <th>ᅑ</th>
+                        <th>ᅕ</th>
+                        <th>ㅱ</th>
+                        <th>( )</th>
+                    </tr>
+                    <tr>
+                        <td>s/</td>
+                        <td>ss/</td>
+                        <td>c/</td>
+                        <td>cc/</td>
+                        <td>ch/</td>
+                        <td>s\</td>
+                        <td>ss\</td>
+                        <td>c\</td>
+                        <td>cc\</td>
+                        <td>ch\</td>
+                        <td>M</td>
+                        <td>&#96;</td>
+                    </tr>
+                    <tr>
+                        <th>ᆞ</th>
+                        <th>ㅗ</th>
+                        <th>ㅛ</th>
+                        <th>ㅡ</th>
+                        <th>ㅜ</th>
+                        <th>ㅠ</th>
+                        <th>ㅏ</th>
+                        <th>ㅘ</th>
+                        <th>ㅑ</th>
+                        <th>ㆇ</th>
+                        <th>ㅓ</th>
+                        <th>ㅝ</th>
+                        <th>ㅕ</th>
+                        <th>ㆊ</th>
+                        <th>ㅣ</th>
+                    </tr>
+                    <tr>
+                        <td>o</td>
+                        <td>wo</td>
+                        <td>yo</td>
+                        <td>u</td>
+                        <td>wu</td>
+                        <td>yu</td>
+                        <td>a</td>
+                        <td>wa</td>
+                        <td>ya</td>
+                        <td>ywa</td>
+                        <td>e</td>
+                        <td>we</td>
+                        <td>ye</td>
+                        <td>ywe</td>
+                        <td>i</td>
+                    </tr>
+                    <tr>
+                        <th>ㆎ</th>
+                        <th>ㅚ</th>
+                        <th>ㆉ</th>
+                        <th>ㅢ</th>
+                        <th>ㅟ</th>
+                        <th>ㆌ</th>
+                        <th>ㅐ</th>
+                        <th>ㅙ</th>
+                        <th>ㅒ</th>
+                        <th>ㆈ</th>
+                        <th>ㅔ</th>
+                        <th>ㅞ</th>
+                        <th>ㅖ</th>
+                        <th>ㆋ</th>
+                    </tr>
+                    <tr>
+                        <td>oy</td>
+                        <td>woy</td>
+                        <td>yoy</td>
+                        <td>uy</td>
+                        <td>wuy</td>
+                        <td>yuy</td>
+                        <td>ay</td>
+                        <td>way</td>
+                        <td>yay</td>
+                        <td>yway</td>
+                        <td>ey</td>
+                        <td>wey</td>
+                        <td>yey</td>
+                        <td>ywey</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 
