@@ -37,7 +37,7 @@ export function highlight(sentences, romanize, searchTerm,
     let reSearchTerm = [];
     for (let part of searchTerm.split(/([%|_])/)) {
         if (part === '%') {
-            reSearchTerm.push('.*');
+            reSearchTerm.push('.*?');
         }
         else if (part === '_') {
             reSearchTerm.push('.');

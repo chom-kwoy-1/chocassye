@@ -1,14 +1,6 @@
 import React from 'react';
 import './index.css';
-import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
-import { Link, useSearchParams } from "react-router-dom";
-import ReactPaginate from 'react-paginate';
-import { highlight } from './Highlight';
 import './i18n';
-import { useTranslation } from 'react-i18next';
-import { Interweave } from 'interweave';
-import HowToPageWrapper from './HowToPage';
-import { Trans } from 'react-i18next';
 
 
 const range = (start, stop, step) =>
@@ -25,7 +17,7 @@ export default class Histogram extends React.Component {
         const BEGIN = 1400;
         const END = 2000;
 
-        let hits = this.props.data.map((decade) => decade.num_hits).sort((a, b) => a > b);
+        let hits = this.props.data.map((decade) => decade.num_hits).sort((a, b) => a - b);
         let median_hits = hits.length > 0 ? hits[Math.floor(hits.length / 2)] : 0;
         let acc_count = 0;
 
