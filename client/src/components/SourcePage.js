@@ -74,7 +74,7 @@ class SourcePage extends React.Component {
             );
         }
 
-        let hl = this.props.highlightWord
+        let hl = this.props.highlightWord ?? "NULL";
 
         const PAGE = 20;
         let pageCount = Math.ceil(this.props.result.data.count / PAGE);
