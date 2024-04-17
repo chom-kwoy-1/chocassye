@@ -236,9 +236,6 @@ class SearchResults extends React.Component {
                     ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
                 ];
                 
-                console.log(text);
-                console.log(toTextIgnoreTone(text));
-                
                 // Remove overlapping ranges
                 match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
                 
@@ -277,15 +274,16 @@ class SearchResults extends React.Component {
 
                 {/* Show highlight match legend */}
                 <div className='matchLegend'>
-                    {uniqueMatches.map((part, i) => [
-                        <span key={i}
-                              className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                              onClick={(event) => {this.toggleMatch(event, i)}}>
-                            <span className={"".concat("colorShower s", i)}></span>
-                            <span className="matchLegendWord">{part}</span>
-                        </span>,
-                        <wbr key={"".concat('wbr', i)}/>
-                    ])}
+                    {uniqueMatches.map((part, i) => 
+                        <React.Fragment key={i}>
+                            <span
+                                className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                                onClick={(event) => {this.toggleMatch(event, i)}}>
+                                <span className={"".concat("colorShower s", i)}></span>
+                                <span className="matchLegendWord">{part}</span>
+                            </span>
+                            <wbr/>
+                        </React.Fragment>)}
                 </div>
             </div>
 

@@ -175,19 +175,21 @@ app.post('/api/search', (req, res) => {
 
 app.get('/api/source', (req, res) => {
     let n = req.query.number_in_source;
+    let excludeChinese = req.query.exclude_chinese === "true";
     const PAGE = 20;
     let start = Math.floor(n / PAGE) * PAGE;
     let end = start + PAGE;
-    console.log(`source doc=${req.query.name} page=${start}-${end}`)
+    console.log(`source doc=${req.query.name} page=${start}-${end} ${typeof(excludeChinese)}`)
     let query = aql`
         LET sentences = (FOR d IN doc_view
             SEARCH ANALYZER(d.filename == ${req.query.name}, "identity")
+            FILTER ${!excludeChinese} OR (d.lang != "chi")
             return d
         )
         LET count = LENGTH(sentences)
         LET result = (FOR s in sentences
-            FILTER ${start} <= s.number_in_book && s.number_in_book <= ${end}
             SORT s.number_in_book ASC
+            LIMIT ${start}, ${PAGE}
             RETURN s
         )
         RETURN {

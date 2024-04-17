@@ -63,7 +63,12 @@ class SourcePage extends React.Component {
     componentDidMount() {
         this.props.initialize();
     }
-
+    
+    handleExcludeChineseChange(event) {
+        let excludeChinese = event.target.checked;
+        this.props.setExcludeChinese(excludeChinese);
+    }
+    
     render() {
         if (this.props.result.data === null) {
             return (
@@ -81,12 +86,48 @@ class SourcePage extends React.Component {
 
         let n = this.props.numberInSource;
         let page = Math.floor(n / PAGE);
-
+        
         return (
             <React.Fragment>
                 <div>
                     <h1 className="docname">{this.props.bookName}</h1>
                     <span className="yearstring">{this.props.result.data.year_string}</span>
+                </div>
+                
+                <span>
+                    <input
+                        type="checkbox"
+                        id="except_chinese_checkbox"
+                        checked={this.props.excludeChinese}
+                        onChange={(event) => this.handleExcludeChineseChange(event)}
+                    />
+                    <label htmlFor="except_chinese_checkbox">{this.props.t("Exclude Chinese")}</label>
+                </span>
+                
+                {/* Pager */}
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel={this.props.t("nextpage")}
+                    previousLabel={this.props.t("prevpage")}
+                    pageCount={pageCount}
+                    forcePage={page}
+                    disableInitialCallback={true}
+                    onPageChange={(event) => {
+                        let newPage = event.selected;
+                        let newN = this.props.numberInSource;
+                        if (newPage !== page) {
+                            newN = newPage * PAGE;
+                        }
+                        this.props.setSearchParams({
+                            name: this.props.bookName,
+                            n: newN,
+                            hl: this.props.highlightWord
+                        });
+                    }}
+                />
+                
+                <div>
                     {this.props.result.data.sentences.map(
                         (sentence, i) => showSentence(sentence, hl, i)
                     )}
@@ -120,10 +161,11 @@ class SourcePage extends React.Component {
 }
 
 
-function load_source(bookName, numberInSource, resultFunc) {
+function load_source(bookName, numberInSource, excludeChinese, resultFunc) {
     fetch("/api/source?" + new URLSearchParams({
         name: bookName,
-        number_in_source: numberInSource
+        number_in_source: numberInSource,
+        exclude_chinese: excludeChinese
     }))
     .then((res) => res.json())
     .then((result) => {
@@ -149,6 +191,7 @@ function SoucePageWrapper(props) {
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
     let highlightWord = searchParams.get("hl");
+    let [excludeChinese, setExcludeChinese] = React.useState(false);
     let [result, setResult] = React.useState({
         data: null,
         loaded: false
@@ -157,9 +200,10 @@ function SoucePageWrapper(props) {
     const prevResult = React.useRef(result);
     const prevBookName = React.useRef(bookName);
     const prevNumberInSource = React.useRef(numberInSource);
+    const prevExcludeChinese = React.useRef(excludeChinese);
 
     const refresh = React.useCallback(
-        (bookName, numberInSource) => {
+        (bookName, numberInSource, excludeChinese) => {
             let active = true;
             setResult({
                 ...prevResult.current,
@@ -167,7 +211,7 @@ function SoucePageWrapper(props) {
             });
 
             load_source(
-                bookName, numberInSource,
+                bookName, numberInSource, excludeChinese,
                 (data) => {
                     if (active) {
                         setResult({
@@ -188,11 +232,15 @@ function SoucePageWrapper(props) {
     React.useEffect(() => {
         prevBookName.current = bookName;
         prevNumberInSource.current = numberInSource;
-        return refresh(bookName, numberInSource);
-    }, [bookName, numberInSource, refresh]);
+        return refresh(bookName, numberInSource, excludeChinese);
+    }, [bookName, numberInSource, excludeChinese, refresh]);
 
     function initialize() {
-        refresh(prevBookName.current, prevNumberInSource.current);
+        refresh(
+            prevBookName.current, 
+            prevNumberInSource.current, 
+            prevExcludeChinese.current
+        );
     }
 
     return <SourcePage {...props}
@@ -203,6 +251,8 @@ function SoucePageWrapper(props) {
         setSearchParams={setSearchParams}
         initialize={initialize}
         highlightWord={highlightWord}
+        excludeChinese={excludeChinese}
+        setExcludeChinese={setExcludeChinese}
         t={t}
     />;
 }

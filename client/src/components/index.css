@@ -233,6 +233,14 @@ footer {
     color: #955;
 }
 
+.sourceSentence.sentence_type_chi .text {
+    color: #000099;
+}
+
+.sourceSentence.sentence_type_mod .text {
+    color: #955;
+}
+
 .sourceSentence.sentence_type_title .text {
     font-size: 20pt;
     text-align: center;
