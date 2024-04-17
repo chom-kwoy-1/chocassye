@@ -4,12 +4,13 @@ const express = require('express');
 const { Database, aql } = require("arangojs");
 const YaleHangul = require('./YaleToHangul');
 const path = require("path");
-
+const http = require("http");
+const https = require("https");
+const fs = require("fs");
 
 // create app
 const app = express();
 const port = process.env.PORT || 5000;
-
 
 // initialize db
 const db = new Database({
@@ -20,7 +21,18 @@ const db = new Database({
 
 
 // start listening
-const server = app.listen(port, () => console.log(`Listening on port ${port}`));
+const http_server = http.createServer(app).listen(port, () => console.log(`Listening on port ${port}`));
+let https_server = null;
+
+if (process.env.SSL === "ON") {
+    const privateKey = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/privkey.pem");
+    const certificate = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/cert.pem");
+    const ca = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/chain.pem");
+    const credentials = { key: privateKey, cert: certificate, ca: ca };
+    https_server = https.createServer(credentials, app).listen(443, () => console.log('Listening on port 443 with SSL'));
+}
+
+
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
 
@@ -132,5 +144,8 @@ app.get('*', (req,res) =>{
 });
 
 process.on('SIGINT', () => {
-    server.close();
+    if (https_server !== null) {
+        https_server.close();
+    }
+    http_server.close();
 });
