@@ -1,6 +1,7 @@
 {
   "name": "etym-eomi",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "main": "arango_server.js",
   "scripts": {

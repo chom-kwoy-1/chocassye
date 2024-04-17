@@ -1,12 +1,11 @@
 'use strict';
 
-const express = require('express');
-const { Database, aql } = require("arangojs");
-const YaleHangul = require('./YaleToHangul');
-const path = require("path");
-const http = require("http");
-const https = require("https");
-const fs = require("fs");
+import express from 'express';
+import { Database, aql } from "arangojs";
+import path from "path";
+import http from "http";
+import https from "https";
+import fs from "fs";
 
 // create app
 const app = express();
@@ -34,13 +33,13 @@ if (process.env.SSL === "ON") {
 
 
 app.use(express.json())
-app.use(express.static(path.join(__dirname, "client/build")));
+app.use(express.static("./client/build"));
 
 
 app.post('/api/search', (req, res) => {
     let text = req.body.term;
     let doc = req.body.doc;
-    console.log(text, doc);
+    console.log(`text=${text} doc=${doc} ip=${req.socket.remoteAddress}`);
 
     if (text === '%%') {
         res.send({

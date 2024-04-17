@@ -44,8 +44,8 @@ class SearchResults extends React.Component {
             let [sentences, indices] = zip(...sentences_and_indices);
             return [{...book, sentences: sentences}, indices];
         }).map(([book, book_unique_idxs], i) => [
-            <span key={i + "y"} className="year"><div>{book.year ?? "-"}</div></span>,
-            <span key={i + "s"} className="sentence">
+            <span key={"".concat(i, "y")} className="year"><div>{book.year ?? "-"}</div></span>,
+            <span key={"".concat(i, "s")} className="sentence">
                 {book.sentences.map((s, j) => (
                     <div key={j}>
                         <span>{highlight(
@@ -219,10 +219,10 @@ class SearchPage extends React.Component {
                         <span key={i}
                               className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
                               onClick={(event) => {this.toggleMatch(event, i)}}>
-                            <span className={"colorShower s" + i}></span>
+                            <span className={"".concat("colorShower s", i)}></span>
                             <span className="matchLegendWord">{part}</span>
                         </span>,
-                        <wbr key={'wbr'+i}/>
+                        <wbr key={"".concat('wbr', i)}/>
                     ])}
                 </div>
 
@@ -297,7 +297,8 @@ function search(word, doc, page, func) {
         term = term.slice(0, term.length - 1);
         suffix = "";
     }
-    term = prefix + term + suffix;
+    term = "".concat(prefix, term, suffix);
+    console.log(term);
 
     postData('/api/search', {
         term: term,
