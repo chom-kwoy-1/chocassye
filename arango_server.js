@@ -3,6 +3,7 @@
 const express = require('express');
 const { Database, aql } = require("arangojs");
 const YaleHangul = require('./YaleToHangul');
+const path = require("path");
 
 
 // create app
@@ -21,6 +22,11 @@ db.useDatabase('etym_db');
 // start listening
 const server = app.listen(port, () => console.log(`Listening on port ${port}`));
 app.use(express.json())
+app.use(express.static(path.join(__dirname, "client/build")));
+// Handles any requests that don't match the ones above
+app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname, '/client/build/index.html'));
+});
 
 
 app.post('/api/search', (req, res) => {
