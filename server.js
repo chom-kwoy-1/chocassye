@@ -202,8 +202,12 @@ app.get('/api/source', (req, res) => {
         WHERE sources.name = ?
         ORDER BY examples.number_in_source
         LIMIT ?
-        OFFSET ?`,
-        [req.query.name, 100, 0]
+        OFFSET (
+            SELECT min(examples.number_in_source)
+            FROM examples JOIN sources ON examples.source_id = sources.rowid
+            WHERE sources.name = ? AND page = ?
+        )`,
+        [req.query.name, 100, req.query.name, req.query.page]
     ).then(rows => {
         res.send({
             status: "success",

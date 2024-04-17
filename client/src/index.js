@@ -11,7 +11,7 @@ ReactDOM.render((
   <BrowserRouter>
     <App>
     <Routes>
-        <Route exact path='/' element={<EomiPage index={1} />}></Route>
+        <Route exact path='/dict' element={<EomiPage index={1} />}></Route>
         <Route exact path='/search' element={<SearchPage />}></Route>
         <Route exact path='/source' element={<SourcePage />}></Route>
     </Routes>
