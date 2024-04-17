@@ -11,7 +11,8 @@ const allowList = ['mark', 'abbr', 'span'];
 
 
 function showSentence(sentence, highlight_term, i) {
-    let html = highlight(sentence.html, false, highlight_term, false, null, addHintToGugyeol);
+    let text = sentence.html ?? sentence.text;
+    let html = highlight(text, false, highlight_term, false, null, addHintToGugyeol);
     return (
         <div key={i} className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
             <Interweave className="text" content={html} allowList={allowList} allowAttributes={true} />

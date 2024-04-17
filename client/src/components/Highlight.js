@@ -93,7 +93,7 @@ export function highlight(sentences, romanize, searchTerm,
 
         for (let sentence of sentences) {
 
-            let splits = sentence.split(inline? /(<[^>]*>z)/ : /(<[^>]*>|\[|\])/);
+            let splits = sentence.split(inline? /(<[^>]*>)/ : /(<[^>]*>|\[|\])/);
 
             for (let string of splits) {
 

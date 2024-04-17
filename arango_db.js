@@ -235,14 +235,17 @@ function populate_db() {
         console.log("Failed to populate collection", err);
     })
     .then(([etym_db, _]) => {
-        return etym_db.createView("doc_view", {
-            type: "arangosearch",
-            links: {
-                "documents": {
-                    "includeAllFields": true,
+        return Promise.all([
+            etym_db,
+            etym_db.createView("doc_view", {
+                type: "arangosearch",
+                links: {
+                    "documents": {
+                        "includeAllFields": true,
+                    }
                 }
-            }
-        });
+            })
+        ]);
     })
     .then(([etym_db, _]) => {
         return etym_db.createView("book_view", {
