@@ -60,7 +60,7 @@ main.bottom {
     font-size: 20pt;
 }
 
-.resultsAndRomCheckBox {
+.flowRoot {
     display: flow-root;
 }
 
@@ -431,6 +431,8 @@ footer {
 
 .romCheckBox {
     float: right;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .featureContainer {

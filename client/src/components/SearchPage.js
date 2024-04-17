@@ -217,17 +217,29 @@ class SearchResults extends React.Component {
                 pageN={this.props.pageN}
             />
 
-            {/* Show highlight match legend */}
-            <div className='matchLegend'>
-                {uniqueMatches.map((part, i) => [
-                    <span key={i}
-                          className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                          onClick={(event) => {this.toggleMatch(event, i)}}>
-                        <span className={"".concat("colorShower s", i)}></span>
-                        <span className="matchLegendWord">{part}</span>
-                    </span>,
-                    <wbr key={"".concat('wbr', i)}/>
-                ])}
+            <div className="flowRoot">
+                <span className="romCheckBox">
+                    <input
+                        type="checkbox"
+                        id="rom_checkbox"
+                        checked={this.props.romanize}
+                        onChange={(event) => this.props.handleRomanizeChange(event)}
+                    />
+                    <label htmlFor="rom_checkbox">{this.props.t("Romanization")}</label>
+                </span>
+
+                {/* Show highlight match legend */}
+                <div className='matchLegend'>
+                    {uniqueMatches.map((part, i) => [
+                        <span key={i}
+                              className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                              onClick={(event) => {this.toggleMatch(event, i)}}>
+                            <span className={"".concat("colorShower s", i)}></span>
+                            <span className="matchLegendWord">{part}</span>
+                        </span>,
+                        <wbr key={"".concat('wbr', i)}/>
+                    ])}
+                </div>
             </div>
 
             <div className="dividerTop"></div>
@@ -392,7 +404,7 @@ class SearchPage extends React.Component {
                     <label htmlFor="ignore_sep_checkbox">{this.props.t("Ignore syllable separators")}</label>
                 </span>
 
-                <div className="resultsAndRomCheckBox">
+                <div className="flowRoot">
                     <span className="numResults">
                         {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
                         {
@@ -401,22 +413,13 @@ class SearchPage extends React.Component {
                             : <span></span>
                         }
                     </span>
-
-                    <span className="romCheckBox">
-                        <input
-                            type="checkbox"
-                            id="rom_checkbox"
-                            checked={this.state.romanize}
-                            onChange={(event) => this.handleRomanizeChange(event)}
-                        />
-                        <label htmlFor="rom_checkbox">{this.props.t("Romanization")}</label>
-                    </span>
                 </div>
 
                 <SearchResultsWrapper
                     results={this.props.result}
                     numResults={this.props.numResults}
                     romanize={this.state.romanize}
+                    handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
                     ignoreSep={this.props.ignoreSep}
                     resultTerm={this.props.resultTerm}
                     histogram={this.props.histogram}

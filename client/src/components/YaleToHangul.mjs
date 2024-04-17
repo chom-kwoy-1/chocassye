@@ -145,6 +145,102 @@ const YALE_TO_HANGUL_VOWELS = {
     'yway': '\u1185',
 };
 
+const COMPATIBILITY_FORMS = {
+    'ᄀ': 'ㄱ',
+    'ᄁ': 'ㄲ',
+    'ᆪ': 'ㄳ',
+    'ᄂ': 'ㄴ',
+    'ᆬ': 'ㄵ',
+    'ᆭ': 'ㄶ',
+    'ᄃ': 'ㄷ',
+    'ᄄ': 'ㄸ',
+    'ᄅ': 'ㄹ',
+    'ᆰ': 'ㄺ',
+    'ᆱ': 'ㄻ',
+    'ᆲ': 'ㄼ',
+    'ᆳ': 'ㄽ',
+    'ᆴ': 'ㄾ',
+    'ᆵ': 'ㄿ',
+    'ᄚ': 'ㅀ',
+    'ᄆ': 'ㅁ',
+    'ᄇ': 'ㅂ',
+    'ᄈ': 'ㅃ',
+    'ᄡ': 'ㅄ',
+    'ᄉ': 'ㅅ',
+    'ᄊ': 'ㅆ',
+    'ᄋ': 'ㅇ',
+    'ᄌ': 'ㅈ',
+    'ᄍ': 'ㅉ',
+    'ᄎ': 'ㅊ',
+    'ᄏ': 'ㅋ',
+    'ᄐ': 'ㅌ',
+    'ᄑ': 'ㅍ',
+    'ᄒ': 'ㅎ',
+    'ᅡ': 'ㅏ',
+    'ᅢ': 'ㅐ',
+    'ᅣ': 'ㅑ',
+    'ᅤ': 'ㅒ',
+    'ᅥ': 'ㅓ',
+    'ᅦ': 'ㅔ',
+    'ᅧ': 'ㅕ',
+    'ᅨ': 'ㅖ',
+    'ᅩ': 'ㅗ',
+    'ᅪ': 'ㅘ',
+    'ᅫ': 'ㅙ',
+    'ᅬ': 'ㅚ',
+    'ᅭ': 'ㅛ',
+    'ᅮ': 'ㅜ',
+    'ᅯ': 'ㅝ',
+    'ᅰ': 'ㅞ',
+    'ᅱ': 'ㅟ',
+    'ᅲ': 'ㅠ',
+    'ᅳ': 'ㅡ',
+    'ᅴ': 'ㅢ',
+    'ᅵ': 'ㅣ',
+    'ᄔ': 'ㅥ',
+    'ᄕ': 'ㅦ',
+    'ᇇ': 'ㅧ',
+    'ᇈ': 'ㅨ',
+    'ᇌ': 'ㅩ',
+    'ᇎ': 'ㅪ',
+    'ᇓ': 'ㅫ',
+    'ᇗ': 'ㅬ',
+    'ᇙ': 'ㅭ',
+    'ᄜ': 'ㅮ',
+    'ᇝ': 'ㅯ',
+    'ᇟ': 'ㅰ',
+    'ᄝ': 'ㅱ',
+    'ᄞ': 'ㅲ',
+    'ᄠ': 'ㅳ',
+    'ᄢ': 'ㅴ',
+    'ᄣ': 'ㅵ',
+    'ᄧ': 'ㅶ',
+    'ᄩ': 'ㅷ',
+    'ᄫ': 'ㅸ',
+    'ᄬ': 'ㅹ',
+    'ᄭ': 'ㅺ',
+    'ᄮ': 'ㅻ',
+    'ᄯ': 'ㅼ',
+    'ᄲ': 'ㅽ',
+    'ᄶ': 'ㅾ',
+    'ᅀ': 'ㅿ',
+    'ᅇ': 'ㆀ',
+    'ᅌ': 'ㆁ',
+    'ᇱ': 'ㆂ',
+    'ᇲ': 'ㆃ',
+    'ᅗ': 'ㆄ',
+    'ᅘ': 'ㆅ',
+    'ᅙ': 'ㆆ',
+    'ᆄ': 'ㆇ',
+    'ᆅ': 'ㆈ',
+    'ᆈ': 'ㆉ',
+    'ᆑ': 'ㆊ',
+    'ᆒ': 'ㆋ',
+    'ᆔ': 'ㆌ',
+    'ᆞ': 'ㆍ',
+    'ᆡ': 'ㆎ',
+}
+
 function inv(obj) {
     return Object.fromEntries(Object.entries(obj).map(a => a.reverse()));
 }
@@ -161,6 +257,7 @@ const INITIAL_HANGUL_TO_YALE = {
 
 const VOWELS_RE = /(ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)/g;
 const CONS_RE = /psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`/g;
+const INDEP_CONS_RE = /(ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄦ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᄼ|ᄽ|ᅎ|ᅏ|ᅔ|ᄾ|ᄿ|ᅐ|ᅑ|ᅕ|ᅟ)(?!ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)/g;
 
 
 function normalize_string(string) {
@@ -242,7 +339,7 @@ export function yale_to_hangul(string, get_index_map=false) {
             }
 
             // Add choseong filler
-            if (!found_suffix) {
+            if (split_idx !== splits.length - 1 && !found_suffix) {
                 suffix = '\u115f';
             }
 
@@ -341,6 +438,14 @@ export function yale_to_hangul(string, get_index_map=false) {
     }
     next_index_map[string.length] = next_index_map[string.length - 1];
 
+    // replace freestanding consonants with compatibility forms
+    result = result.replace(INDEP_CONS_RE, (_, p1) => {
+        if (COMPATIBILITY_FORMS.hasOwnProperty(p1)) {
+            return COMPATIBILITY_FORMS[p1];
+        }
+        return p1;
+    });
+
     if (get_index_map) {
         return {
             result: result,
@@ -352,7 +457,6 @@ export function yale_to_hangul(string, get_index_map=false) {
             next_index_map: next_index_map
         }
     }
-
 
     return result;
 }
