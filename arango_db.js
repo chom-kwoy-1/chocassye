@@ -28,7 +28,7 @@ function find_year(doc) {
 }
 
 
-function add_file(collection, file, xml) {
+function add_file(collection, book_collection, file, xml) {
     const errorNode = xml.querySelector('parsererror');
     if (errorNode) {
         throw new Error("parse failed: " + errorNode.innerHTML);
@@ -100,6 +100,14 @@ function add_file(collection, file, xml) {
     console.log(`${filename}: ${elements.length} sentences selected.`);
     let sentences = [];
 
+    let book_details = {
+        filename: filename,
+        year: year,
+        year_start: year_start,
+        year_end: year_end,
+        year_string: year_string,
+    };
+
     // iterate over sentences
     let index = 0;
     for (let sentence of elements) {
@@ -109,6 +117,7 @@ function add_file(collection, file, xml) {
             let text = uni(sentence.textContent);
 
             sentences.push({
+                ...book_details,
                 date: Date(),
                 text: text,
                 type: type,
@@ -134,6 +143,7 @@ function add_file(collection, file, xml) {
                 }
 
                 sentences.push({
+                    ...book_details,
                     date: Date(),
                     text: text,
                     html: html,
@@ -153,14 +163,10 @@ function add_file(collection, file, xml) {
         index += 1;
     }
 
-    return collection.save({
-        filename: filename,
-        year: year,
-        year_start: year_start,
-        year_end: year_end,
-        year_string: year_string,
-        sentences: sentences
-    });
+    return Promise.all([
+        collection.saveAll(sentences),
+        book_collection.save(book_details)
+    ]);
 }
 
 
@@ -186,13 +192,14 @@ function populate_db() {
 
         const etym_db = db.database('etym_db');
         const collection = etym_db.createCollection('documents');
+        const book_collection = etym_db.createCollection('books');
 
-        return Promise.all([Promise.resolve(etym_db), collection]);
+        return Promise.all([Promise.resolve(etym_db), collection, book_collection]);
     })
     .catch((err) => {
         console.log("Failed to create collection", err);
     })
-    .then(([etym_db, collection]) => {
+    .then(([etym_db, collection, book_collection]) => {
         const dom = new jsdom.JSDOM("");
         const DOMParser = dom.window.DOMParser;
         const parser = new DOMParser;
@@ -210,7 +217,7 @@ function populate_db() {
                     });
                     return parser.parseFromString(data, "text/xml");
                 })
-                .then((xml) => add_file(collection, file, xml))
+                .then((xml) => add_file(collection, book_collection, file, xml))
                 .then(() => {
                     // TODO: indicate progress
                 })
@@ -232,11 +239,17 @@ function populate_db() {
             type: "arangosearch",
             links: {
                 "documents": {
-                    fields: {
-                        "sentences": {
-                            includeAllFields: true
-                        }
-                    }
+                    "includeAllFields": true,
+                }
+            }
+        });
+    })
+    .then(([etym_db, _]) => {
+        return etym_db.createView("book_view", {
+            type: "arangosearch",
+            links: {
+                "books": {
+                    "includeAllFields": true,
                 }
             }
         });

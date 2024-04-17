@@ -1,6 +1,7 @@
 @font-face {
     font-family: 'Gugyeol';
     src: url(./fonts/NewGulim.woff2) format('woff2');
+    unicode-range: U+E000-F8FF; /* PUA */
 }
 
 body {

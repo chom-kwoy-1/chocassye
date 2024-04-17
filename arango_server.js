@@ -44,10 +44,10 @@ app.post('/api/doc_suggest', (req, res) => {
 
     let query = aql`
         LET doc_pattern = ${'%' + doc + '%'}
-        FOR d IN doc_view
-            FILTER d.filename LIKE doc_pattern
-            LET year = d.year == null? 9999: d.year
-            SORT year ASC
+        FOR d IN book_view
+            SEARCH ANALYZER(LIKE(d.filename, doc_pattern), "identity")
+            LET nyear = d.year == null? 9999: d.year
+            SORT nyear ASC, d.filename ASC
             LIMIT 0, 10
             RETURN {
                 name: d.filename,
@@ -55,9 +55,7 @@ app.post('/api/doc_suggest', (req, res) => {
                 year_start: d.year_start,
                 year_end: d.year_end,
                 year_string: d.year_string
-            }
-    `;
-
+            }`;
     db.query(query, {fullCount: true})
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);
@@ -89,32 +87,29 @@ app.post('/api/search', (req, res) => {
         return;
     }
 
-    let N = 20;
+    let N = 50;
     let offset = (req.body.page - 1) * N;
     let query = aql`
         LET query = ${text}
         LET doc_pattern = ${'%' + doc + '%'}
-        FOR d IN doc_view
-            SEARCH ANALYZER(LIKE(d.sentences.text, query), "identity")
-            FILTER d.filename LIKE doc_pattern
-            LET year = d.year == null? 9999: d.year
-            SORT year ASC, TFIDF(d) DESC
+        FOR s IN doc_view
+            SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), "identity")
+            LET nyear = s.year == null? 9999: s.year
+            SORT nyear ASC, s.filename ASC, s.number_in_book ASC
             LIMIT ${offset}, ${N}
+            COLLECT doc = s.filename,
+                    year = s.year,
+                    year_start = s.year_start,
+                    year_end = s.year_end,
+                    year_string = s.year_string INTO groups
             RETURN {
-                name: d.filename,
-                year: d.year,
-                year_string: d.year_string,
-                count: COUNT(
-                    FOR s IN d.sentences
-                    FILTER LIKE(s.text, query)
-                    RETURN s
-                ),
-                sentences: (
-                    FOR s IN d.sentences
-                    FILTER LIKE(s.text, query)
-                    LIMIT 1000
-                    RETURN s
-                )
+                name: doc,
+                year: year,
+                year_start: year_start,
+                year_end: year_end,
+                year_string: year_string,
+                count: COUNT(groups),
+                sentences: groups[*].s
             }
     `;
 
@@ -124,13 +119,14 @@ app.post('/api/search', (req, res) => {
         return {
             count: cursor.extra.stats.fullCount,
             rows: rows
-        }
+        };
     })
     .then((result) => {
         res.send({
             status: "success",
             total_rows: result.count,
-            results: result.rows
+            results: result.rows,
+            page_N: N
         });
     });
 
@@ -141,30 +137,36 @@ app.get('/api/source', (req, res) => {
     const PAGE = 20;
     let start = Math.floor(n / PAGE) * PAGE;
     let end = start + PAGE;
-    db.query(aql`
-        FOR d IN doc_view
-            FILTER d.filename == ${req.query.name}
-            LET sentences = ( // subquery start
-                FOR s IN d.sentences
-                FILTER ${start} <= s.number_in_book && s.number_in_book <= ${end}
-                SORT s.number_in_book ASC
-                RETURN s
-            ) // subquery end
-            LET count = LENGTH(d.sentences)
-            RETURN {
-                name: d.filename,
-                sentences: sentences,
-                count: count,
-                year_string: d.year_string
-            }`)
+    console.log(`source doc=${req.query.name} page=${start}-${end}`)
+    let query = aql`
+        LET sentences = (FOR d IN doc_view
+            SEARCH ANALYZER(d.filename == ${req.query.name}, "identity")
+            return d
+        )
+        LET count = LENGTH(sentences)
+        LET result = (FOR s in sentences
+            FILTER ${start} <= s.number_in_book && s.number_in_book <= ${end}
+            SORT s.number_in_book ASC
+            RETURN s
+        )
+        RETURN {
+            count: count, rows: result
+        }`;
+    db.query(query)
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);
         return rows[0];
     })
-    .then(row => {
+    .then((result) => {
+        let data = {
+            name: result.rows[0].filename,
+            year_string: result.rows[0].year_string,
+            sentences: result.rows,
+            count: result.count,
+        };
         res.send({
             status: "success",
-            data: row
+            data: data
         });
     })
     .catch(err => {

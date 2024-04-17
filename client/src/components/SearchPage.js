@@ -29,17 +29,85 @@ const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_
 
 class SearchResults extends React.Component {
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            disabledMatches: new Set(),
+        };
+    }
+
+    toggleMatch(event, i) {
+        let disabledMatches = new Set(this.state.disabledMatches);
+        if (disabledMatches.has(i)) {
+            disabledMatches.delete(i);
+        }
+        else {
+            disabledMatches.add(i);
+        }
+
+        this.setState({
+            ...this.state,
+            disabledMatches: disabledMatches
+        });
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.resultTerm !== this.props.resultTerm
+            || prevProps.page !== this.props.page
+            || prevProps.doc !== this.props.doc) {
+            this.setState({
+                ...this.state,
+                disabledMatches: new Set()
+            });
+        }
+    }
+
     render() {
+        console.log("Rerender  SearchResults!!!");
+        console.log(this.props.results);
+
+        let page = this.props.page;
+
+        const N = this.props.pageN;
+        let num_pages = Math.ceil(this.props.numResults / N);
+
+        // Determine highlight colors
+        let highlighted_parts = [];
+
+        for (const book of this.props.results) {
+            let book_parts = [];
+            for (const s of book.sentences) {
+                let parts = highlight(s.text, this.props.romanize, this.props.resultTerm, true);
+                book_parts.push(parts);
+            }
+            highlighted_parts.push(book_parts);
+        }
+
+        let unique_parts = [...new Set(highlighted_parts.flat(2))];
+
+        let parts_unique_indices = [];
+        for (const book_parts of highlighted_parts) {
+            let book_parts_indices = [];
+            for (const sentence_parts of book_parts) {
+                let indices = [];
+                for (const part of sentence_parts) {
+                    indices.push(unique_parts.indexOf(part));
+                }
+                book_parts_indices.push(indices);
+            }
+            parts_unique_indices.push(book_parts_indices);
+        }
+
         let results_list = zip(
             this.props.results,
-            this.props.partsUniqueIndices
+            parts_unique_indices
         ).filter(([_, unique_idxs]) =>
             !unique_idxs.flat().every(
-                elem => this.props.disabledMatches.has(elem)
+                elem => this.state.disabledMatches.has(elem)
             )
         ).map(([book, book_unique_idxs]) => {
             let sentences_and_indices = zip(book.sentences, book_unique_idxs).filter(([_, sentence_unique_idxs]) =>
-                !sentence_unique_idxs.every(elem => this.props.disabledMatches.has(elem))
+                !sentence_unique_idxs.every(elem => this.state.disabledMatches.has(elem))
             );
             let [sentences, indices] = zip(...sentences_and_indices);
             return [{...book, sentences: sentences}, indices];
@@ -68,12 +136,67 @@ class SearchResults extends React.Component {
         ]);
 
         if (results_list.length === 0) {
-            return [<div key="0"></div>, <div key="1">{this.props.t('No match')}</div>];
+            results_list = [<div key="0"></div>, <div key="1">{this.props.t('No match')}</div>];
         }
 
-        return results_list;
+        return <React.Fragment>
+            {/* Show highlight match legend */}
+            <div className='matchLegend'>
+                {unique_parts.map((part, i) => [
+                    <span key={i}
+                          className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                          onClick={(event) => {this.toggleMatch(event, i)}}>
+                        <span className={"".concat("colorShower s", i)}></span>
+                        <span className="matchLegendWord">{part}</span>
+                    </span>,
+                    <wbr key={"".concat('wbr', i)}/>
+                ])}
+            </div>
+
+            <div className="dividerTop"></div>
+
+            {/* Pager at top */}
+            {num_pages > 0?
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel="▶"
+                    previousLabel="◀"
+                    pageCount={num_pages}
+                    forcePage={page - 1}
+                    onPageChange={(event) => {
+                        this.props.setPage(event.selected + 1);
+                    }}
+                /> : ""}
+
+            {/* Results area */}
+            <div className="dividerBottom"></div>
+            <div className="loadingWrapper">
+                <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
+                {results_list}
+            </div>
+            <div className="dividerTop"></div>
+
+            {/* Pager on bottom */}
+            {num_pages > 0?
+                <ReactPaginate
+                    className="paginator"
+                    pageRangeDisplayed={10}
+                    nextLabel="▶"
+                    previousLabel="◀"
+                    pageCount={num_pages}
+                    forcePage={page - 1}
+                    onPageChange={(event) => {
+                        this.props.setPage(event.selected + 1);
+                    }}
+                /> : ""}
+        </React.Fragment>;
     }
 }
+
+const SearchResultsWrapper = React.memo(function SearchResultsWrapper(props) {
+    return <SearchResults {...props} />;
+});
 
 
 class SearchPage extends React.Component {
@@ -81,8 +204,9 @@ class SearchPage extends React.Component {
         super(props);
         this.state = {
             romanize: false,
-            disabledMatches: new Set()
         };
+
+        this.setPage = this.setPage.bind(this);
     }
 
     handleChange(event) {
@@ -90,7 +214,7 @@ class SearchPage extends React.Component {
         this.props.setSearchParams({
             term: searchTerm,
             doc: this.props.doc,
-            page: 1
+            page: this.props.page
         });
     }
 
@@ -99,7 +223,7 @@ class SearchPage extends React.Component {
         this.props.setSearchParams({
             term: this.props.term,
             doc: doc,
-            page: 1
+            page: this.props.page
         });
     }
 
@@ -110,66 +234,17 @@ class SearchPage extends React.Component {
         })
     }
 
-    toggleMatch(event, i) {
-        let disabledMatches = new Set(this.state.disabledMatches);
-        if (disabledMatches.has(i)) {
-            disabledMatches.delete(i);
-        }
-        else {
-            disabledMatches.add(i);
-        }
-
-        this.setState({
-            ...this.state,
-            disabledMatches: disabledMatches
+    setPage(page) {
+        this.props.setSearchParams({
+            term: this.props.term,
+            doc: this.props.doc,
+            page: page
         });
     }
 
-    componentDidUpdate(prevProps) {
-        if (prevProps.result.result_term !== this.props.result.result_term
-            || prevProps.page !== this.props.page
-            || prevProps.doc !== this.props.doc) {
-            this.setState({
-                ...this.state,
-                disabledMatches: new Set()
-            });
-        }
-    }
-
     render() {
-        let page = this.props.page;
         let searchTerm = this.props.term;
         let doc = this.props.doc;
-
-        const N = 20;
-        let num_pages = Math.ceil(this.props.numResults / N);
-
-        // Determine highlight colors
-        let highlighted_parts = [];
-
-        for (const book of this.props.result) {
-            let book_parts = [];
-            for (const s of book.sentences) {
-                let parts = highlight(s.text, this.props.romanize, this.props.resultTerm, true);
-                book_parts.push(parts);
-            }
-            highlighted_parts.push(book_parts);
-        }
-
-        let unique_parts = [...new Set(highlighted_parts.flat(2))];
-
-        let parts_unique_indices = [];
-        for (const book_parts of highlighted_parts) {
-            let book_parts_indices = [];
-            for (const sentence_parts of book_parts) {
-                let indices = [];
-                for (const part of sentence_parts) {
-                    indices.push(unique_parts.indexOf(part));
-                }
-                book_parts_indices.push(indices);
-            }
-            parts_unique_indices.push(book_parts_indices);
-        }
 
         return (
             <div>
@@ -221,71 +296,17 @@ class SearchPage extends React.Component {
                     </span>
                 </div>
 
-                {/* Show highlight match legend */}
-                <div className='matchLegend'>
-                    {unique_parts.map((part, i) => [
-                        <span key={i}
-                              className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                              onClick={(event) => {this.toggleMatch(event, i)}}>
-                            <span className={"".concat("colorShower s", i)}></span>
-                            <span className="matchLegendWord">{part}</span>
-                        </span>,
-                        <wbr key={"".concat('wbr', i)}/>
-                    ])}
-                </div>
-
-                <div className="dividerTop"></div>
-
-                {/* Pager at top */}
-                {num_pages > 0?
-                    <ReactPaginate
-                        className="paginator"
-                        pageRangeDisplayed={10}
-                        nextLabel="▶"
-                        previousLabel="◀"
-                        pageCount={num_pages}
-                        forcePage={page - 1}
-                        onPageChange={(event) => {
-                            this.props.setSearchParams({
-                                term: searchTerm,
-                                doc: doc,
-                                page: event.selected + 1
-                            });
-                        }}
-                    /> : ""}
-
-                {/* Results area */}
-                <div className="dividerBottom"></div>
-                <div className="loadingWrapper">
-                    <div className={this.props.loaded? "loading loaded" : "loading"}>Loading...</div>
-                     <SearchResults
-                         results={this.props.result}
-                         romanize={this.state.romanize}
-                         resultTerm={this.props.resultTerm}
-                         partsUniqueIndices={parts_unique_indices}
-                         disabledMatches={this.state.disabledMatches}
-                         t={this.props.t}
-                     />
-                </div>
-                <div className="dividerTop"></div>
-
-                {/* Pager on bottom */}
-                {num_pages > 0?
-                    <ReactPaginate
-                        className="paginator"
-                        pageRangeDisplayed={10}
-                        nextLabel="▶"
-                        previousLabel="◀"
-                        pageCount={num_pages}
-                        forcePage={page - 1}
-                        onPageChange={(event) => {
-                            this.props.setSearchParams({
-                                term: searchTerm,
-                                doc: doc,
-                                page: event.selected + 1
-                            });
-                        }}
-                    /> : ""}
+                <SearchResultsWrapper
+                    results={this.props.result}
+                    numResults={this.props.numResults}
+                    romanize={this.state.romanize}
+                    resultTerm={this.props.resultTerm}
+                    pageN={this.props.pageN}
+                    page={this.props.page}
+                    setPage={this.setPage}
+                    loaded={this.props.loaded}
+                    t={this.props.t}
+                />
             </div>
         );
     }
@@ -314,7 +335,7 @@ function search(word, doc, page, callback) {
         page: page
     }).then((result) => {
         if (result.status === 'success') {
-            callback(result.results, result.total_rows);
+            callback(result.results, result.total_rows, result.page_N);
         } else {
             callback([], 0);
         }
@@ -368,27 +389,38 @@ function SearchPageWrapper(props) {
     const refresh = React.useCallback(
         (term, doc, page) => {
             let active = true;
-            setResult({
-                ...prevResult.current,
-                loaded: false
-            });
 
-            search(
-                term, doc, page,
-                (result, num_results) => {
-                    if (active) {
-                        setResult({
-                            result: result,
-                            num_results: num_results,
-                            result_term: term,
-                            loaded: true
-                        });
+            if (page !== 1 && (prevTerm.current !== term || prevDoc.current !== doc)) {
+                setSearchParams({
+                    page: 1,
+                    term: term,
+                    doc: doc
+                });
+            }
+            else {
+                setResult({
+                    ...prevResult.current,
+                    loaded: false
+                });
+
+                search(
+                    term, doc, page,
+                    (result, num_results, page_N) => {
+                        if (active) {
+                            setResult({
+                                result: result,
+                                num_results: num_results,
+                                page_N: page_N,
+                                result_term: term,
+                                loaded: true
+                            });
+                        }
                     }
-                }
-            );
+                );
 
-            return () => {
-                active = false;
+                return () => {
+                    active = false;
+                }
             }
         },
         []
@@ -397,8 +429,6 @@ function SearchPageWrapper(props) {
     const suggest_doc = React.useCallback(
         (doc) => {
             let active = true;
-
-            console.log("Suggest for", doc);
 
             suggest(doc, (result, num_results) => {
                 if (active) {
@@ -424,12 +454,12 @@ function SearchPageWrapper(props) {
             isInited.current = true;
             prevPage.current = page;
             prevTerm.current = term;
+            prevDoc.current = doc;
             return refresh(term, prevDoc.current, page);
         }
     }, [term, page, refresh]);
 
     React.useEffect(() => {
-        prevDoc.current = doc;
         return suggest_doc(doc);
     }, [doc, suggest_doc]);
 
@@ -454,6 +484,7 @@ function SearchPageWrapper(props) {
             result={result.result}
             numResults={result.num_results}
             resultTerm={result.result_term}
+            pageN={result.page_N}
             loaded={result.loaded}
             setSearchParams={setSearchParams}
             onRefresh={forceRefresh}
