@@ -7,6 +7,8 @@ import { highlight } from './Highlight';
 import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Interweave } from 'interweave';
+import HowToPageWrapper from './HowToPage';
+import { Trans } from 'react-i18next';
 
 
 async function postData(url = '', data = {}) {
@@ -26,6 +28,61 @@ async function postData(url = '', data = {}) {
 
 
 const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_,i) => arr.map(a => a[i]));
+const range = (start, stop, step) =>
+  Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
+
+
+class Histogram extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+
+    render() {
+        const BEGIN = 1400;
+        const END = 2000;
+
+        let hits = this.props.data.map((decade) => decade.num_hits).sort((a, b) => a > b);
+        let median_hits = hits.length > 0 ? hits[Math.floor(hits.length / 2)] : 0;
+        let acc_count = 0;
+
+        return <div className='histogramContainerContainer'>
+            <div className='histogramContainer'>
+                {range(BEGIN, END - 50, 50).map((year, i) => {
+                    return <div key={i} className='halfCentury'>
+                        <span className='hCLabel'>{year}</span>
+                    </div>
+                })}
+            </div>
+            <div className='histogramOverlay'>
+                {this.props.data.map((decade, i) => {
+                    let percentage = (decade.period - BEGIN) / (END - BEGIN) * 100;
+                    let style = {
+                        left: percentage + "%",
+                        width: (100 / ((END - BEGIN) / 10)) + "%",
+                        opacity: decade.num_hits / median_hits + 0.1
+                    };
+                    let tooltip = this.props.t('number decade', { decade: decade.period }) + ': '
+                                + this.props.t('number Results', { numResults: decade.num_hits });
+
+                    let page_idx = 1 + Math.floor(acc_count / this.props.pageN);
+                    acc_count += decade.num_hits;
+                    let click = () => {
+                        this.props.setPage(page_idx);
+                    };
+
+                    return <div
+                        key={i}
+                        className="tooltip"
+                        data-title={tooltip}
+                        style={style}
+                        onClick={click}
+                    ></div>
+                })}
+            </div>
+        </div>
+    }
+}
 
 
 class SearchResults extends React.Component {
@@ -144,10 +201,26 @@ class SearchResults extends React.Component {
         ]);
 
         if (results_list.length === 0) {
-            results_list = [<div key="0"></div>, <div key="1">{this.props.t('No match')}</div>];
+            results_list = <React.Fragment>
+                <div>{/* Empty div for 'year' column */}</div>
+                {
+                    this.props.loaded? <div>
+                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                        <HowToPageWrapper title=""/>
+                    </div> : this.props.t('number Results', { numResults: results_list.length })
+                }
+            </React.Fragment>;
         }
 
         return <React.Fragment>
+
+            <Histogram
+                data={this.props.histogram}
+                t={this.props.t}
+                setPage={this.props.setPage}
+                pageN={this.props.pageN}
+            />
+
             {/* Show highlight match legend */}
             <div className='matchLegend'>
                 {unique_parts.map((part, i) => [
@@ -260,6 +333,7 @@ class SearchPage extends React.Component {
                     <input
                         type="text"
                         value={searchTerm}
+                        placeholder={this.props.t("Search term...")}
                         onChange={(event) => this.handleChange(event)}
                     />
                     <button onClick={(e) => this.props.onRefresh(e)}>{this.props.t("Search")}</button>
@@ -309,6 +383,7 @@ class SearchPage extends React.Component {
                     numResults={this.props.numResults}
                     romanize={this.state.romanize}
                     resultTerm={this.props.resultTerm}
+                    histogram={this.props.histogram}
                     pageN={this.props.pageN}
                     page={this.props.page}
                     setPage={this.setPage}
@@ -343,7 +418,7 @@ function search(word, doc, page, callback) {
         page: page
     }).then((result) => {
         if (result.status === 'success') {
-            callback(result.results, result.total_rows, result.page_N);
+            callback(result.results, result.total_rows, result.histogram, result.page_N);
         } else {
             callback([], 0);
         }
@@ -379,6 +454,7 @@ function SearchPageWrapper(props) {
     let doc = searchParams.get('doc') ?? "";
     let [result, setResult] = React.useState({
         result: [],
+        histogram: [],
         num_results: 0,
         result_term: "",
         loaded: false
@@ -413,12 +489,13 @@ function SearchPageWrapper(props) {
 
                 search(
                     term, doc, page,
-                    (result, num_results, page_N) => {
+                    (result, num_results, histogram, page_N) => {
                         if (active) {
                             setResult({
                                 result: result,
                                 num_results: num_results,
                                 page_N: page_N,
+                                histogram: histogram,
                                 result_term: term,
                                 loaded: true
                             });
@@ -493,6 +570,7 @@ function SearchPageWrapper(props) {
             numResults={result.num_results}
             resultTerm={result.result_term}
             pageN={result.page_N}
+            histogram={result.histogram}
             loaded={result.loaded}
             setSearchParams={setSearchParams}
             onRefresh={forceRefresh}

@@ -8,7 +8,7 @@ function HowToPageWrapper(props) {
     const { t, i18n } = useTranslation();
 
     return <div>
-        <h1>{t('How to Use Chocassye')}</h1>
+        <h1>{props.title?? t('How to Use Chocassye')}</h1>
 
         <h2>{t('Basic Usage')}</h2>
 
@@ -65,6 +65,10 @@ function HowToPageWrapper(props) {
                  </li>
              </ul>
              <Trans i18nKey="The chart below shows" />
+
+            <table>
+                <tbody><tr><td>표 추가 예정</td></tr></tbody>
+            </table>
         </div>
 
         <h2>{t('Advanced Usage')}</h2>
@@ -83,10 +87,16 @@ function HowToPageWrapper(props) {
 
         <div className='paragraph'>
             <Trans i18nKey="startend-detail-1" />
+            <table>
+                <tbody><tr><td>예시 추가 예정</td></tr></tbody>
+            </table>
         </div>
 
         <div className='paragraph'>
             <Trans i18nKey="startend-detail-2" />
+            <table>
+                <tbody><tr><td>예시 추가 예정</td></tr></tbody>
+            </table>
         </div>
     </div>;
 }

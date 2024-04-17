@@ -78,22 +78,42 @@ app.post('/api/search', (req, res) => {
     let doc = req.body.doc;
     console.log(`search text=${text} doc=${doc} ip=${req.socket.remoteAddress}`);
 
+    let N = 50;
     if (text === '%%') {
         res.send({
             status: "success",
             total_rows: 0,
-            results: []
+            results: [],
+            histogram: [],
+            page_N: N
         });
         return;
     }
 
-    let N = 50;
     let offset = (req.body.page - 1) * N;
     let query = aql`
         LET query = ${text}
         LET doc_pattern = ${'%' + doc + '%'}
+        LET results = (
         FOR s IN doc_view
             SEARCH ANALYZER(LIKE(s.text, query) AND LIKE(s.filename, doc_pattern), "identity")
+            RETURN s
+        )
+
+        LET histogram = (
+        FOR s in results
+            LET nyear = s.year == null? 9999: s.year
+            LET period = nyear - (nyear % 10)
+            COLLECT agg_period = period
+                AGGREGATE num_hits = SUM(1)
+            RETURN {
+                period: agg_period,
+                num_hits: num_hits
+            }
+        )
+
+        LET page = (
+        FOR s in results
             LET nyear = s.year == null? 9999: s.year
             SORT nyear ASC, s.filename ASC, s.number_in_book ASC
             LIMIT ${offset}, ${N}
@@ -113,14 +133,22 @@ app.post('/api/search', (req, res) => {
                 count: COUNT(groups),
                 sentences: groups[*].s
             }
+        )
+
+        RETURN {
+            histogram: histogram,
+            rows: page,
+            full_count: LENGTH(results)
+        }
     `;
 
-    db.query(query, {fullCount: true})
+    db.query(query)
     .then(async (cursor) => {
         let rows = await cursor.map(item => item);
         return {
-            count: cursor.extra.stats.fullCount,
-            rows: rows
+            count: rows[0]['full_count'],
+            rows: rows[0]['rows'],
+            histogram: rows[0]['histogram']
         };
     })
     .then((result) => {
@@ -128,6 +156,7 @@ app.post('/api/search', (req, res) => {
             status: "success",
             total_rows: result.count,
             results: result.rows,
+            histogram: result.histogram,
             page_N: N
         });
     });

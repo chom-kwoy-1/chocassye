@@ -79,7 +79,7 @@ export function highlight(sentences, romanize, searchTerm,
                 }
 
                 let mark_class = highlight_class.join(' ');
-                let mark_text = serializeTextNode(transformText(highlighted_part));
+                let mark_text = transformText(serializeTextNode(highlighted_part));
                 dom.push(`<mark class=${mark_class}>${mark_text}</mark>`);
                 highlighted_parts.push(highlighted_part);
                 hl_idx += 1;
@@ -135,7 +135,7 @@ export function highlight(sentences, romanize, searchTerm,
                                 }
 
                                 let mark_class = highlight_class.join(' ');
-                                let mark_text = serializeTextNode(transformText(highlighted_part));
+                                let mark_text = transformText(serializeTextNode(highlighted_part));
                                 dom.push(`<mark class="${mark_class}">${mark_text}</mark>`);
 
                                 highlighted_parts.push(highlighted_part);

@@ -41,15 +41,30 @@ function AboutWrapper(props) {
 
     <div className='paragraph'>
         <p>
-            자료는 국립국어원의 '역사 자료 종합 정비'를 사용하였습니다.
+            한글 자료는 국립국어원의 &lsquo;역사 자료 종합 정비&rsquo;를 사용하였습니다. 석독구결 자료는 <a href="https://kohico.kr/" target="blank">kohico.kr</a>에 공개되어 있는 sktot 자료를 사용하였습니다.
+        </p>
+        <p>
+            위 자료들의 제작에 참여하신 분들께 감사를 표합니다.
         </p>
     </div>
 
     <h2>지은이</h2>
 
     <div className='paragraph'>
-        <p>참괴</p>
+        <p>ᄎᆞᆷ괴</p>
+        <p>문의·건의사항: <a href="mailto:chom.kwoy@됬.xyz" target="blank">chom.kwoy@됬.xyz</a></p>
     </div>
+
+
+    <h2>자매 프로젝트</h2>
+
+    <div className='paragraph'>
+        <ul>
+            <li><a href="https://됬.xyz/oko/" target="blank">온라인 옛한글 입력기</a></li>
+        </ul>
+    </div>
+
+
     </div>;
 }
 
