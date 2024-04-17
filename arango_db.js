@@ -93,7 +93,7 @@ function add_txt_file(collection, book_collection, file, data) {
         let line = line.trim();
         // parse line as single xml tag
 
-
+        // TODO
     }
 }
 
@@ -218,7 +218,7 @@ function add_file(collection, book_collection, file, xml) {
         if (sentence.tagName === "mark") {
             let attr = sentence.attributes;
             let type = attr.type === undefined? null : uni(attr.type.value.trim());
-            let text = uni(sentence.textContent);
+            let text = uni(sentence.textContent.trim());
 
             sentences.push({
                 ...book_details,
@@ -322,8 +322,8 @@ function populate_db() {
         const parser = new DOMParser;
 
         const result = Promise.all([
-            promisify(glob)("data/*/*.xml"),
-            promisify(glob)("data/*/*.txt"),
+            promisify(glob)("chocassye-corpus/data/*/*.xml"),
+            promisify(glob)("chocassye-corpus/data/*/*.txt"),
         ]).then(async ([xmlFiles, txtFiles]) => {
             console.log("total", xmlFiles.length, "files");
             console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
