@@ -12,11 +12,13 @@
   "license": "ISC",
   "dependencies": {
     "arangojs": "^8.4.0",
+    "escape-string-regexp": "^5.0.0",
     "express": "^4.17.2",
     "floating-ui": "^5.2.8",
     "glob": "^7.2.0",
     "jsdom": "^19.0.0",
     "log4js": "^6.7.1",
+    "mongodb": "^6.5.0",
     "solr-client": "^0.10.0-rc10",
     "sqlite3": "^5.0.2",
     "xml2js": "^0.4.23"
