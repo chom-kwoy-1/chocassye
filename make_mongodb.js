@@ -239,7 +239,7 @@ function add_file(file, xml) {
         }
         else {
             try {
-                let html = uni(sentence.innerHTML);
+                let html = uni(sentence.innerHTML.trim());
                 html = hangul_to_yale(html, has_tone);
                 let text = uni(sentence.textContent.trim());
                 let text_with_tone = null;
@@ -297,12 +297,16 @@ function insert_documents(db) {
     const DOMParser = dom.window.DOMParser;
     const parser = new DOMParser;
 
-    const result = Promise.all([
+    const result = sentences_collection.dropIndex("text").then().catch((err) => console.log(err))
+    .then(() => sentences_collection.createIndex(
+        {text: "text", text_with_tone: "text"},
+        {default_language: "none", name: "text"}
+    )).then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
         sentences_collection.deleteMany({}),
         books_collection.deleteMany({}),
-    ]).then(async ([xmlFiles, txtFiles]) => {
+    ])).then(async ([xmlFiles, txtFiles]) => {
         console.log("total", xmlFiles.length, "files");
         console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
 

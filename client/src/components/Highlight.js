@@ -1,5 +1,6 @@
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { GUGYEOL_READINGS, GUGYEOL_REGEX } from './Gugyeol'
+import escapeStringRegexp from "escape-string-regexp";
 
 
 function escapeRegex(string) {
@@ -10,37 +11,46 @@ function serializeTextNode(text) {
     return new XMLSerializer().serializeToString(document.createTextNode(text));
 }
 
-export function searchTerm2Regex(searchTerm) {
-    searchTerm = hangul_to_yale(searchTerm);
+export function searchTerm2Regex(text) {
+    text = hangul_to_yale(text);
 
-    let prefix = "";
-    let suffix = "";
-    if (searchTerm.startsWith('^')) {
-        searchTerm = searchTerm.slice(1);
-        prefix = "^";
+    let strippedText = text;
+    if (text.startsWith('^')) {
+        strippedText = strippedText.substring(1);
     }
-    if (searchTerm.endsWith('$')) {
-        searchTerm = searchTerm.slice(0, searchTerm.length - 1);
-        suffix = "$";
+    if (text.endsWith('$')) {
+        strippedText = strippedText.substring(0, strippedText.length - 1);
+    }
+    let regex = "";
+    let isEscaping = false;
+    for (let i = 0; i < strippedText.length; i++) {
+        if (strippedText[i] === '%' && !isEscaping) {
+            regex += ".*?";
+            continue;
+        }
+        if (strippedText[i] === '_' && !isEscaping) {
+            regex += ".";
+            continue;
+        }
+        if (isEscaping) {
+            isEscaping = false;
+            regex += escapeStringRegexp(strippedText[i]);
+            continue;
+        }
+        if (strippedText[i] === '\\') {
+            isEscaping = true;
+            continue;
+        }
+        regex += escapeStringRegexp(strippedText[i]);
+    }
+    if (text.startsWith('^')) {
+        regex = `^${regex}`;
+    }
+    if (text.endsWith('$')) {
+        regex = `${regex}$`;
     }
 
-    let reSearchTerm = [];
-    for (let part of searchTerm.split(/([%|_])/)) {
-        if (part === '%') {
-            reSearchTerm.push('.*?');
-        }
-        else if (part === '_') {
-            reSearchTerm.push('.');
-        }
-        else {
-            reSearchTerm.push(escapeRegex(part));
-        }
-    }
-    reSearchTerm = reSearchTerm.join('');
-
-    let regexp = new RegExp(prefix + reSearchTerm + suffix, 'g');
-    
-    return regexp;
+    return new RegExp(regex, 'g');
 }
 
 

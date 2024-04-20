@@ -263,7 +263,7 @@ function highlight(text, searchTerm, match_ids, footnotes, romanize) {
             displayHTMLMapping
         ),
         ...getMatchingRanges(
-            hlRegex, 
+            hlRegex,
             ...toTextIgnoreTone(text),
             displayHTMLMapping
         )

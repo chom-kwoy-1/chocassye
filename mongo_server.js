@@ -96,13 +96,36 @@ db_client.connect().then(function() {
         if (text.endsWith('%')) {
             strippedText = strippedText.substring(0, strippedText.length - 1);
         }
-        let textRegex = new RegExp(escapeStringRegexp(strippedText));
+        let regex = "";
+        let isEscaping = false;
+        for (let i = 0; i < strippedText.length; i++) {
+            if (strippedText[i] === '%' && !isEscaping) {
+                regex += ".*?";
+                continue;
+            }
+            if (strippedText[i] === '_' && !isEscaping) {
+                regex += ".";
+                continue;
+            }
+            if (isEscaping) {
+                isEscaping = false;
+                regex += escapeStringRegexp(strippedText[i]);
+                continue;
+            }
+            if (strippedText[i] === '\\') {
+                isEscaping = true;
+                continue;
+            }
+            regex += escapeStringRegexp(strippedText[i]);
+        }
         if (!text.startsWith('%')) {
-            textRegex = new RegExp(`^${textRegex.source}`);
+            regex = `^${regex}`;
         }
         if (!text.endsWith('%')) {
-            textRegex = new RegExp(`${textRegex.source}$`);
+            regex = `${regex}$`;
         }
+        console.log(`regex=${regex}`);
+        let textRegex = new RegExp(regex);
         let offset = (req.body.page - 1) * N;
 
         const sentences_collection = db.collection('sentences');
@@ -130,6 +153,7 @@ db_client.connect().then(function() {
                         year_start: {$first: "$year_start"},
                         year_end: {$first: "$year_end"},
                         year_string: {$first: "$year_string"},
+                        year_sort: {$first: "$year_sort"},
                         count: {$sum: 1},
                         sentences: {$push: "$$ROOT"}
                     }},
@@ -200,7 +224,6 @@ db_client.connect().then(function() {
             }}
         ]).toArray().then((results) => {
             console.log("Successfully retrieved source results");
-            console.log(results[0]);
             if (results[0].total.length === 0) {
                 res.send({
                     status: "error",
