@@ -215,7 +215,6 @@ db_client.connect().then(function() {
                 } : {})
             }},
             {$facet: {
-                total: [{$count: "count"}],
                 results: [
                     {$sort: {number_in_book: 1}},
                     {$skip: start},
@@ -224,7 +223,7 @@ db_client.connect().then(function() {
             }}
         ]).toArray().then((results) => {
             console.log("Successfully retrieved source results");
-            if (results[0].total.length === 0) {
+            if (results[0].results.length === 0) {
                 res.send({
                     status: "error",
                     msg: "No results found"
@@ -237,7 +236,7 @@ db_client.connect().then(function() {
                     bibliography: results[0].results[0].bibliography,
                     attributions: results[0].results[0].attributions,
                     sentences: results[0].results,
-                    count: results[0].total[0].count,
+                    count: results[0].results[0].num_sentences,
                 };
                 res.send({
                     status: "success",

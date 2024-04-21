@@ -189,18 +189,6 @@ function add_file(file, xml) {
     let attributions = findAttributions(doc);
     let bibliography = findBibl(doc);
 
-    let book_details = {
-        filename: filename,
-        year: year,
-        year_sort: Number.isNaN(year)? 9999 : year,
-        decade_sort: Number.isNaN(year)? 9999 : Math.floor(year / 10) * 10,
-        year_start: year_start,
-        year_end: year_end,
-        year_string: year_string,
-        attributions: attributions,
-        bibliography: bibliography,
-    };
-
     let elements = doc.querySelectorAll(
         ':not(meta):not(titleStmt):not(bibl) > sent,' +
         ':not(meta):not(titleStmt):not(bibl) > mark,' +
@@ -211,6 +199,20 @@ function add_file(file, xml) {
         ':not(meta):not(titleStmt):not(bibl) > page'
     );
     console.log(`${filename}: ${elements.length} sentences selected.`);
+
+    let book_details = {
+        filename: filename,
+        year: year,
+        year_sort: Number.isNaN(year)? 9999 : year,
+        decade_sort: Number.isNaN(year)? 9999 : Math.floor(year / 10) * 10,
+        year_start: year_start,
+        year_end: year_end,
+        year_string: year_string,
+        attributions: attributions,
+        bibliography: bibliography,
+        num_sentences: elements.length,
+    };
+
     let sentences = [];
 
     // iterate over sentences
@@ -259,6 +261,11 @@ function add_file(file, xml) {
                     number_in_page = uni(attr.num.value);
                 }
 
+                if (text.length > 5000) {
+                    console.error(filename, "Sentence too long:", text.length);
+                    throw new Error("Sentence too long");
+                }
+
                 sentences.push({
                     ...book_details,
                     date: Date(),
@@ -297,20 +304,27 @@ function insert_documents(db) {
     const DOMParser = dom.window.DOMParser;
     const parser = new DOMParser;
 
-    const result = sentences_collection.dropIndex("text").then().catch((err) => console.log(err))
-    .then(() => sentences_collection.createIndex(
-        {text: "text", text_with_tone: "text"},
-        {default_language: "none", name: "text"}
-    )).then(() => Promise.all([
+    const result = sentences_collection.dropIndex("text").then(() => {
+        console.log("Index dropped")
+    }).catch((err) => console.log(err))
+    .then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
         sentences_collection.deleteMany({}),
         books_collection.deleteMany({}),
+    ])).then(() => Promise.all([
+        sentences_collection.createIndex(
+            {text: "text", text_with_tone: "text"},
+            {default_language: "none", name: "text"}
+        ),
+        sentences_collection.createIndex({text: 1}),
+        sentences_collection.createIndex({year_sort: 1}),
+        sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
+        sentences_collection.createIndex({filename: 1}),
+        sentences_collection.createIndex({number_in_book: 1}),
     ])).then(async ([xmlFiles, txtFiles]) => {
         console.log("total", xmlFiles.length, "files");
         console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
-
-        let promises = [];
 
         /*
         for (let [i, file] of txtFiles.entries()) {
@@ -331,7 +345,7 @@ function insert_documents(db) {
         */
 
         for (let [i, file] of xmlFiles.entries()) {
-            promises.push(promisify(fs.readFile)(file, "utf8")
+            await promisify(fs.readFile)(file, "utf8")
                 .then((data) => {
                     data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function (ch) {
                         return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
@@ -351,10 +365,8 @@ function insert_documents(db) {
                 })
                 .catch((err) => {
                     console.error(i, "ERROR", file, err.stack);
-                }));
+                });
         }
-
-        return Promise.all(promises);
     });
 
     return result;
