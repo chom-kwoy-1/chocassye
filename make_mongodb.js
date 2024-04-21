@@ -308,8 +308,6 @@ function insert_documents(db) {
         console.log("Index dropped")
     }).catch((err) => console.log(err))
     .then(() => Promise.all([
-        promisify(glob)("chocassye-corpus/data/*/*.xml"),
-        promisify(glob)("chocassye-corpus/data/*/*.txt"),
         sentences_collection.deleteMany({}),
         books_collection.deleteMany({}),
     ])).then(() => Promise.all([
@@ -322,7 +320,10 @@ function insert_documents(db) {
         sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
         sentences_collection.createIndex({filename: 1}),
         sentences_collection.createIndex({number_in_book: 1}),
-    ])).then(async ([xmlFiles, txtFiles]) => {
+    ])).then(() => Promise.all([
+        promisify(glob)("chocassye-corpus/data/*/*.xml"),
+        promisify(glob)("chocassye-corpus/data/*/*.txt"),
+    ]).then(async ([xmlFiles, txtFiles]) => {
         console.log("total", xmlFiles.length, "files");
         console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
 
