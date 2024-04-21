@@ -323,7 +323,7 @@ function insert_documents(db) {
     ])).then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
-    ]).then(async ([xmlFiles, txtFiles]) => {
+    ])).then(async ([xmlFiles, txtFiles]) => {
         console.log("total", xmlFiles.length, "files");
         console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
 
