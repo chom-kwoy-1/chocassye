@@ -16,7 +16,7 @@ import {
     Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
     TableContainer, Table, TableBody,
-    TableRow, TableCell, Tooltip,
+    TableRow, TableCell, Tooltip, Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { tableCellClasses } from '@mui/material/TableCell';
@@ -119,7 +119,19 @@ class SourcePage extends React.Component {
     
     handleExcludeChineseChange(event) {
         let excludeChinese = event.target.checked;
+        if (excludeChinese) {
+            this.props.setSearchParams({
+                name: this.props.bookName,
+                n: 0,
+                hl: this.props.highlightWord
+            });
+        }
         this.props.setExcludeChinese(excludeChinese);
+    }
+
+    handleViewCountChange(event) {
+        let viewCount = event.target.value;
+        this.props.setViewCount(viewCount);
     }
     
     render() {
@@ -140,7 +152,7 @@ class SourcePage extends React.Component {
 
         let hl = this.props.highlightWord ?? "NULL";
 
-        const PAGE = 20;
+        const PAGE = this.props.viewCount;
         let pageCount = Math.ceil(this.props.result.data.count / PAGE);
 
         let n = this.props.numberInSource;
@@ -210,17 +222,36 @@ class SourcePage extends React.Component {
                     </TableContainer>
                 </Grid>
                 
-                <Grid item xs={12}>
-                    <FormControlLabel
-                        control={<Checkbox size="small" sx={{py: 0}} />} 
-                        label={
-                            <Typography sx={{fontSize: "1em"}}>
-                                {this.props.t("Exclude Chinese")}
-                            </Typography>
-                        }
-                        checked={this.props.excludeChinese}
-                        onChange={(event) => this.handleExcludeChineseChange(event)}
-                    />
+                <Grid item container xs={12}>
+                    <Grid item xs={10}>
+                        <FormControlLabel
+                            control={<Checkbox size="small" sx={{py: 0}} />}
+                            label={
+                                <Typography sx={{fontSize: "1em"}}>
+                                    {this.props.t("Exclude Chinese")}
+                                </Typography>
+                            }
+                            checked={this.props.excludeChinese}
+                            onChange={(event) => this.handleExcludeChineseChange(event)}
+                        />
+                    </Grid>
+                    <Grid item xs={2}>
+                        <FormControl variant="standard" fullWidth>
+                            <InputLabel id="view-count-select-label">개씩 보기</InputLabel>
+                            <Select
+                                labelId="view-count-select-label"
+                                id="view-count-select"
+                                label="개수"
+                                value={this.props.viewCount}
+                                onChange={(event) => this.handleViewCountChange(event)}
+                                >
+                                <MenuItem value={20}>20</MenuItem>
+                                <MenuItem value={50}>50</MenuItem>
+                                <MenuItem value={100}>100</MenuItem>
+                                <MenuItem value={200}>200</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
                 </Grid>
                 
                 {/* Pager */}
@@ -296,11 +327,12 @@ class SourcePage extends React.Component {
 }
 
 
-function load_source(bookName, numberInSource, excludeChinese, resultFunc) {
+function load_source(bookName, numberInSource, excludeChinese, viewCount, resultFunc) {
     fetch("/api/source?" + new URLSearchParams({
         name: bookName,
         number_in_source: numberInSource,
-        exclude_chinese: excludeChinese
+        exclude_chinese: excludeChinese,
+        view_count: viewCount,
     }))
     .then((res) => res.json())
     .then((result) => {
@@ -327,6 +359,7 @@ function SoucePageWrapper(props) {
     let numberInSource = searchParams.get("n") ?? 0;
     let highlightWord = searchParams.get("hl");
     let [excludeChinese, setExcludeChinese] = React.useState(false);
+    let [viewCount, setViewCount] = React.useState(20);
     let [result, setResult] = React.useState({
         data: null,
         loaded: false
@@ -336,9 +369,10 @@ function SoucePageWrapper(props) {
     const prevBookName = React.useRef(bookName);
     const prevNumberInSource = React.useRef(numberInSource);
     const prevExcludeChinese = React.useRef(excludeChinese);
+    const prevViewCount = React.useRef(viewCount);
 
     const refresh = React.useCallback(
-        (bookName, numberInSource, excludeChinese) => {
+        (bookName, numberInSource, excludeChinese, viewCount) => {
             let active = true;
             setResult({
                 ...prevResult.current,
@@ -346,7 +380,7 @@ function SoucePageWrapper(props) {
             });
 
             load_source(
-                bookName, numberInSource, excludeChinese,
+                bookName, numberInSource, excludeChinese, viewCount,
                 (data) => {
                     if (active) {
                         setResult({
@@ -367,14 +401,17 @@ function SoucePageWrapper(props) {
     React.useEffect(() => {
         prevBookName.current = bookName;
         prevNumberInSource.current = numberInSource;
-        return refresh(bookName, numberInSource, excludeChinese);
-    }, [bookName, numberInSource, excludeChinese, refresh]);
+        prevExcludeChinese.current = excludeChinese;
+        prevViewCount.current = viewCount;
+        return refresh(bookName, numberInSource, excludeChinese, viewCount);
+    }, [bookName, numberInSource, excludeChinese, viewCount, refresh]);
 
     function initialize() {
         refresh(
             prevBookName.current, 
             prevNumberInSource.current, 
-            prevExcludeChinese.current
+            prevExcludeChinese.current,
+            prevViewCount.current,
         );
     }
 
@@ -388,6 +425,8 @@ function SoucePageWrapper(props) {
         highlightWord={highlightWord}
         excludeChinese={excludeChinese}
         setExcludeChinese={setExcludeChinese}
+        viewCount={viewCount}
+        setViewCount={setViewCount}
         t={t}
     />;
 }

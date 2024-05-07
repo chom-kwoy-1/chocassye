@@ -48,7 +48,7 @@ db_client.connect().then(function() {
 
         const book_collection = db.collection('books');
         const regex = new RegExp(escapeStringRegexp(doc), 'i');
-        book_collection.find({filename: regex}).sort({year_sort: 1}).limit(10).toArray()
+        book_collection.find({filename: regex}).sort({year_sort: 1, filename: 1}).limit(10).toArray()
         .then((docs) => {
             // rename keys in docs
             docs = docs.map(doc => {
@@ -140,20 +140,27 @@ db_client.connect().then(function() {
                     }
                 } : {})
             }},
+            {$lookup: {
+                from: "books",
+                localField: "filename",
+                foreignField: "filename",
+                as: "book_info",
+            }},
+            {$unwind: "$book_info"},
             {$facet: {
                 total: [{$count: "count"}],
                 results: [
-                    {$sort: {year_sort: 1, number_in_book: 1}},
+                    {$sort: {year_sort: 1, filename: 1, number_in_book: 1}},
                     {$skip: offset},
                     {$limit: N},
                     {$group: {
                         _id: "$filename",
                         name: {$first: "$filename"},
-                        year: {$first: "$year"},
-                        year_start: {$first: "$year_start"},
-                        year_end: {$first: "$year_end"},
-                        year_string: {$first: "$year_string"},
-                        year_sort: {$first: "$year_sort"},
+                        year: {$first: "$book_info.year"},
+                        year_start: {$first: "$book_info.year_start"},
+                        year_end: {$first: "$book_info.year_end"},
+                        year_string: {$first: "$book_info.year_string"},
+                        year_sort: {$first: "$book_info.year_sort"},
                         count: {$sum: 1},
                         sentences: {$push: "$$ROOT"}
                     }},
@@ -161,8 +168,8 @@ db_client.connect().then(function() {
                 ],
                 histogram: [
                     {$group: {
-                        _id: "$decade_sort",
-                        period: {$first: "$decade_sort"},
+                        _id: "$book_info.decade_sort",
+                        period: {$first: "$book_info.decade_sort"},
                         num_hits: {$sum: 1}
                     }}
                 ],
@@ -199,31 +206,43 @@ db_client.connect().then(function() {
     app.get('/api/source', (req, res) => {
         let n = req.query.number_in_source;
         let excludeChinese = req.query.exclude_chinese === "true";
-        const PAGE = 20;
+        const PAGE = parseInt(req.query.view_count);
+        if (isNaN(PAGE) || PAGE > 200) {
+            res.send({
+                status: "error",
+                msg: "Invalid view_count"
+            });
+            return;
+        }
         let start = Math.floor(n / PAGE) * PAGE;
         let end = start + PAGE;
         console.log(`source doc=${req.query.name} page=${start}-${end} ${typeof(excludeChinese)}`)
 
+        const book_collection = db.collection('books');
         const sentences_collection = db.collection('sentences');
-        sentences_collection.aggregate([
-            {$match: {
-                filename: req.query.name,
-                ...(excludeChinese? {
-                    lang: {
-                        $nin: ["chi"]
-                    }
-                } : {})
-            }},
-            {$facet: {
-                results: [
-                    {$sort: {number_in_book: 1}},
-                    {$skip: start},
-                    {$limit: PAGE},
-                ]
-            }}
-        ]).toArray().then((results) => {
+        Promise.all([
+            book_collection.find({filename: req.query.name}).toArray(),
+            sentences_collection.aggregate([
+                {$match: {
+                    filename: req.query.name,
+                    ...(excludeChinese? {
+                        lang: {
+                            $nin: ["chi"]
+                        }
+                    } : {})
+                }},
+                {$facet: {
+                    results: [
+                        {$sort: {number_in_book: 1}},
+                        {$skip: start},
+                        {$limit: PAGE},
+                    ]
+                }}
+            ]).toArray()
+        ]).then((results) => {
             console.log("Successfully retrieved source results");
-            if (results[0].results.length === 0) {
+            const [book, sentences] = results;
+            if (sentences[0].results.length === 0) {
                 res.send({
                     status: "error",
                     msg: "No results found"
@@ -231,12 +250,12 @@ db_client.connect().then(function() {
             }
             else {
                 let data = {
-                    name: results[0].results[0].filename,
-                    year_string: results[0].results[0].year_string,
-                    bibliography: results[0].results[0].bibliography,
-                    attributions: results[0].results[0].attributions,
-                    sentences: results[0].results,
-                    count: results[0].results[0].num_sentences,
+                    name: book[0].filename,
+                    year_string: book[0].year_string,
+                    bibliography: book[0].bibliography,
+                    attributions: book[0].attributions,
+                    sentences: sentences[0].results,
+                    count: excludeChinese? book[0].non_chinese_sentence_count : book[0].num_sentences,
                 };
                 res.send({
                     status: "success",

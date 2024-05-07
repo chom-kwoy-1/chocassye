@@ -218,6 +218,7 @@ function add_file(file, xml) {
     // iterate over sentences
     let index = 0;
     let global_page = null;
+    let non_chinese_sentence_count = 0;
     for (let sentence of elements) {
         if (sentence.tagName === "mark") {
             let attr = sentence.attributes;
@@ -225,12 +226,13 @@ function add_file(file, xml) {
             let text = uni(sentence.textContent.trim());
 
             sentences.push({
-                ...book_details,
+                filename: filename,
                 date: Date(),
                 text: text,
                 type: type,
                 number_in_book: index
             });
+            non_chinese_sentence_count += 1;
             index += 1;
         }
         else if (sentence.tagName === "page") {
@@ -266,8 +268,11 @@ function add_file(file, xml) {
                     throw new Error("Sentence too long");
                 }
 
+                if (lang !== "chi") {
+                    non_chinese_sentence_count += 1;
+                }
                 sentences.push({
-                    ...book_details,
+                    filename: filename,
                     date: Date(),
                     text: text,
                     text_with_tone: text_with_tone,
@@ -288,6 +293,8 @@ function add_file(file, xml) {
         }
 
     }
+
+    book_details['non_chinese_sentence_count'] = non_chinese_sentence_count;
 
     return [ sentences, book_details ];
 }
@@ -318,6 +325,7 @@ function insert_documents(db) {
         sentences_collection.createIndex({text: 1}),
         sentences_collection.createIndex({year_sort: 1}),
         sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
+        sentences_collection.createIndex({year_sort: 1, filename: 1, number_in_book: 1}),
         sentences_collection.createIndex({filename: 1}),
         sentences_collection.createIndex({number_in_book: 1}),
     ])).then(() => Promise.all([
