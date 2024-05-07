@@ -150,7 +150,7 @@ db_client.connect().then(function() {
             {$facet: {
                 total: [{$count: "count"}],
                 results: [
-                    {$sort: {year_sort: 1, filename: 1, number_in_book: 1}},
+                    {$sort: {"book_info.year_sort": 1, filename: 1, number_in_book: 1}},
                     {$skip: offset},
                     {$limit: N},
                     {$group: {

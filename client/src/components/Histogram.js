@@ -19,18 +19,19 @@ export default class Histogram extends React.Component {
     render() {
         const BEGIN = 1400;
         const END = 2000;
-        
-        let hits = this.props.data.map((decade) => decade.num_hits).sort((a, b) => a - b);
+
+        const data = this.props.data.toSorted((a, b) => a.period - b.period);
+        let hits = data.map((decade) => decade.num_hits).sort((a, b) => a - b);
         let median_hits = hits.length > 0 ? hits[Math.floor(hits.length / 2)] : 0;
         let acc_count = 0;
 
         // Sum number of hits between 1400 and 1600
-        let middleKoreanHits = this.props.data.filter((decade) => decade.period >= 1400 && decade.period < 1600)
+        let middleKoreanHits = data.filter((decade) => decade.period >= 1400 && decade.period < 1600)
             .map((decade) => decade.num_hits)
             .reduce((a, b) => a + b, 0);
 
         // Sum number of hits from 1600
-        let modernKoreanHits = this.props.data.filter((decade) => decade.period >= 1600)
+        let modernKoreanHits = data.filter((decade) => decade.period >= 1600)
             .map((decade) => decade.num_hits)
             .reduce((a, b) => a + b, 0);
 
@@ -59,7 +60,7 @@ export default class Histogram extends React.Component {
                             })}
                         </Grid>
                         <Box position="absolute" top={0} minHeight="50px" width="100%">
-                            {this.props.data.map((decade, i) => {
+                            {data.map((decade, i) => {
                                 let percentage = (decade.period - BEGIN) / (END - BEGIN) * 100;
                                 let left = percentage + "%";
                                 let width = (100 / ((END - BEGIN) / 10)) * 1.01 + "%";
