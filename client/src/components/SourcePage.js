@@ -109,9 +109,6 @@ function showSentence(bookname, sentence, highlight_term, t, i) {
 
 
 class SourcePage extends React.Component {
-    constructor(props) {
-        super(props);
-    }
 
     componentDidMount() {
         this.props.initialize();
@@ -222,8 +219,8 @@ class SourcePage extends React.Component {
                     </TableContainer>
                 </Grid>
                 
-                <Grid item container xs={12}>
-                    <Grid item xs={10}>
+                <Grid item container xs={12} alignItems="center">
+                    <Grid item xs={8} md={10}>
                         <FormControlLabel
                             control={<Checkbox size="small" sx={{py: 0}} />}
                             label={
@@ -235,13 +232,13 @@ class SourcePage extends React.Component {
                             onChange={(event) => this.handleExcludeChineseChange(event)}
                         />
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={4} md={2}>
                         <FormControl variant="standard" fullWidth>
-                            <InputLabel id="view-count-select-label">개씩 보기</InputLabel>
+                            <InputLabel id="view-count-select-label">{this.props.t("Results per page")}</InputLabel>
                             <Select
                                 labelId="view-count-select-label"
                                 id="view-count-select"
-                                label="개수"
+                                label={this.props.t("Results per page")}
                                 value={this.props.viewCount}
                                 onChange={(event) => this.handleViewCountChange(event)}
                                 >
