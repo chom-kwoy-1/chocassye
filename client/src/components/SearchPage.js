@@ -793,6 +793,18 @@ class SearchPage extends React.Component {
                             />
                         </Grid>
                         */}
+                        <Grid item xs="auto" sm="auto">
+                            <FormControlLabel
+                                control={<Checkbox size="small" sx={{py: 0}} />}
+                                label={
+                                    <Typography sx={{fontSize: "1em"}}>
+                                        {this.props.t("Regex")}
+                                    </Typography>
+                                }
+                                checked={this.props.excludeModern === "yes"}
+                                onChange={(event) => this.handleExcludeModernChange(event)}
+                            />
+                        </Grid>
                     </Grid>
                 </Grid>
 
