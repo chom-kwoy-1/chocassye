@@ -22,5 +22,5 @@ npm start
 ## Run Production Server
 ```bash
 npm run build  # build the project
-PORT=80 SSL=ON node mongo_server.js  # run the server
+SSL=ON node mongo_server.js  # run the server
 ```

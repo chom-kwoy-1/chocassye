@@ -32,7 +32,7 @@ if (process.env.SSL === "ON") {
     const certificate = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/cert.pem");
     const ca = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/chain.pem");
     const credentials = { key: privateKey, cert: certificate, ca: ca };
-    https_server = https.createServer(credentials, app).listen(sslport, () => console.log('Listening on port 443 with SSL'));
+    https_server = https.createServer(credentials, app).listen(sslport, () => console.log(`Listening on port ${sslport} with SSL`));
 }
 
 
