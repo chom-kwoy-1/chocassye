@@ -330,13 +330,12 @@ function insert_documents(db) {
     const parser = new DOMParser;
 
     return Promise.all([
-        sentences_collection.createIndex({text_ngrams: 1}),
-        sentences_collection.createIndex({text_without_sep_ngrams: 1}),
-        sentences_collection.createIndex({year_sort: 1}),
-        sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
-        sentences_collection.createIndex({year_sort: 1, filename: 1, number_in_book: 1}),
-        sentences_collection.createIndex({filename: 1}),
-        sentences_collection.createIndex({number_in_book: 1}),
+        sentences_collection.createIndex({text_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}), // for search
+        sentences_collection.createIndex({text_without_sep_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}),  // for search
+        sentences_collection.createIndex({text_ngrams: 1, decade_sort: 1}),  // for stats
+        sentences_collection.createIndex({text_without_sep_ngrams: 1, decade_sort: 1}),  // for stats
+        sentences_collection.createIndex({year_sort: 1, filename: 1}),  // for doc suggest
+        sentences_collection.createIndex({filename: 1, number_in_book: 1}),  // for source view
     ]).then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
@@ -362,8 +361,9 @@ function insert_documents(db) {
         }
         */
 
+        let promises = [];
         for (let [i, file] of xmlFiles.entries()) {
-            await promisify(fs.readFile)(file, "utf8")
+            const pushTask = promisify(fs.readFile)(file, "utf8")
                 .then((data) => {
                     data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function (ch) {
                         return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
@@ -380,11 +380,19 @@ function insert_documents(db) {
                 })
                 .then(() => {
                     // TODO: indicate progress
+                    console.log(i, "DONE", file);
                 })
                 .catch((err) => {
                     console.error(i, "ERROR", file, err.stack);
                 });
+            promises.push(pushTask);
+
+            if (i % 16 === 0) {
+                await Promise.all(promises);
+                promises = [];
+            }
         }
+        await Promise.all(promises);
     });
 }
 
