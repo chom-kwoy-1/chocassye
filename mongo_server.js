@@ -327,11 +327,20 @@ db_client.connect().then(function() {
         ]).toArray().then((results) => {
             const elapsed = new Date() - beginTime;
             console.log("Successfully retrieved search stats in " + elapsed + "ms");
-            res.send({
-                status: "success",
-                num_results: results[0].count[0].count,
-                histogram: results[0].histogram,
-            });
+            if (results[0].count.length === 0) {
+                res.send({
+                    status: "success",
+                    num_results: 0,
+                    histogram: [],
+                });
+            }
+            else {
+                res.send({
+                    status: "success",
+                    num_results: results[0].count[0].count,
+                    histogram: results[0].histogram,
+                });
+            }
         }).catch(err => {
             console.log(err.message);
             res.send({
