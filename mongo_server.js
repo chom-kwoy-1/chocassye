@@ -112,17 +112,18 @@ function makeCorpusQuery(query) {
         if (ignoreSep) {
             queryText = queryText.replace(/[ .^]/g, "");
         }
-        searchPattern = {
-            [text_ngrams_field]: {
-                $all: [
-                    ...make_ngrams(queryText, 1),
-                    ...make_ngrams(queryText, 2),
-                    ...make_ngrams(queryText, 3),
-                    ...make_ngrams(queryText, 4),
-                ]
-            },
-            [text_field]: {$regex: new RegExp(escapeStringRegexp(queryText))},
-        };
+
+        if (queryText.length === 0) {
+            return null;
+        }
+
+        let ngrams = make_ngrams(queryText, Math.min(queryText.length, 4));
+
+        searchPattern = { [text_ngrams_field]: { $all: ngrams } };
+        if (queryText.length > 4) {
+            searchPattern[text_field] = {$regex: makeSearchRegex(text)};
+        }
+
     } else {
         searchPattern = {[text_field]: {$regex: makeSearchRegex(text)}};
     }
@@ -264,6 +265,8 @@ db_client.connect().then(function() {
             {$project: {_id: 1}},
         ];
 
+        //console.dir(pipeline, {depth: null});
+
         const sentences_collection = db.collection('sentences');
         sentences_collection.aggregate(pipeline).toArray().then((results) => {
             return sentences_collection.aggregate([
@@ -327,7 +330,7 @@ db_client.connect().then(function() {
         const timestamp = new Date().toISOString();
         console.log(`${timestamp} ip=${req.socket.remoteAddress} | SearchStats text=${req.body.term} doc=${req.body.doc}`);
 
-        const pipeline = makeCorpusQuery(req.body, PAGE_N);
+        let pipeline = makeCorpusQuery(req.body, PAGE_N);
 
         if (pipeline === null) {
             res.send({
@@ -338,26 +341,30 @@ db_client.connect().then(function() {
             return;
         }
 
-        const sentences_collection = db.collection('sentences');
-        sentences_collection.aggregate([
+        pipeline = [
             ...pipeline,
             {$facet: {
                 count: [{$count: "count"}],
                 histogram: [
                     {$group: {
-                        _id: "$decade_sort",
-                        period: {$first: "$decade_sort"},
-                        num_hits: {$sum: 1}
-                    }},
+                            _id: "$decade_sort",
+                            period: {$first: "$decade_sort"},
+                            num_hits: {$sum: 1}
+                        }},
                     {$project: {
-                        _id: 0,
-                        period: 1,
-                        num_hits: 1,
-                    }},
+                            _id: 0,
+                            period: 1,
+                            num_hits: 1,
+                        }},
                     {$sort: {period: 1}}
                 ]
             }}
-        ]).toArray().then((results) => {
+        ];
+
+        console.dir(pipeline, {depth: null});
+
+        const sentences_collection = db.collection('sentences');
+        sentences_collection.aggregate(pipeline).toArray().then((results) => {
             const elapsed = new Date() - beginTime;
             console.log("Successfully retrieved search stats in " + elapsed + "ms");
             if (results[0].count.length === 0) {
