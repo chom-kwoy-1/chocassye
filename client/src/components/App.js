@@ -49,7 +49,7 @@ function App(props) {
                     <Toolbar disableGutters>
 
                         {/* For big screens */}
-                        <Link to="/">
+                        <Link to="/search">
                             <CollectionsBookmarkIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
                         </Link>
                         <Typography

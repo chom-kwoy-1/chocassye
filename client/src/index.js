@@ -23,7 +23,7 @@ ReactDOM.render((
                     <CssBaseline />
                     <App>
                     <Routes>
-                        <Route exact path='/' element={<Navigate to='/search' />}></Route>
+                        <Route exact path='/' element={<Navigate to='/search' replace={true} />}></Route>
                         <Route exact path='/search' element={<SearchPage />}></Route>
                         <Route exact path='/howtouse' element={<HowToPage />}></Route>
                         <Route exact path='/about' element={<AboutPage />}></Route>

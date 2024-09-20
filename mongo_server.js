@@ -23,23 +23,26 @@ const db_url = 'mongodb://localhost:27017';
 // Create a new MongoClient
 const db_client = new MongoClient(db_url);
 
-// start listening
-const http_redirect_app = express();
-const domain = process.env.DOMAIN || "find.xn--gt1b.xyz";
-http_redirect_app.use(function(req, res) {
-    res.redirect('https://' + domain + req.originalUrl);
-});
-const http_server = http.createServer(http_redirect_app).listen(port, () => console.log(`Listening on port ${port}`));
-let https_server = null;
-
+let http_server;
 if (process.env.SSL === "ON") {
+    // start listening
+    const http_redirect_app = express();
+    const domain = process.env.DOMAIN || "find.xn--gt1b.xyz";
+    http_redirect_app.use(function(req, res) {
+        res.redirect('https://' + domain + req.originalUrl);
+    });
+    http_server = http.createServer(http_redirect_app).listen(port, () => console.log(`Listening on port ${port}`));
+    let https_server = null;
+
     const privateKey = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/privkey.pem");
     const certificate = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/cert.pem");
     const ca = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/chain.pem");
     const credentials = { key: privateKey, cert: certificate, ca: ca };
     https_server = https.createServer(credentials, app).listen(sslport, () => console.log(`Listening on port ${sslport} with SSL`));
+}  else {
+    // start listening
+    http_server = http.createServer(app).listen(port, () => console.log(`Listening on port ${port}`));
 }
-
 
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
