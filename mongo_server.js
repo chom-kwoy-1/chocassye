@@ -347,15 +347,15 @@ db_client.connect().then(function() {
                 count: [{$count: "count"}],
                 histogram: [
                     {$group: {
-                            _id: "$decade_sort",
-                            period: {$first: "$decade_sort"},
-                            num_hits: {$sum: 1}
-                        }},
+                        _id: "$decade_sort",
+                        period: {$first: "$decade_sort"},
+                        num_hits: {$sum: 1}
+                    }},
                     {$project: {
-                            _id: 0,
-                            period: 1,
-                            num_hits: 1,
-                        }},
+                        _id: 0,
+                        period: 1,
+                        num_hits: 1,
+                    }},
                     {$sort: {period: 1}}
                 ]
             }}
