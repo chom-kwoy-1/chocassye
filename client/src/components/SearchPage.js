@@ -792,7 +792,6 @@ class SearchPage extends React.Component {
                                 onChange={(event) => this.handleIgnoreSepChange(event)}
                             />
                         </Grid>
-                        */}
                         <Grid item xs="auto" sm="auto">
                             <FormControlLabel
                                 control={<Checkbox size="small" sx={{py: 0}} />}
@@ -805,6 +804,7 @@ class SearchPage extends React.Component {
                                 onChange={(event) => this.handleExcludeModernChange(event)}
                             />
                         </Grid>
+                        */}
                     </Grid>
                 </Grid>
 

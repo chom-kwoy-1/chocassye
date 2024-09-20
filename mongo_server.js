@@ -7,6 +7,7 @@ import https from "https";
 import fs from "fs";
 import {MongoClient} from "mongodb";
 import escapeStringRegexp from 'escape-string-regexp';
+import nodecallspython from 'node-calls-python';
 
 const __dirname = path.resolve();
 
@@ -41,6 +42,18 @@ app.use(express.static(path.join(__dirname, "client/build")));
 db_client.connect().then(function() {
     console.log("Connected successfully to server");
     const db = db_client.db("chocassye");
+
+    app.post('/api/hangulize', (req, res) => {
+        let text = req.body.text;
+        nodecallspython.import("./english_hangul.py").then(async function (pymodule) {
+            let result = await nodecallspython.call(pymodule, "hangulize", text);
+            res.send({
+                status: "success",
+                phonemes: result[0],
+                hangul: result[1],
+            });
+        });
+    });
 
     app.post('/api/doc_suggest', (req, res) => {
         let doc = req.body.doc;

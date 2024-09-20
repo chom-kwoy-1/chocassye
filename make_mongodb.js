@@ -384,7 +384,7 @@ function insert_documents(db) {
 
 function populate_db() {
     // Connection URL
-    const url = 'mongodb://localhost:27017';
+    const url = 'mongodb://0.0.0.0:27017';
 
     // Create a new MongoClient
     const client = new MongoClient(url);

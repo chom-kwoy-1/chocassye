@@ -19,6 +19,8 @@
     "jsdom": "^19.0.0",
     "log4js": "^6.7.1",
     "mongodb": "^6.5.0",
+    "node-calls-python": "^1.10.0",
+    "socket.io": "^4.7.5",
     "solr-client": "^0.10.0-rc10",
     "sqlite3": "^5.0.2",
     "xml2js": "^0.4.23"

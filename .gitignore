@@ -7,3 +7,5 @@ db/*
 dump/*
 .idea/*
 pages.txt
+AmazonKeypair.pem
+__pycache__/*
