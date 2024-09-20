@@ -278,9 +278,19 @@ function add_file(file, xml) {
                     filename: filename,
                     date: Date(),
                     text: text,
-                    text_trigrams: make_ngrams(text, 3),
+                    text_ngrams: [
+                        ...make_ngrams(text, 1),
+                        ...make_ngrams(text, 2),
+                        ...make_ngrams(text, 3),
+                        ...make_ngrams(text, 4),
+                    ],
                     text_without_sep: text_without_sep,
-                    text_without_sep_trigrams: make_ngrams(text_without_sep, 3),
+                    text_without_sep_ngrams: [
+                        ...make_ngrams(text_without_sep, 1),
+                        ...make_ngrams(text_without_sep, 2),
+                        ...make_ngrams(text_without_sep, 3),
+                        ...make_ngrams(text_without_sep, 4),
+                    ],
                     text_with_tone: text_with_tone,
                     html: html,
                     type: type,
@@ -320,17 +330,14 @@ function insert_documents(db) {
     const parser = new DOMParser;
 
     return Promise.all([
-        sentences_collection.deleteMany({}),
-        books_collection.deleteMany({}),
-    ]).then(() => Promise.all([
-        sentences_collection.createIndex({text_trigrams: 1}),
-        sentences_collection.createIndex({text_without_sep_trigrams: 1}),
+        sentences_collection.createIndex({text_ngrams: 1}),
+        sentences_collection.createIndex({text_without_sep_ngrams: 1}),
         sentences_collection.createIndex({year_sort: 1}),
         sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
         sentences_collection.createIndex({year_sort: 1, filename: 1, number_in_book: 1}),
         sentences_collection.createIndex({filename: 1}),
         sentences_collection.createIndex({number_in_book: 1}),
-    ])).then(() => Promise.all([
+    ]).then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
     ])).then(async ([xmlFiles, txtFiles]) => {
@@ -392,11 +399,12 @@ function populate_db() {
     // Use connect method to connect to the Server
     client.connect().then(function() {
         console.log("Connected successfully to server");
-
         const db = client.db("chocassye");
-
+        return db.dropDatabase();
+    }).then(() => {
+        console.log("Dropped database");
+        const db = client.db("chocassye");
         return insert_documents(db);
-
     }).then(() => {
         console.log("Finished inserting documents!");
         return client.close();

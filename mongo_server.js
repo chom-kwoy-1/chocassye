@@ -101,7 +101,7 @@ function makeCorpusQuery(query) {
     }
 
     const text_field = ignoreSep? "text_without_sep" : "text";
-    const text_trigrams_field = ignoreSep? "text_without_sep_trigrams" : "text_trigrams";
+    const text_ngrams_field = ignoreSep? "text_without_sep_ngrams" : "text_ngrams";
 
     let searchPattern;
     if (text.startsWith('%') && text.endsWith('%')
@@ -113,7 +113,14 @@ function makeCorpusQuery(query) {
             queryText = queryText.replace(/[ .^]/g, "");
         }
         searchPattern = {
-            [text_trigrams_field]: {$all: make_ngrams(queryText, 3)},
+            [text_ngrams_field]: {
+                $all: [
+                    ...make_ngrams(queryText, 1),
+                    ...make_ngrams(queryText, 2),
+                    ...make_ngrams(queryText, 3),
+                    ...make_ngrams(queryText, 4),
+                ]
+            },
             [text_field]: {$regex: new RegExp(escapeStringRegexp(queryText))},
         };
     } else {
