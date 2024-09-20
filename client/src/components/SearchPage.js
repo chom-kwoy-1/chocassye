@@ -31,6 +31,7 @@ import {
     highlightColors, StyledTableCell, StyledTableRow,
     postData, zip
 } from './utils';
+import {SearchResultContext} from "./SearchContext";
 
 
 function SearchResultsList(props) {
@@ -803,23 +804,15 @@ function SearchPageWrapper(props) {
     // Search options
     let excludeModern = searchParams.get('excludeModern') ?? 'no';
     let ignoreSep = searchParams.get('ignoreSep') ?? 'no';
+    const [result, setResult] = React.useContext(SearchResultContext);
 
-    let [result, setResult] = React.useState({
-        result: [],
-        result_term: "",
-        page_N: 50,
-        loaded: false,
-        num_results: 0,
-        histogram: [],
-        statsLoaded: false,
-    });
     let [docSuggestions, setDocSuggestions] = React.useState({
         result: [],
         num_results: 0,
         loaded: false,
     });
 
-    const isInited = React.useRef(false);
+    const isInited = React.useRef(result.result_term === term && result.loaded);
 
     const prevResult = React.useRef(result);
     const prevQuery = React.useRef({
@@ -857,6 +850,7 @@ function SearchPageWrapper(props) {
                                 result: result,
                                 page_N: page_N,
                                 result_term: query.term,
+                                result_page: query.page,
                                 loaded: true
                             });
                         }

@@ -9,6 +9,7 @@ import {
     MenuItem, Paper
 } from '@mui/material';
 import './i18n';
+import {SearchResultContext} from "./SearchContext";
 
 
 function App(props) {
@@ -16,6 +17,17 @@ function App(props) {
 
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElUser, setAnchorElUser] = React.useState(null);
+
+    let [searchResult, setSearchResult] = React.useState({
+        result: [],
+        result_term: "",
+        result_page: 1,
+        page_N: 50,
+        loaded: false,
+        num_results: 0,
+        histogram: [],
+        statsLoaded: false,
+    });
     
     function handleOpenNavMenu(event) {
         setAnchorElNav(event.currentTarget);
@@ -154,7 +166,9 @@ function App(props) {
 
             <Container maxWidth="lg" sx={{ mb: 4, px: { xs: 0.2, sm: 2 } }}>
                 <Paper variant="outlined" sx={{ my: { xs: 2, md: 4 }, p: { xs: 1, md: 3 } }}>
-                    {props.children}
+                    <SearchResultContext.Provider value={[ searchResult, setSearchResult ]}>
+                        {props.children}
+                    </SearchResultContext.Provider>
                 </Paper>
             </Container>
 
