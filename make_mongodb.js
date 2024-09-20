@@ -380,7 +380,7 @@ function insert_documents(db) {
                 });
             promises.push(pushTask);
 
-            if (i % 16 === 0) {
+            if (i % (process.env.BATCH || 16) === 0) {
                 await Promise.all(promises);
                 promises = [];
             }
