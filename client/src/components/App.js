@@ -64,7 +64,7 @@ function App(props) {
                                 color: 'inherit',
                                 textDecoration: 'none',
                             }}>
-                            <Link to="/">{t('Chocassye')}</Link>
+                            <Link to="/search">{t('Chocassye')}</Link>
                         </Typography>
                         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                             <Link to="/search">
@@ -141,7 +141,7 @@ function App(props) {
                                 color: 'inherit',
                                 textDecoration: 'none',
                                 }}>
-                            <Link to="/">{t('Chocassye')}</Link>
+                            <Link to="/search">{t('Chocassye')}</Link>
                         </Typography>
 
                         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
