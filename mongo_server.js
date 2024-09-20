@@ -48,7 +48,7 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
 
 
-function makeSearchRegex(text) {
+function makeSearchRegex(text, ignoreSep=false) {
     let strippedText = text;
     if (text.startsWith('%')) {
         strippedText = strippedText.substring(1);
@@ -69,14 +69,22 @@ function makeSearchRegex(text) {
         }
         if (isEscaping) {
             isEscaping = false;
-            regex += escapeStringRegexp(strippedText[i]);
+            let s = strippedText[i];
+            if (ignoreSep) {
+                s = s.replace(/[ .^]/g, "");
+            }
+            regex += escapeStringRegexp(s);
             continue;
         }
         if (strippedText[i] === '\\') {
             isEscaping = true;
             continue;
         }
-        regex += escapeStringRegexp(strippedText[i]);
+        let s = strippedText[i];
+        if (ignoreSep) {
+            s = s.replace(/[ .^]/g, "");
+        }
+        regex += escapeStringRegexp(s);
     }
     if (!text.startsWith('%')) {
         regex = `^${regex}`;
@@ -84,9 +92,7 @@ function makeSearchRegex(text) {
     if (!text.endsWith('%')) {
         regex = `${regex}$`;
     }
-    console.log(`regex=${regex}`);
-    let textRegex = new RegExp(regex);
-    return textRegex;
+    return new RegExp(regex);
 }
 
 
@@ -120,11 +126,11 @@ function makeCorpusQuery(query) {
 
         searchPattern = { [text_ngrams_field]: { $all: ngrams } };
         if (queryText.length > 4) {
-            searchPattern[text_field] = {$regex: makeSearchRegex(text)};
+            searchPattern[text_field] = {$regex: makeSearchRegex(text, ignoreSep)};
         }
 
     } else {
-        searchPattern = {[text_field]: {$regex: makeSearchRegex(text)}};
+        searchPattern = {[text_field]: {$regex: makeSearchRegex(text, ignoreSep)}};
     }
 
     return [
