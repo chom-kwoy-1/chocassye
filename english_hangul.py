@@ -1,7 +1,6 @@
 import csv
 import hgtk
 import re
-import zerorpc
 
 
 def read_csv(file_name):
