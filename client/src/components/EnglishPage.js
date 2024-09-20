@@ -1,6 +1,5 @@
 import React from 'react';
 import './i18n';
-import { useTranslation } from 'react-i18next';
 
 
 async function postData(url = '', data = {}) {
@@ -20,7 +19,7 @@ async function postData(url = '', data = {}) {
 
 
 function TestWrapper(props) {
-    const { t, i18n } = useTranslation();
+
     const [ state, setState ] = React.useState({
         hangulOutput: "우오티즈디쓰",
         englishInput: "What is this?",

@@ -113,108 +113,102 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 
-class SearchResultsList extends React.Component {
+function SearchResultsList(props) {
+    const { t } = useTranslation();
 
-    constructor(props) {
-        super(props);
-    }
+    let footnotes = [];
 
-    render() {
-        
-        let footnotes = [];
-        
-        return <React.Fragment>
-        
-            <Grid item xs={12}>
-                <TableContainer component={Paper} elevation={3}>
-                    <Table size="small">
-                        <TableBody>
-                        
-                        {/* For each book */}
-                        {this.props.filteredResults.map(([book, match_ids_in_book], i) =>
-                            <StyledTableRow key={i}>
+    return <React.Fragment>
 
-                                {/* Year column */}
-                                <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
-                                    <Grid item sx={{ py: 0.4 }}>
-                                        {book.year ?? "-"}
+        <Grid item xs={12}>
+            <TableContainer component={Paper} elevation={3}>
+                <Table size="small">
+                    <TableBody>
+
+                    {/* For each book */}
+                    {props.filteredResults.map(([book, match_ids_in_book], i) =>
+                        <StyledTableRow key={i}>
+
+                            {/* Year column */}
+                            <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
+                                <Grid item sx={{ py: 0.4 }}>
+                                    {book.year ?? "-"}
+                                </Grid>
+                            </StyledTableCell>
+
+                            {/* Sentences column */}
+                            <StyledTableCell>
+
+                                {/* For each sentence */}
+                                {zip(book.sentences, match_ids_in_book)
+                                .map(([sentence, match_ids_in_sentence], i) =>
+                                    <Grid item key={i} sx={{ py: 0.4 }}>
+
+                                        {/* Highlighted sentence */}
+                                        <Interweave
+                                            content={highlight(
+                                                sentence.html ?? sentence.text,
+                                                props.resultTerm,
+                                                match_ids_in_sentence,
+                                                footnotes,
+                                                props.romanize,
+                                            )}
+                                            allowList={['mark', 'span', 'a']}
+                                            allowAttributes={true}
+                                        />&#8203;
+
+                                        {/* Add source link */}
+                                        <span style={{color: '#888'}}>
+                                            &lang;
+                                            <Link className="sourceLink"
+                                                  to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${props.resultTerm}`}
+                                                  style={{textDecoration: "underline dotted lightgrey"}}>
+                                                {sentence.page === null? book.name : `${book.name}:`}
+                                            </Link>
+                                            {sentence.hasImages && sentence.page !== '' ?
+                                                sentence.page.split('-').map((page, i) => {
+                                                    const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
+                                                    return <ImageTooltip title={pageImagePreview(page, imageURL, t)}
+                                                                         placement="right" key={i}>
+                                                        <span>
+                                                            <a className="pageNum"
+                                                               style={{color: '#888', textDecoration: 'underline'}}
+                                                               href={imageURL}
+                                                               target="blank"
+                                                               key={i}>{page}</a>
+                                                            {i < sentence.page.split('-').length - 1? "-" : null}
+                                                        </span>
+                                                    </ImageTooltip>
+                                                }) : (sentence.page !== '' ? sentence.page : null)}
+                                            &rang;
+                                        </span>
+
                                     </Grid>
-                                </StyledTableCell>
+                                )}
 
-                                {/* Sentences column */}
-                                <StyledTableCell>
+                            </StyledTableCell>
 
-                                    {/* For each sentence */}
-                                    {zip(book.sentences, match_ids_in_book)
-                                    .map(([sentence, match_ids_in_sentence], i) =>
-                                        <Grid item key={i} sx={{ py: 0.4 }}>
+                        </StyledTableRow>
+                    )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Grid>
 
-                                            {/* Highlighted sentence */}
-                                            <Interweave
-                                                content={highlight(
-                                                    sentence.html ?? sentence.text,
-                                                    this.props.resultTerm,
-                                                    match_ids_in_sentence,
-                                                    footnotes,
-                                                    this.props.romanize,
-                                                )}
-                                                allowList={['mark', 'span', 'a']}
-                                                allowAttributes={true}
-                                            />&#8203;
-                                            
-                                            {/* Add source link */}
-                                            <span style={{color: '#888'}}>
-                                                &lang;
-                                                <Link className="sourceLink"
-                                                      to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${this.props.resultTerm}`}
-                                                      style={{textDecoration: "underline dotted lightgrey"}}>
-                                                    {sentence.page === null? book.name : `${book.name}:`}
-                                                </Link>
-                                                {sentence.hasImages && sentence.page !== '' ?
-                                                    sentence.page.split('-').map((page, i) => {
-                                                        const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
-                                                        return <ImageTooltip title={pageImagePreview(page, imageURL, this.props.t)}
-                                                                             placement="right" key={i}>
-                                                            <span>
-                                                                <a className="pageNum"
-                                                                   style={{color: '#888', textDecoration: 'underline'}}
-                                                                   href={imageURL}
-                                                                   target="blank"
-                                                                   key={i}>{page}</a>
-                                                                {i < sentence.page.split('-').length - 1? "-" : null}
-                                                            </span>
-                                                        </ImageTooltip>
-                                                    }) : (sentence.page !== '' ? sentence.page : null)}
-                                                &rang;
-                                            </span>
+        <Grid item xs={12} container alignItems="flex-start" spacing={1.5} className="searchResultsList">
+            {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
 
-                                        </Grid>
-                                    )}
+            {/* Show footnotes */}
+            {footnotes.map((footnote, i) =>
+                <div key={i} className="footnoteContent">
+                    <a className="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
+                    &nbsp;
+                    {footnote}
+                </div>
+            )}
+        </Grid>
 
-                                </StyledTableCell>
-
-                            </StyledTableRow>
-                        )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Grid>
-            
-            <Grid item xs={12} container alignItems="flex-start" spacing={1.5} className="searchResultsList">
-                {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
-                
-                {/* Show footnotes */}
-                {footnotes.map((footnote, i) => 
-                    <div key={i} className="footnoteContent">
-                        <a className="footnoteLink" id={`note${i+1}`} href={`#notefrom${i+1}`} data-footnotenum={`${i+1}`}></a>
-                        &nbsp;
-                        {footnote}
-                    </div>
-                )}
-            </Grid>
-            
-        </React.Fragment>;
-    }
+    </React.Fragment>;
 }
 
 
@@ -276,219 +270,196 @@ function highlight(text, searchTerm, match_ids, footnotes, romanize) {
     return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
 }
 
+const SearchResultsWrapper = React.memo(function (props) {
+    const { t } = useTranslation();
 
-class SearchResults extends React.Component {
+    const [disabledMatches, setDisabledMatches] = React.useState(new Set());
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            disabledMatches: new Set(),
-        };
-    }
+    let num_pages = Math.ceil(props.numResults / props.pageN);
 
-    toggleMatch(_, i) {
-        let disabledMatches = new Set(this.state.disabledMatches);
-        if (disabledMatches.has(i)) {
-            disabledMatches.delete(i);
+    // Determine highlight colors
+    let matches = [];
+
+    function toggleMatch(_, i) {
+        let disabledMatches_ = new Set(disabledMatches);
+        if (disabledMatches_.has(i)) {
+            disabledMatches_.delete(i);
         }
         else {
-            disabledMatches.add(i);
+            disabledMatches_.add(i);
         }
 
-        this.setState({
-            ...this.state,
-            disabledMatches: disabledMatches
-        });
+        setDisabledMatches(disabledMatches_);
     }
 
-    componentDidUpdate(prevProps) {
-        if (prevProps.resultTerm !== this.props.resultTerm
-            || prevProps.page !== this.props.page
-            || prevProps.doc !== this.props.doc) {
-            this.setState({
-                ...this.state,
-                disabledMatches: new Set()
-            });
-        }
-    }
+    React.useEffect(() => {
+        setDisabledMatches(new Set());
+    }, [props.resultTerm, props.page, props.doc]);
 
-    render() {
-        console.log("Rerender  SearchResults!!!");
+    for (const book of props.results) {
+        let book_parts = [];
+        for (const sentence of book.sentences) {
 
-        let num_pages = Math.ceil(this.props.numResults / this.props.pageN);
+            let text = sentence.html ?? sentence.text;
 
-        // Determine highlight colors
-        let matches = [];
+            // Find matches
+            let hlRegex = searchTerm2Regex(props.resultTerm);
+            let [rawText, rawTextRanges] = toText(text);
+            let match_ranges = [
+                ...getMatchingRanges(hlRegex, rawText, rawTextRanges, rawTextRanges),
+                ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
+            ];
 
-        for (const book of this.props.results) {
-            let book_parts = [];
-            for (const sentence of book.sentences) {
-                
-                let text = sentence.html ?? sentence.text;
-                
-                // Find matches
-                let hlRegex = searchTerm2Regex(this.props.resultTerm);
-                let [rawText, rawTextRanges] = toText(text);
-                let match_ranges = [
-                    ...getMatchingRanges(hlRegex, rawText, rawTextRanges, rawTextRanges),
-                    ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
-                ];
-                
-                // Remove overlapping ranges
-                match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
-                
-                let parts = [];
-                for (let range of match_ranges) {
-                    parts.push(yale_to_hangul(rawText.slice(...range)));
-                }
-                
-                book_parts.push(parts);
+            // Remove overlapping ranges
+            match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
+
+            let parts = [];
+            for (let range of match_ranges) {
+                parts.push(yale_to_hangul(rawText.slice(...range)));
             }
-            matches.push(book_parts);
+
+            book_parts.push(parts);
         }
+        matches.push(book_parts);
+    }
 
-        // List of unique matches in current page
-        let uniqueMatches = [...new Set(matches.flat(2))];
+    // List of unique matches in current page
+    let uniqueMatches = [...new Set(matches.flat(2))];
 
-        // Array(book)[Array(sentence)[Array(matches)[int]]]
-        let match_ids = matches.map(
-            (matches_in_book) => matches_in_book.map(
-                (matches_in_sentence) => matches_in_sentence.map(
-                    (match) => uniqueMatches.indexOf(match)
-                )
+    // Array(book)[Array(sentence)[Array(matches)[int]]]
+    let match_ids = matches.map(
+        (matches_in_book) => matches_in_book.map(
+            (matches_in_sentence) => matches_in_sentence.map(
+                (match) => uniqueMatches.indexOf(match)
             )
-        );
-
-        let filtered_results_list = zip(
-            this.props.results,
-            match_ids
         )
+    );
+
+    let filtered_results_list = zip(
+        props.results,
+        match_ids
+    )
         //.filter(
         //    ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
         //        !match_ids_in_book.flat().every(
-        //            id => this.props.disabledMatches.has(id)
+        //            id => props.disabledMatches.has(id)
         //        )
         //)
         .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
 
             let sentences_and_indices =
                 zip(book.sentences, match_ids_in_book);
-                //.filter(
-                //    ([_, match_ids_in_sentence]) =>
-                //        !match_ids_in_sentence.every(
-                //            id => this.props.disabledMatches.has(id)
-                //        )
-                //);
+            //.filter(
+            //    ([_, match_ids_in_sentence]) =>
+            //        !match_ids_in_sentence.every(
+            //            id => props.disabledMatches.has(id)
+            //        )
+            //);
 
             let [sentences, indices] = zip(...sentences_and_indices);
 
             return [{...book, sentences: sentences}, indices];
         });
 
-        return <React.Fragment>
+    return <React.Fragment>
 
-            <Histogram
-                data={this.props.histogram}
-                t={this.props.t}
-                setPage={this.props.setPage}
-                pageN={this.props.pageN}
-            />
-            
-            {/* Show highlight match legend */}
-            <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
-                {uniqueMatches.map((part, i) =>
-                    <Grid key={i} item xs="auto">
-                        <Chip 
-                            label={part} 
-                            sx={{backgroundColor: highlightColors[i % highlightColors.length]}}
-                            size="small"
-                            onDelete={() => null} 
-                            clickable>
-                            {/*<span
-                                className={this.state.disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                                onClick={(event) => {this.toggleMatch(event, i)}}>
-                                <span className={"".concat("colorShower s", i)}></span>
-                                <span className="matchLegendWord">{part}</span>
-                            </span>*/}
-                        </Chip>
-                    </Grid>
-                )}
-            </Grid>
-            
-            <Grid item sm="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>
-                <FormControlLabel
-                    control={<Checkbox size="small" sx={{py: 0}} />} 
-                    label={
-                        <Typography sx={{fontSize: "1em"}}>
-                            {this.props.t("Romanization")}
-                        </Typography>
-                    }
-                    checked={this.props.romanize}
-                    onChange={(event) => this.props.handleRomanizeChange(event)}
-                />
-            </Grid>
-            
-            {/* Pager on top */}
-            <Grid item xs={12}>
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center">
-                    {filtered_results_list.length > 0?
-                        <Pagination 
-                            color="primary"
-                            count={num_pages}
-                            siblingCount={2}
-                            boundaryCount={2}
-                            page={this.props.page}
-                            onChange={(_, page) => this.props.setPage(page)}
-                        /> : null}
-                </Box>
-            </Grid>
+        <Histogram
+            data={props.histogram}
+            t={t}
+            setPage={props.setPage}
+            pageN={props.pageN}
+        />
 
-            {/* Results area */}
-            <Grid item xs={12}>
-                {filtered_results_list.length > 0?
-                    null:
-                    <div>
-                        <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                        <HowToPageWrapper title=""/>
-                    </div>
+        {/* Show highlight match legend */}
+        <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
+            {uniqueMatches.map((part, i) =>
+                <Grid key={i} item xs="auto">
+                    <Chip
+                        label={part}
+                        sx={{backgroundColor: highlightColors[i % highlightColors.length]}}
+                        size="small"
+                        onDelete={() => null}
+                        clickable>
+                        {<span
+                            className={disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                            onClick={(event) => {toggleMatch(event, i)}}>
+                            <span className={"".concat("colorShower s", i)}></span>
+                            <span className="matchLegendWord">{part}</span>
+                        </span>}
+                    </Chip>
+                </Grid>
+            )}
+        </Grid>
+
+        <Grid item sm="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>
+            <FormControlLabel
+                control={<Checkbox size="small" sx={{py: 0}} />}
+                label={
+                    <Typography sx={{fontSize: "1em"}}>
+                        {t("Romanization")}
+                    </Typography>
                 }
-            </Grid>
-            
-            <SearchResultsList
-                filteredResults={filtered_results_list}
-                romanize={this.props.romanize}
-                ignoreSep={this.props.ignoreSep}
-                resultTerm={this.props.resultTerm}
-                t={this.props.t}
+                checked={props.romanize}
+                onChange={(event) => props.handleRomanizeChange(event)}
             />
+        </Grid>
 
-            {/* Pager on bottom */}
-            <Grid item xs={12} my={1}>
-                <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center">
-                    {filtered_results_list.length > 0?
-                        <Pagination 
-                            color="primary"
-                            count={num_pages}
-                            siblingCount={2}
-                            boundaryCount={2}
-                            page={this.props.page}
-                            onChange={(_, page) => this.props.setPage(page)}
-                        /> : null}
-                </Box>
-            </Grid>
-        </React.Fragment>;
-    }
-}
+        {/* Pager on top */}
+        <Grid item xs={12}>
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center">
+                {filtered_results_list.length > 0?
+                    <Pagination
+                        color="primary"
+                        count={num_pages}
+                        siblingCount={2}
+                        boundaryCount={2}
+                        page={props.page}
+                        onChange={(_, page) => props.setPage(page)}
+                    /> : null}
+            </Box>
+        </Grid>
 
-const SearchResultsWrapper = React.memo(function SearchResultsWrapper(props) {
-    // measure time to render
-    return <SearchResults {...props} />;
+        {/* Results area */}
+        <Grid item xs={12}>
+            {filtered_results_list.length > 0?
+                null:
+                <div>
+                    <Trans i18nKey='No match. Please follow the instructions below for better results.' />
+                    <HowToPageWrapper title=""/>
+                </div>
+            }
+        </Grid>
+
+        <SearchResultsList
+            filteredResults={filtered_results_list}
+            romanize={props.romanize}
+            ignoreSep={props.ignoreSep}
+            resultTerm={props.resultTerm}
+            t={t}
+        />
+
+        {/* Pager on bottom */}
+        <Grid item xs={12} my={1}>
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center">
+                {filtered_results_list.length > 0?
+                    <Pagination
+                        color="primary"
+                        count={num_pages}
+                        siblingCount={2}
+                        boundaryCount={2}
+                        page={props.page}
+                        onChange={(_, page) => props.setPage(page)}
+                    /> : null}
+            </Box>
+        </Grid>
+    </React.Fragment>;
+
 }, arePropsEqual);
 
 function arePropsEqual(oldProps, newProps) {
@@ -507,352 +478,324 @@ function arePropsEqual(oldProps, newProps) {
     return equal;
 }
 
-class DocSelector extends React.Component {
+function DocSelector(props) {
+    const { t } = useTranslation();
+
+    const [open, setOpen] = React.useState(false);
     
-    constructor(props) {
-        super(props);
-        this.state = {
-            open: false
-        };
-    }
-    
-    handleChange(ev, doc, reason) {
+    function handleChange(ev, doc, reason) {
         if (reason === 'selectOption') {
-            this.props.navigate(`/source?name=${doc.name}`);
+            props.navigate(`/source?name=${doc.name}`);
         }
     }
-    
-    handleKeyDown(ev) {
+
+    function handleKeyDown(ev) {
         if (ev.key === "Enter") {
-            this.props.onRefresh();
+            props.onRefresh();
         }
     }
-    
-    handleDocChange(ev, value, reason) {
+
+    function handleDocChange(ev, value, reason) {
         if (reason === 'input') {
-            this.props.handleDocChange(value);
+            props.handleDocChange(value);
         }
     }
-    
-    render() {
-        let docCandLoading = !this.props.docSuggestions.loaded;
-        
-        return <Autocomplete
-            fullWidth
-            open={this.state.open}
-            onOpen={() => this.setState({...this.state, open: true})}
-            onClose={() => this.setState({...this.state, open: false})}
-            options={this.props.docSuggestions.result}
-            getOptionLabel={(doc) => typeof doc === 'string'? doc : `${doc.name} (${doc.year_string})`}
-            loading={docCandLoading}
-            freeSolo
-            onChange={(ev, value, reason) => this.handleChange(ev, value, reason)}
-            onInputChange={(ev, value, reason) => this.handleDocChange(ev, value, reason)}
-            onKeyDown={(ev) => this.handleKeyDown(ev)}
-            filterOptions={(x) => x}
-            inputValue={this.props.doc}
-            renderInput={(params) => (
-                <TextField
-                    {...params}
-                    variant="standard" 
-                    label={this.props.t("document name...")}
-                    InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                            <React.Fragment>
-                                {docCandLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                {params.InputProps.endAdornment}
-                            </React.Fragment>
-                        ),
-                    }}
-                />
-            )}
-        />;
-    }
+
+    let docCandLoading = !props.docSuggestions.loaded;
+
+    return <Autocomplete
+        fullWidth
+        open={open}
+        onOpen={() => setOpen(true)}
+        onClose={() => setOpen(false)}
+        options={props.docSuggestions.result}
+        getOptionLabel={(doc) => typeof doc === 'string'? doc : `${doc.name} (${doc.year_string})`}
+        loading={docCandLoading}
+        freeSolo
+        onChange={(ev, value, reason) => handleChange(ev, value, reason)}
+        onInputChange={(ev, value, reason) => handleDocChange(ev, value, reason)}
+        onKeyDown={(ev) => handleKeyDown(ev)}
+        filterOptions={(x) => x}
+        inputValue={props.doc}
+        renderInput={(params) => (
+            <TextField
+                {...params}
+                variant="standard"
+                label={t("document name...")}
+                InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                        <React.Fragment>
+                            {docCandLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                        </React.Fragment>
+                    ),
+                }}
+            />
+        )}
+    />;
 }
 
-class SearchPage extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            romanize: false,
-            anchorEl: null,
-            gugyeolInputOpen: false,
-            isFocused: false,
-        };
+function SearchPage(props) {
+    const { t } = useTranslation();
 
-        this.setPage = this.setPage.bind(this);
-    }
+    const [romanize, setRomanize] = React.useState(false);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
+    const [isFocused, setIsFocused] = React.useState(false);
 
-    setSearchParams(args) {
-        this.props.setSearchParams({
-            term: this.props.term,
-            doc: this.props.doc,
-            page: this.props.page,
-            excludeModern: this.props.excludeModern,
-            ignoreSep: this.props.ignoreSep,
+    function setSearchParams(args) {
+        props.setSearchParams({
+            term: props.term,
+            doc: props.doc,
+            page: props.page,
+            excludeModern: props.excludeModern,
+            ignoreSep: props.ignoreSep,
             ...args
         });
     }
 
-    handleChange(event) {
+    function handleChange(event) {
         let searchTerm = event.target.value;
-        this.setSearchParams({term: searchTerm});
+        setSearchParams({term: searchTerm});
     }
 
-    handleDocChange(doc) {
-        this.setSearchParams({doc: doc});
+    function  handleDocChange(doc) {
+        setSearchParams({doc: doc});
     }
 
-    handleExcludeModernChange(event) {
+    function handleExcludeModernChange(event) {
         let excludeModern = event.target.checked;
-        this.setSearchParams({excludeModern: excludeModern? "yes" : "no"});
+        setSearchParams({excludeModern: excludeModern? "yes" : "no"});
     }
 
-    handleIgnoreSepChange(event) {
+    function handleIgnoreSepChange(event) {
         let ignoreSep = event.target.checked;
-        this.setSearchParams({ignoreSep: ignoreSep? "yes" : "no"});
+        setSearchParams({ignoreSep: ignoreSep? "yes" : "no"});
     }
 
-    handleRomanizeChange(event) {
-        this.setState({
-            ...this.state,
-            romanize: event.target.checked
-        })
+    function handleRomanizeChange(event) {
+        setRomanize(event.target.checked);
     }
-    
-    handleKeyDown(ev) {
+
+    function handleKeyDown(ev) {
         if (ev.key === "Enter") {
-            this.props.onRefresh();
+            props.onRefresh();
         }
     }
 
-    setPage(page) {
-        this.setSearchParams({page: page});
+    function setPage(page) {
+        setSearchParams({page: page});
     }
 
-    toggleGugyeolInput(e) {
-        this.setState({
-            ...this.state,
-            anchorEl: document.getElementById('searchTermField'),
-            gugyeolInputOpen: !this.state.gugyeolInputOpen,
-            isFocused: !this.state.gugyeolInputOpen,
-        });
+    function toggleGugyeolInput(e) {
+        setAnchorEl(document.getElementById('searchTermField'));
+        setGugyeolInputOpen(!gugyeolInputOpen);
+        setIsFocused(!gugyeolInputOpen);
     }
 
-    setGugyeolFocus(isFocused) {
-        this.setState({
-            ...this.state,
-            anchorEl: document.getElementById('searchTermField'),
-            isFocused: isFocused
-        });
-    }
-
-    replaceGugyeol(suggestion) {
-        let term = this.props.term;
+    function replaceGugyeol(suggestion) {
+        let term = props.term;
         term = term.slice(0, term.length - suggestion.replaceLength) + suggestion.gugyeol;
-        this.props.setSearchParams({
+        props.setSearchParams({
             term: term,
-            doc: this.props.doc,
-            page: this.props.page,
-            excludeModern: this.props.excludeModern,
-            ignoreSep: this.props.ignoreSep,
+            doc: props.doc,
+            page: props.page,
+            excludeModern: props.excludeModern,
+            ignoreSep: props.ignoreSep,
         });
     }
 
-    render() {
-        console.log("SearchPage rerender");
-        let searchTerm = this.props.term;
-        let suggestedGugyeols = suggestGugyeol(searchTerm);
-        let groupedSuggestions = [];
-        const COLUMNS = 3;
-        for (let i = 0; i < suggestedGugyeols.length; i++) {
-            if (i % COLUMNS === 0) {
-                groupedSuggestions.push([]);
-            }
-            groupedSuggestions[groupedSuggestions.length - 1].push(suggestedGugyeols[i]);
+    let searchTerm = props.term;
+    let suggestedGugyeols = suggestGugyeol(searchTerm);
+    let groupedSuggestions = [];
+    const COLUMNS = 3;
+    for (let i = 0; i < suggestedGugyeols.length; i++) {
+        if (i % COLUMNS === 0) {
+            groupedSuggestions.push([]);
         }
-        
-        return (
-            <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
-                <Grid item xs={9} sm={6}>
-                    <Box position="relative">
-                        <TextField
-                            id={"searchTermField"}
-                            variant="filled"
-                            value={searchTerm}
-                            label={this.props.t("Search term...")}
-                            onChange={(event) => this.handleChange(event)}
-                            onKeyDown={(event) => this.handleKeyDown(event)}
-                            fullWidth
-                        />
-                        <Box style={{position: "absolute", right: 0, padding: 0, top: "50%", transform: "translateY(-50%)"}}>
-                            <Tooltip title={this.props.t("Toggle Gugyeol Input")}>
-                                <IconButton variant="outlined" onClick={(e) => this.toggleGugyeolInput(e)}>
-                                    <Typography sx={{fontSize: "20pt", fontWeight: "900", lineHeight: 0.7,
-                                                     color: this.state.gugyeolInputOpen? "#4e342e": "inherit"}}>
-                                        <br/>
-                                    </Typography>
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
+        groupedSuggestions[groupedSuggestions.length - 1].push(suggestedGugyeols[i]);
+    }
+
+    return (
+        <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
+            <Grid item xs={9} sm={6}>
+                <Box position="relative">
+                    <TextField
+                        id={"searchTermField"}
+                        variant="filled"
+                        value={searchTerm}
+                        label={t("Search term...")}
+                        onChange={(event) => handleChange(event)}
+                        onKeyDown={(event) => handleKeyDown(event)}
+                        fullWidth
+                    />
+                    <Box style={{position: "absolute", right: 0, padding: 0, top: "50%", transform: "translateY(-50%)"}}>
+                        <Tooltip title={t("Toggle Gugyeol Input")}>
+                            <IconButton variant="outlined" onClick={(e) => toggleGugyeolInput(e)}>
+                                <Typography sx={{fontSize: "20pt", fontWeight: "900", lineHeight: 0.7,
+                                                 color: gugyeolInputOpen? "#4e342e": "inherit"}}>
+                                    <br/>
+                                </Typography>
+                            </IconButton>
+                        </Tooltip>
                     </Box>
-                    <Popper open={this.state.gugyeolInputOpen && this.state.isFocused} anchorEl={this.state.anchorEl}
-                            placement='bottom-end' style={{ zIndex: 1000 }}>
-                        <TableContainer component={Paper} elevation={3}>
-                            <Table size="small">
-                                <TableBody>
-                                    {groupedSuggestions.map((group, i) =>
-                                        <TableRow key={i}>
-                                            {group.map((suggestion, j) =>
-                                                <StyledTableCell key={j} sx={{padding: 0}}>
-                                                    <Button onClick={() => this.replaceGugyeol(suggestion)}>
-                                                        <Stack direction="column" justifyContent="center" alignItems="center">
-                                                            <Typography sx={{fontSize: "15pt", fontWeight: "900", lineHeight: 0.8}}>
-                                                                {suggestion.gugyeol}
-                                                            </Typography>
-                                                            <Typography sx={{fontSize: "8pt", lineHeight: 0.8}}>
-                                                                {suggestion.pron}
-                                                            </Typography>
-                                                        </Stack>
-                                                    </Button>
-                                                </StyledTableCell>
-                                            )}
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Popper>
+                </Box>
+                <Popper open={gugyeolInputOpen && isFocused} anchorEl={anchorEl}
+                        placement='bottom-end' style={{ zIndex: 1000 }}>
+                    <TableContainer component={Paper} elevation={3}>
+                        <Table size="small">
+                            <TableBody>
+                                {groupedSuggestions.map((group, i) =>
+                                    <TableRow key={i}>
+                                        {group.map((suggestion, j) =>
+                                            <StyledTableCell key={j} sx={{padding: 0}}>
+                                                <Button onClick={() => replaceGugyeol(suggestion)}>
+                                                    <Stack direction="column" justifyContent="center" alignItems="center">
+                                                        <Typography sx={{fontSize: "15pt", fontWeight: "900", lineHeight: 0.8}}>
+                                                            {suggestion.gugyeol}
+                                                        </Typography>
+                                                        <Typography sx={{fontSize: "8pt", lineHeight: 0.8}}>
+                                                            {suggestion.pron}
+                                                        </Typography>
+                                                    </Stack>
+                                                </Button>
+                                            </StyledTableCell>
+                                        )}
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Popper>
+            </Grid>
+            <Grid item xs={3} sm={1}>
+                <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={(e) => props.onRefresh(e)}>
+                    {t("Search")}
+                </Button>
+            </Grid>
+
+            <Grid item xs={0} sm={1}>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+                <DocSelector
+                    t={t}
+                    doc={props.doc}
+                    docSuggestions={props.docSuggestions}
+                    navigate={props.navigate}
+                    handleDocChange={(ev) => handleDocChange(ev)}
+                    onRefresh={() => props.onRefresh()}
+                />
+            </Grid>
+
+            <Grid item xs={12} sm={12}>
+                <Typography
+                    variant="h5"
+                    noWrap
+                    sx={{
+                        mr: 2,
+                        display: 'flex',
+                        flexGrow: 1,
+                        fontWeight: 500,
+                        color: 'inherit',
+                        textDecoration: 'none',
+                    }}>
+                    {yale_to_hangul(searchTerm)}
+                </Typography>
+            </Grid>
+
+            <Grid item xs="auto" sm="auto">
+                <Grid
+                    container
+                    direction="row"
+                    justifyContent="flex-start"
+                    alignItems="center">
+                    <Grid item xs="auto" sm="auto">
+                        <FormControlLabel
+                            control={<Checkbox size="small" sx={{py: 0}} />}
+                            label={
+                                <Typography sx={{fontSize: "1em"}}>
+                                    {t("Exclude modern translations")}
+                                </Typography>
+                            }
+                            checked={props.excludeModern === "yes"}
+                            onChange={(event) => handleExcludeModernChange(event)}
+                        />
+                    </Grid>
+                    {/*
+                    <Grid item xs="auto" sm="auto">
+                        <FormControlLabel
+                            fontSize="tiny"
+                            control={<Checkbox size="tiny" />}
+                            label={this.props.t("Ignore syllable separators")}
+                            checked={this.props.ignoreSep === "yes"}
+                            onChange={(event) => this.handleIgnoreSepChange(event)}
+                        />
+                    </Grid>
+                    <Grid item xs="auto" sm="auto">
+                        <FormControlLabel
+                            control={<Checkbox size="small" sx={{py: 0}} />}
+                            label={
+                                <Typography sx={{fontSize: "1em"}}>
+                                    {this.props.t("Regex")}
+                                </Typography>
+                            }
+                            checked={this.props.excludeModern === "yes"}
+                            onChange={(event) => this.handleExcludeModernChange(event)}
+                        />
+                    </Grid>
+                    */}
                 </Grid>
-                <Grid item xs={3} sm={1}>
-                    <Button 
-                        variant="contained" 
-                        fullWidth 
-                        onClick={(e) => this.props.onRefresh(e)}>
-                        {this.props.t("Search")}
-                    </Button>
-                </Grid>
-                
-                <Grid item xs={0} sm={1}>
-                </Grid>
-                
-                <Grid item xs={12} sm={4}>
-                    <DocSelector 
-                        t={this.props.t}
-                        doc={this.props.doc}
-                        docSuggestions={this.props.docSuggestions}
-                        navigate={this.props.navigate}
-                        handleDocChange={(ev) => this.handleDocChange(ev)}
-                        onRefresh={() => this.props.onRefresh()}
+            </Grid>
+
+            <Grid item xs={12} sm={12}>
+                <Typography sx={{fontSize: "1em", fontWeight: 600}}>
+                    {t('number Results', { numResults: props.numResults })}&ensp;
+                    {
+                        props.result.length > 0?
+                        t('current page', { startYear: props.result[0].year, endYear: props.result[props.result.length - 1].year})
+                        : <span></span>
+                    }
+                </Typography>
+            </Grid>
+
+
+            <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
+                <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
+                    <Backdrop
+                        sx={{
+                            color: '#fff',
+                            zIndex: (theme) => theme.zIndex.drawer + 1,
+                            position: 'absolute',
+                            alignItems: 'flex-start',
+                            pt: 5,
+                        }}
+                        open={!props.loaded}>
+                        <CircularProgress color="inherit" />
+                    </Backdrop>
+
+                    <SearchResultsWrapper
+                        results={props.result}
+                        numResults={props.numResults}
+                        romanize={romanize}
+                        handleRomanizeChange={(event) => handleRomanizeChange(event)}
+                        ignoreSep={props.ignoreSep}
+                        resultTerm={props.resultTerm}
+                        histogram={props.histogram}
+                        pageN={props.pageN}
+                        page={props.page}
+                        setPage={setPage}
+                        t={props.t}
                     />
                 </Grid>
-                
-                <Grid item xs={12} sm={12}>
-                    <Typography
-                        variant="h5"
-                        noWrap
-                        sx={{
-                            mr: 2,
-                            display: 'flex',
-                            flexGrow: 1,
-                            fontWeight: 500,
-                            color: 'inherit',
-                            textDecoration: 'none',
-                        }}>
-                        {yale_to_hangul(searchTerm)}
-                    </Typography>
-                </Grid>
-
-                <Grid item xs="auto" sm="auto">
-                    <Grid
-                        container
-                        direction="row"
-                        justifyContent="flex-start"
-                        alignItems="center">
-                        <Grid item xs="auto" sm="auto">
-                            <FormControlLabel
-                                control={<Checkbox size="small" sx={{py: 0}} />} 
-                                label={
-                                    <Typography sx={{fontSize: "1em"}}>
-                                        {this.props.t("Exclude modern translations")}
-                                    </Typography>
-                                }
-                                checked={this.props.excludeModern === "yes"}
-                                onChange={(event) => this.handleExcludeModernChange(event)}
-                            />
-                        </Grid>
-                        {/*
-                        <Grid item xs="auto" sm="auto">
-                            <FormControlLabel 
-                                fontSize="tiny"
-                                control={<Checkbox size="tiny" />} 
-                                label={this.props.t("Ignore syllable separators")}
-                                checked={this.props.ignoreSep === "yes"}
-                                onChange={(event) => this.handleIgnoreSepChange(event)}
-                            />
-                        </Grid>
-                        <Grid item xs="auto" sm="auto">
-                            <FormControlLabel
-                                control={<Checkbox size="small" sx={{py: 0}} />}
-                                label={
-                                    <Typography sx={{fontSize: "1em"}}>
-                                        {this.props.t("Regex")}
-                                    </Typography>
-                                }
-                                checked={this.props.excludeModern === "yes"}
-                                onChange={(event) => this.handleExcludeModernChange(event)}
-                            />
-                        </Grid>
-                        */}
-                    </Grid>
-                </Grid>
-
-                <Grid item xs={12} sm={12}>
-                    <Typography sx={{fontSize: "1em", fontWeight: 600}}>
-                        {this.props.t('number Results', { numResults: this.props.numResults })}&ensp;
-                        {
-                            this.props.result.length > 0?
-                            this.props.t('current page', { startYear: this.props.result[0].year, endYear: this.props.result[this.props.result.length - 1].year})
-                            : <span></span>
-                        }
-                    </Typography>
-                </Grid>
-                
-                
-                <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
-                    <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
-                        <Backdrop
-                            sx={{
-                                color: '#fff', 
-                                zIndex: (theme) => theme.zIndex.drawer + 1,
-                                position: 'absolute',
-                                alignItems: 'flex-start',
-                                pt: 5,
-                            }}
-                            open={!this.props.loaded}>
-                            <CircularProgress color="inherit" />
-                        </Backdrop>
-                        
-                        <SearchResultsWrapper
-                            results={this.props.result}
-                            numResults={this.props.numResults}
-                            romanize={this.state.romanize}
-                            handleRomanizeChange={(event) => this.handleRomanizeChange(event)}
-                            ignoreSep={this.props.ignoreSep}
-                            resultTerm={this.props.resultTerm}
-                            histogram={this.props.histogram}
-                            pageN={this.props.pageN}
-                            page={this.props.page}
-                            setPage={this.setPage}
-                            t={this.props.t}
-                        />
-                    </Grid>
-                </Grid>
-                
             </Grid>
-        );
-    }
+
+        </Grid>
+    );
 }
 
 
@@ -906,10 +849,9 @@ function suggest(doc, callback) {
     });
 }
 
+const ENABLE_SEARCH_AS_YOU_TYPE = false;
 
 function SearchPageWrapper(props) {
-    const { t, i18n } = useTranslation();
-    
     let navigate = useNavigate();
     let [searchParams, setSearchParams] = useSearchParams();
     let page = parseInt(searchParams.get('page') ?? '1');
@@ -1013,7 +955,6 @@ function SearchPageWrapper(props) {
         []
     );
 
-    const ENABLE_SEARCH_AS_YOU_TYPE = false;
     React.useEffect(() => {
         if (prevTerm.current !== term) {
             if (ENABLE_SEARCH_AS_YOU_TYPE) {
@@ -1032,7 +973,7 @@ function SearchPageWrapper(props) {
                 prevTerm.current = term;
             }
         }
-    }, [term]);
+    }, [term, refresh]);
 
     React.useEffect(() => {
         if (prevPage.current !== page || !isInited.current) {
@@ -1048,7 +989,8 @@ function SearchPageWrapper(props) {
             prevPage.current = page;
             return result;
         }
-    }, [page]);
+    }, [page, refresh]);
+
     React.useEffect(() => {
         if (prevDoc.current !== doc) {
             console.log("Doc changed: ", prevDoc.current, " -> ", doc);
@@ -1067,7 +1009,8 @@ function SearchPageWrapper(props) {
                 prevDoc.current = doc;
             }
         }
-    }, [doc]);
+    }, [doc, refresh]);
+
     React.useEffect(() => {
         if (prevExcludeModern.current !== excludeModern) {
             console.log("Exclude modern changed: ", prevExcludeModern.current, " -> ", excludeModern);
@@ -1082,7 +1025,8 @@ function SearchPageWrapper(props) {
             prevExcludeModern.current = excludeModern;
             return result;
         }
-    }, [excludeModern]);
+    }, [excludeModern, refresh]);
+
     React.useEffect(() => {
         if (prevIgnoreSep.current !== ignoreSep) {
             console.log("Ignore separator changed: ", prevIgnoreSep.current, " -> ", ignoreSep);
@@ -1097,7 +1041,7 @@ function SearchPageWrapper(props) {
             prevIgnoreSep.current = ignoreSep;
             return result;
         }
-    }, [ignoreSep]);
+    }, [ignoreSep, refresh]);
 
     React.useEffect(() => {
         return suggest_doc(doc);
@@ -1135,7 +1079,6 @@ function SearchPageWrapper(props) {
         onRefresh={forceRefresh}
         docSuggestions={docSuggestions}
         navigate={navigate}
-        t={t}
     />;
     const endTime = performance.now();
     console.log("SearchPage render time:", endTime - startTime);

@@ -43,16 +43,53 @@ db_client.connect().then(function() {
     console.log("Connected successfully to server");
     const db = db_client.db("chocassye");
 
+    app.post('/api/parse', (req, res) => {
+        nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
+            nodecallspython.call(pymodule, "parse_into_json", req.body.text).then(result => {
+                console.log(result);
+                res.send({
+                    status: "success",
+                    data: JSON.parse(result),
+                });
+            }).catch(err => {
+                console.log(err);
+                res.send({
+                    status: "error",
+                    msg: err.msg
+                });
+            });
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        });
+    });
+
     app.post('/api/hangulize', (req, res) => {
         let text = req.body.text;
         nodecallspython.import("./english_hangul.py").then(async function (pymodule) {
-            let result = await nodecallspython.call(pymodule, "hangulize", text);
-            res.send({
-                status: "success",
-                phonemes: result[0],
-                hangul: result[1],
+            nodecallspython.call(pymodule, "hangulize", text).then(result => {
+                res.send({
+                    status: "success",
+                    phonemes: result[0],
+                    hangul: result[1],
+                });
+            }).catch(err => {
+                console.log(err);
+                res.send({
+                    status: "error",
+                    msg: err.msg
+                });
             });
-        });
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        })
     });
 
     app.post('/api/doc_suggest', (req, res) => {
