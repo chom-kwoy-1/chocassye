@@ -211,7 +211,7 @@ db_client.connect().then(function() {
         const timestamp = new Date().toISOString();
         console.log(`${timestamp} ip=${req.socket.remoteAddress} | Search text=${req.body.term} doc=${req.body.doc}`);
 
-        const pipeline = makeCorpusQuery(req.body, PAGE_N);
+        let pipeline = makeCorpusQuery(req.body, PAGE_N);
 
         if (pipeline === null) {
             res.send({
@@ -224,8 +224,7 @@ db_client.connect().then(function() {
 
         const offset = (req.body.page - 1) * PAGE_N;
 
-        const sentences_collection = db.collection('sentences');
-        sentences_collection.aggregate([
+        pipeline = [
             ...pipeline,
             {$sort: {
                 year_sort: 1,
@@ -234,33 +233,43 @@ db_client.connect().then(function() {
             }},
             {$skip: offset},
             {$limit: PAGE_N},
-            {$group: {
-                _id: "$filename",
-                filename: {$first: "$filename"},
-                year_sort: {$first: "$year_sort"},
-                count: {$sum: 1},
-                sentences: {$push: "$$ROOT"}
-            }},
-            {$sort: {year_sort: 1, _id: 1}},
-            {$lookup: {
-                from: "books",
-                localField: "filename",
-                foreignField: "filename",
-                as: "book_info",
-            }},
-            {$unwind: "$book_info"},
-            {$project: {
-                _id: 0,
-                name: "$filename",
-                year: "$book_info.year",
-                year_start: "$book_info.year_start",
-                year_end: "$book_info.year_end",
-                year_string: "$book_info.year_string",
-                year_sort: "$book_info.year_sort",
-                sentences: 1,
-                count: 1
-            }},
-        ]).toArray().then((results) => {
+        ];
+
+        const sentences_collection = db.collection('sentences');
+        sentences_collection.aggregate(pipeline).toArray().then((results) => {
+            return sentences_collection.aggregate([
+                // Workaround for weird MongoDB behavior
+                {$match: {
+                    _id: {$in: results.map(result => result._id)}
+                }},
+                {$group: {
+                    _id: "$filename",
+                    filename: {$first: "$filename"},
+                    year_sort: {$first: "$year_sort"},
+                    count: {$sum: 1},
+                    sentences: {$push: "$$ROOT"}
+                }},
+                {$sort: {year_sort: 1, _id: 1}},
+                {$lookup: {
+                    from: "books",
+                    localField: "filename",
+                    foreignField: "filename",
+                    as: "book_info",
+                }},
+                {$unwind: "$book_info"},
+                {$project: {
+                    _id: 0,
+                    name: "$filename",
+                    year: "$book_info.year",
+                    year_start: "$book_info.year_start",
+                    year_end: "$book_info.year_end",
+                    year_string: "$book_info.year_string",
+                    year_sort: "$book_info.year_sort",
+                    sentences: 1,
+                    count: 1
+                }},
+            ]).toArray();
+        }).then((results) => {
             const elapsed = new Date() - beginTime;
             console.log("Successfully retrieved search results in " + elapsed + "ms");
             res.send({
