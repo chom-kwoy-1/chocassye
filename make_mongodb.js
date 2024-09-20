@@ -330,16 +330,9 @@ function insert_documents(db) {
     const parser = new DOMParser;
 
     return Promise.all([
-        sentences_collection.createIndex({text_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}), // for search
-        sentences_collection.createIndex({text_without_sep_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}),  // for search
-        sentences_collection.createIndex({text_ngrams: 1, decade_sort: 1}),  // for stats
-        sentences_collection.createIndex({text_without_sep_ngrams: 1, decade_sort: 1}),  // for stats
-        sentences_collection.createIndex({year_sort: 1, filename: 1}),  // for doc suggest
-        sentences_collection.createIndex({filename: 1, number_in_book: 1}),  // for source view
-    ]).then(() => Promise.all([
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
-    ])).then(async ([xmlFiles, txtFiles]) => {
+    ]).then(async ([xmlFiles, txtFiles]) => {
         console.log("total", xmlFiles.length, "files");
         console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
 
@@ -393,6 +386,18 @@ function insert_documents(db) {
             }
         }
         await Promise.all(promises);
+    }).then(() => {
+        console.log("Finished inserting documents!");
+        return Promise.all([
+            sentences_collection.createIndex({text_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}), // for search
+            sentences_collection.createIndex({text_without_sep_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}),  // for search
+            sentences_collection.createIndex({text_ngrams: 1, decade_sort: 1}),  // for stats
+            sentences_collection.createIndex({text_without_sep_ngrams: 1, decade_sort: 1}),  // for stats
+            sentences_collection.createIndex({year_sort: 1, filename: 1}),  // for doc suggest
+            sentences_collection.createIndex({filename: 1, number_in_book: 1}),  // for source view
+        ]);
+    }).then(() => {
+        console.log("Finished creating indexes!");
     });
 }
 

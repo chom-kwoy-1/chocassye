@@ -272,8 +272,8 @@ db_client.connect().then(function() {
                     _id: {$in: results.map(result => result._id)}
                 }},
                 {$project: {
-                    text_trigrams: 0,
-                    text_without_sep_trigrams: 0,
+                    text_ngrams: 0,
+                    text_without_sep_ngrams: 0,
                 }},
                 {$group: {
                     _id: "$filename",
