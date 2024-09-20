@@ -131,7 +131,7 @@ db_client.connect().then(function() {
 
     app.post('/api/parse', (req, res) => {
         nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
-            nodecallspython.call(pymodule, "parse_into_json", req.body.text).then(result => {
+            nodecallspython.call(pymodule, "parse_into_json", req.body.text, 20).then(result => {
                 result = JSON.parse(result);
                 if (result.error !== undefined) {
                     res.send({

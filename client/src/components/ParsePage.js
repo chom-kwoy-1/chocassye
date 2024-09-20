@@ -1,14 +1,72 @@
 import React from 'react';
 import './i18n';
 import {postData} from './utils';
-import {Button, Grid, MenuItem, Select, TextField} from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    CardContent, FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    TextField
+} from "@mui/material";
 import {useTranslation} from "react-i18next";
+import {yale_to_hangul} from './YaleToHangul';
+
+
+function makeParseTreeDOM(parseTree) {
+    if (typeof parseTree.children === 'string') {
+        return <Paper style={{padding: "10px"}}>{parseTree.canonical_form}</Paper>;
+    }
+    return <Stack direction="column">
+        <Box>
+            <Stack direction="row" spacing={1} sx={{
+                justifyContent: "center",
+                alignItems: "flex-end",
+            }} divider={<Box sx={{py: "10px"}}>+</Box>}>
+                {parseTree.children.map((child, i) => {
+                    return <React.Fragment key={i}>
+                        {makeParseTreeDOM(child)}
+                    </React.Fragment>
+                })}
+            </Stack>
+        </Box>
+        <Box display="flex" justifyContent="center" alignItems="center" style={{
+            borderBottom: "1px solid grey",
+            borderLeft: "1px solid grey",
+            borderRight: "1px solid grey",
+            borderBottomLeftRadius: 10,
+            borderBottomRightRadius: 10,
+            minHeight: "5px",
+        }}>
+            {yale_to_hangul(parseTree.canonical_form ?? "")}
+        </Box>
+        <Box display="flex" justifyContent="center" alignItems="center">
+            {parseTree.label}
+        </Box>
+    </Stack>;
+}
+
+function makeName(parseTree) {
+    if (typeof parseTree.children === 'string') {
+        return parseTree.canonical_form;
+    }
+    let result = [];
+    for (let child of parseTree.children) {
+        result.push(makeName(child));
+    }
+    return result.join(' + ');
+}
 
 
 function ParsePage(props) {
     const { t } = useTranslation();
 
-    const [currentQuery, setCurrentQuery] = React.useState("");
+    const [currentQuery, setCurrentQuery] = React.useState("안녕하시겠어요");
     const [parseResults, setParseResults] = React.useState([]);
     const [selectedParseIndex, setSelectedParseIndex] = React.useState('');
 
@@ -19,6 +77,11 @@ function ParsePage(props) {
             console.log(result);
             if (result.status === "success") {
                 setParseResults(result.data);
+                if (result.data.length > 0) {
+                    setSelectedParseIndex(0);
+                } else {
+                    setSelectedParseIndex('');
+                }
             } else {
                 setParseResults([]);
             }
@@ -27,13 +90,48 @@ function ParsePage(props) {
         });
     }
 
+    let parseTreeDOM = null;
+    if (Number.isInteger(selectedParseIndex) && parseResults.length > selectedParseIndex) {
+        const parseTree = parseResults[selectedParseIndex];
+        console.log(parseTree);
+        parseTreeDOM = makeParseTreeDOM(parseTree);
+    }
+
+    let pr_sum = 0;
+    for (let parseTree of parseResults) {
+        pr_sum += parseTree['prob'];
+    }
+
+    let filteredResults = parseResults.filter((parseTree) => {
+        return parseTree['prob'] / pr_sum > 0.001;
+    });
+
     return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
         <Grid item xs={12}>
-            <Select variant="filled" fullWidth value={selectedParseIndex}>
-                {parseResults.map((result, i) => {
-                    return <MenuItem key={i}>{JSON.stringify(result)}</MenuItem>
-                })}
-            </Select>
+            <Card elevation={1} style={{backgroundColor: "#FAFBFB"}}>
+                <CardContent>
+                    <Stack spacing={3}>
+                        <FormControl fullWidth>
+                            <InputLabel id="parse-selector">{t("Parse")}</InputLabel>
+                            <Select variant="filled"
+                                    value={selectedParseIndex}
+                                    onChange={(event) => setSelectedParseIndex(event.target.value)}
+                                    id="parse-selector">
+                                {filteredResults.map((result, i) => {
+                                    return <MenuItem key={i} value={i}>
+                                        {`${makeName(result)} (${(result['prob'] / pr_sum * 100).toFixed(1)}%)`}
+                                    </MenuItem>
+                                })}
+                            </Select>
+                        </FormControl>
+                        <Box display="flex"
+                             justifyContent="center"
+                             alignItems="center">
+                            {parseTreeDOM}
+                        </Box>
+                    </Stack>
+                </CardContent>
+            </Card>
         </Grid>
         <Grid item xs={9} sm={10} md={11}>
             <TextField
@@ -41,6 +139,7 @@ function ParsePage(props) {
                 variant="filled"
                 value={currentQuery}
                 onChange={(event) => setCurrentQuery(event.target.value)}
+                onKeyDown={(event) => {if (event.key === 'Enter') {refresh()}}}
                 label={t("Word or phrase")}
                 fullWidth
             />
