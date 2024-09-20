@@ -95,7 +95,7 @@ function showSentence(bookname, sentence, highlight_term, t, i) {
                             <Tooltip title={t("Image for page", { page: page })}>
                                 <a className="pageNum"
                                    style={{color: '#888', textDecoration: 'underline'}}
-                                   href={IMAGE_BASE_URL + bookname + '/' + page + '.jpg'}
+                                   href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
                                    target="blank"
                                    key={i}>{page}</a>
                                 {i < sentence.page.split('-').length - 1? "-" : null}
@@ -108,219 +108,214 @@ function showSentence(bookname, sentence, highlight_term, t, i) {
 }
 
 
-class SourcePage extends React.Component {
-
-    componentDidMount() {
-        this.props.initialize();
-    }
+function SourcePage(props) {
+    const { t } = useTranslation();
     
-    handleExcludeChineseChange(event) {
+    function handleExcludeChineseChange(event) {
         let excludeChinese = event.target.checked;
         if (excludeChinese) {
-            this.props.setSearchParams({
-                name: this.props.bookName,
+            props.setSearchParams({
+                name: props.bookName,
                 n: 0,
-                hl: this.props.highlightWord
+                hl: props.highlightWord
             });
         }
-        this.props.setExcludeChinese(excludeChinese);
+        props.setExcludeChinese(excludeChinese);
     }
 
-    handleViewCountChange(event) {
+    function handleViewCountChange(event) {
         let viewCount = event.target.value;
-        this.props.setViewCount(viewCount);
+        props.setViewCount(viewCount);
     }
-    
-    render() {
-        if (this.props.result.data === null) {
-            return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
-                <Grid item xs={12}>
-                    <Box>
-                        <Typography
-                            variant='h5'
-                            component='span'
-                            sx={{
-                                fontWeight: 500
-                            }}>{this.props.bookName}</Typography>
-                    </Box>
+
+    if (props.result.data === null) {
+        return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+            <Grid item xs={12}>
+                <Box>
+                    <Typography
+                        variant='h5'
+                        component='span'
+                        sx={{
+                            fontWeight: 500
+                        }}>{props.bookName}</Typography>
+                </Box>
+            </Grid>
+        </Grid>
+    }
+
+    let hl = props.highlightWord ?? "NULL";
+
+    const PAGE = props.viewCount;
+    let pageCount = Math.ceil(props.result.data.count / PAGE);
+
+    let n = props.numberInSource;
+    let page = Math.floor(n / PAGE);
+
+    return (
+        <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+            <Grid item xs={12}>
+                <Box>
+                    <Typography
+                        variant='h5'
+                        component='span'
+                        sx={{
+                            fontWeight: 500
+                        }}>{props.bookName}</Typography>
+                    &ensp;
+                    <span>{props.result.data.year_string}</span>
+                </Box>
+            </Grid>
+
+            {/* Bibliography and attributions */}
+            <Grid item xs={10} sm={8} lg={6} mx="auto">
+                <TableContainer component={Paper} elevation={1}>
+                    <Table size="small">
+                        <TableBody>
+                            {props.result.data.bibliography === "" ? null :
+                            <StyledTableRow>
+                                <StyledTableCell>
+                                    <Typography color={"textSecondary"}>
+                                        {t("Source")}
+                                    </Typography>
+                                </StyledTableCell>
+                                <StyledTableCell>
+                                        {props.result.data.bibliography}
+                                </StyledTableCell>
+                            </StyledTableRow>}
+                            {props.result.data.attributions.length === 0 ? null :
+                            <StyledTableRow>
+                                <StyledTableCell>
+                                    <Typography color={"textSecondary"}>
+                                        {t("Attributions")}
+                                    </Typography>
+                                </StyledTableCell>
+                                <StyledTableCell>
+                                    <TableContainer component={Paper} elevation={0}>
+                                        <Table size="small">
+                                            <TableBody>
+                                                {props.result.data.attributions.map((attribution, i) => (
+                                                    <NonAlternatingTableRow key={i}>
+                                                        <StyledTableCell>
+                                                            <Typography color={"textSecondary"}>
+                                                                {attribution.role}
+                                                            </Typography>
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>
+                                                            {attribution.name}
+                                                        </StyledTableCell>
+                                                    </NonAlternatingTableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </StyledTableCell>
+                            </StyledTableRow>}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Grid>
+
+            <Grid item container xs={12} alignItems="center">
+                <Grid item xs={8} md={10}>
+                    <FormControlLabel
+                        control={<Checkbox size="small" sx={{py: 0}} />}
+                        label={
+                            <Typography sx={{fontSize: "1em"}}>
+                                {t("Exclude Chinese")}
+                            </Typography>
+                        }
+                        checked={props.excludeChinese}
+                        onChange={(event) => handleExcludeChineseChange(event)}
+                    />
+                </Grid>
+                <Grid item xs={4} md={2}>
+                    <FormControl variant="standard" fullWidth>
+                        <InputLabel id="view-count-select-label">{t("Results per page")}</InputLabel>
+                        <Select
+                            labelId="view-count-select-label"
+                            id="view-count-select"
+                            label={props.t("Results per page")}
+                            value={props.viewCount}
+                            onChange={(event) => handleViewCountChange(event)}
+                            >
+                            <MenuItem value={20}>20</MenuItem>
+                            <MenuItem value={50}>50</MenuItem>
+                            <MenuItem value={100}>100</MenuItem>
+                            <MenuItem value={200}>200</MenuItem>
+                        </Select>
+                    </FormControl>
                 </Grid>
             </Grid>
-        }
 
-        let hl = this.props.highlightWord ?? "NULL";
-
-        const PAGE = this.props.viewCount;
-        let pageCount = Math.ceil(this.props.result.data.count / PAGE);
-
-        let n = this.props.numberInSource;
-        let page = Math.floor(n / PAGE);
-        
-        return (
-            <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
-                <Grid item xs={12}>
-                    <Box>
-                        <Typography 
-                            variant='h5' 
-                            component='span'
-                            sx={{
-                                fontWeight: 500
-                            }}>{this.props.bookName}</Typography>
-                        &ensp;
-                        <span>{this.props.result.data.year_string}</span>
-                    </Box>
-                </Grid>
-
-                {/* Bibliography and attributions */}
-                <Grid item xs={10} sm={8} lg={6} mx="auto">
-                    <TableContainer component={Paper} elevation={1}>
-                        <Table size="small">
-                            <TableBody>
-                                {this.props.result.data.bibliography === "" ? null :
-                                <StyledTableRow>
-                                    <StyledTableCell>
-                                        <Typography color={"textSecondary"}>
-                                            {this.props.t("Source")}
-                                        </Typography>
-                                    </StyledTableCell>
-                                    <StyledTableCell>
-                                            {this.props.result.data.bibliography}
-                                    </StyledTableCell>
-                                </StyledTableRow>}
-                                {this.props.result.data.attributions.length === 0 ? null :
-                                <StyledTableRow>
-                                    <StyledTableCell>
-                                        <Typography color={"textSecondary"}>
-                                            {this.props.t("Attributions")}
-                                        </Typography>
-                                    </StyledTableCell>
-                                    <StyledTableCell>
-                                        <TableContainer component={Paper} elevation={0}>
-                                            <Table size="small">
-                                                <TableBody>
-                                                    {this.props.result.data.attributions.map((attribution, i) => (
-                                                        <NonAlternatingTableRow key={i}>
-                                                            <StyledTableCell>
-                                                                <Typography color={"textSecondary"}>
-                                                                    {attribution.role}
-                                                                </Typography>
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {attribution.name}
-                                                            </StyledTableCell>
-                                                        </NonAlternatingTableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
-                                        </TableContainer>
-                                    </StyledTableCell>
-                                </StyledTableRow>}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Grid>
-                
-                <Grid item container xs={12} alignItems="center">
-                    <Grid item xs={8} md={10}>
-                        <FormControlLabel
-                            control={<Checkbox size="small" sx={{py: 0}} />}
-                            label={
-                                <Typography sx={{fontSize: "1em"}}>
-                                    {this.props.t("Exclude Chinese")}
-                                </Typography>
+            {/* Pager */}
+            <Grid item xs={12}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center">
+                    <Pagination
+                        color="primary"
+                        count={pageCount}
+                        siblingCount={2}
+                        boundaryCount={2}
+                        page={page + 1}
+                        onChange={(_, newPage) => {
+                            newPage = newPage - 1;
+                            let newN = props.numberInSource;
+                            if (newPage !== page) {
+                                newN = newPage * PAGE;
                             }
-                            checked={this.props.excludeChinese}
-                            onChange={(event) => this.handleExcludeChineseChange(event)}
-                        />
-                    </Grid>
-                    <Grid item xs={4} md={2}>
-                        <FormControl variant="standard" fullWidth>
-                            <InputLabel id="view-count-select-label">{this.props.t("Results per page")}</InputLabel>
-                            <Select
-                                labelId="view-count-select-label"
-                                id="view-count-select"
-                                label={this.props.t("Results per page")}
-                                value={this.props.viewCount}
-                                onChange={(event) => this.handleViewCountChange(event)}
-                                >
-                                <MenuItem value={20}>20</MenuItem>
-                                <MenuItem value={50}>50</MenuItem>
-                                <MenuItem value={100}>100</MenuItem>
-                                <MenuItem value={200}>200</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-                
-                {/* Pager */}
-                <Grid item xs={12}>
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center">
-                        <Pagination 
-                            color="primary"
-                            count={pageCount}
-                            siblingCount={2}
-                            boundaryCount={2}
-                            page={page + 1}
-                            onChange={(_, newPage) => {
-                                newPage = newPage - 1;
-                                let newN = this.props.numberInSource;
-                                if (newPage !== page) {
-                                    newN = newPage * PAGE;
-                                }
-                                this.props.setSearchParams({
-                                    name: this.props.bookName,
-                                    n: newN,
-                                    hl: this.props.highlightWord
-                                });
-                            }}
-                        />
-                    </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                    <TableContainer component={Paper}>
-                        <Table size="small">
-                            <TableBody>
-                                {this.props.result.data.sentences.map(
-                                    (sentence, i) => showSentence(this.props.bookName, sentence, hl, this.props.t, i)
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Grid>
-                
-                {/* Pager */}
-                <Grid item xs={12} my={1}>
-                    <Box
-                        display="flex"
-                        justifyContent="center"
-                        alignItems="center">
-                        <Pagination 
-                            color="primary"
-                            count={pageCount}
-                            siblingCount={2}
-                            boundaryCount={2}
-                            page={page + 1}
-                            onChange={(_, newPage) => {
-                                newPage = newPage - 1;
-                                let newN = this.props.numberInSource;
-                                if (newPage !== page) {
-                                    newN = newPage * PAGE;
-                                }
-                                this.props.setSearchParams({
-                                    name: this.props.bookName,
-                                    n: newN,
-                                    hl: this.props.highlightWord
-                                });
-                            }}
-                        />
-                    </Box>
-                </Grid>
+                            props.setSearchParams({
+                                name: props.bookName,
+                                n: newN,
+                                hl: props.highlightWord
+                            });
+                        }}
+                    />
+                </Box>
             </Grid>
-        );
-    }
+
+            <Grid item xs={12}>
+                <TableContainer component={Paper}>
+                    <Table size="small">
+                        <TableBody>
+                            {props.result.data.sentences.map(
+                                (sentence, i) => showSentence(props.bookName, sentence, hl, t, i)
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Grid>
+
+            {/* Pager */}
+            <Grid item xs={12} my={1}>
+                <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center">
+                    <Pagination
+                        color="primary"
+                        count={pageCount}
+                        siblingCount={2}
+                        boundaryCount={2}
+                        page={page + 1}
+                        onChange={(_, newPage) => {
+                            newPage = newPage - 1;
+                            let newN = props.numberInSource;
+                            if (newPage !== page) {
+                                newN = newPage * PAGE;
+                            }
+                            props.setSearchParams({
+                                name: props.bookName,
+                                n: newN,
+                                hl: props.highlightWord
+                            });
+                        }}
+                    />
+                </Box>
+            </Grid>
+        </Grid>
+    );
 }
 
 
@@ -349,8 +344,6 @@ function load_source(bookName, numberInSource, excludeChinese, viewCount, result
 
 
 function SoucePageWrapper(props) {
-    const { t, i18n } = useTranslation();
-
     let [searchParams, setSearchParams] = useSearchParams();
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
@@ -424,7 +417,6 @@ function SoucePageWrapper(props) {
         setExcludeChinese={setExcludeChinese}
         viewCount={viewCount}
         setViewCount={setViewCount}
-        t={t}
     />;
 }
 

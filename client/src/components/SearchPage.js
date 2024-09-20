@@ -365,7 +365,6 @@ const SearchResultsWrapper = React.memo(function (props) {
 
         <Histogram
             data={props.histogram}
-            t={t}
             setPage={props.setPage}
             pageN={props.pageN}
         />
@@ -438,7 +437,6 @@ const SearchResultsWrapper = React.memo(function (props) {
             romanize={props.romanize}
             ignoreSep={props.ignoreSep}
             resultTerm={props.resultTerm}
-            t={t}
         />
 
         {/* Pager on bottom */}
@@ -683,7 +681,6 @@ function SearchPage(props) {
 
             <Grid item xs={12} sm={4}>
                 <DocSelector
-                    t={t}
                     doc={props.doc}
                     docSuggestions={props.docSuggestions}
                     navigate={props.navigate}
