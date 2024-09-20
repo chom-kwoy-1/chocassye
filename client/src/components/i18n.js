@@ -49,6 +49,7 @@ const resources = {
       "Image for page": "Image for {page}",
       "Toggle Gugyeol Input": "Toggle Gugyeol Input",
       "Results per page": "Results per page",
+      "Unknown year": "-",
     }
   },
   ko: {
@@ -96,6 +97,7 @@ const resources = {
       "Image for page": "{page} 원문사진",
       "Toggle Gugyeol Input": "구결자 입력기",
       "Results per page": "개씩 보기",
+      "Unknown year": "연도미상",
     }
   }
 };

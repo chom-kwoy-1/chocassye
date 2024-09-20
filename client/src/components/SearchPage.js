@@ -18,48 +18,19 @@ import HowToPageWrapper from './HowToPage';
 import Histogram from './Histogram';
 import {suggestGugyeol} from './Gugyeol';
 import {
-    Autocomplete,
-    Backdrop,
-    Box,
-    Button,
-    Checkbox,
-    Chip,
-    CircularProgress,
-    FormControlLabel,
-    Grid,
-    Pagination,
-    Paper,
-    Popper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-    TextField,
-    Tooltip,
-    Typography,
-    IconButton,
-    Stack,
+    Autocomplete, Backdrop, Box, Button, Checkbox,
+    Chip, CircularProgress, FormControlLabel, Grid,
+    Pagination, Paper, Popper, Table, TableBody,
+    TableCell, TableContainer, TableRow, TextField,
+    Tooltip, Typography, IconButton, Stack,
 } from '@mui/material';
 import {styled} from '@mui/material/styles';
 import {tableCellClasses} from '@mui/material/TableCell';
 import {
-    amber,
-    blue,
-    cyan,
-    deepOrange,
-    deepPurple,
-    green,
-    indigo,
-    lightBlue,
-    lightGreen,
-    lime,
-    orange,
-    pink,
-    purple,
-    red,
-    teal,
-    yellow,
+    amber, blue, cyan, deepOrange,
+    deepPurple, green, indigo,
+    lightBlue, lightGreen, lime,
+    orange, pink, purple, red, teal, yellow,
 } from '@mui/material/colors';
 import {IMAGE_BASE_URL} from "./config";
 import {tooltipClasses} from '@mui/material/Tooltip';
@@ -132,7 +103,17 @@ function SearchResultsList(props) {
                             {/* Year column */}
                             <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
                                 <Grid item sx={{ py: 0.4 }}>
-                                    {book.year ?? "-"}
+                                    <Tooltip title={book.year_string}>
+                                        {
+                                            book.year === null ? (
+                                                t("Unknown year")
+                                            ) : (
+                                                book.year_end - book.year_start > 0 ? (
+                                                'c.\u00a0' + book.year
+                                                ) : book.year
+                                            )
+                                        }
+                                    </Tooltip>
                                 </Grid>
                             </StyledTableCell>
 
