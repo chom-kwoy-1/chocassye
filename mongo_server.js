@@ -24,13 +24,12 @@ const db_url = 'mongodb://localhost:27017';
 const db_client = new MongoClient(db_url);
 
 // start listening
-const http = express();
+const http_redirect_app = express();
 const domain = process.env.DOMAIN || "find.xn--gt1b.xyz";
-http.use(function(req, res) {
+http_redirect_app.use(function(req, res) {
     res.redirect('https://' + domain + req.originalUrl);
 });
-http.listen(port, () => console.log(`Listening on port ${port}`));
-
+const http_server = http.createServer(http_redirect_app).listen(port, () => console.log(`Listening on port ${port}`));
 let https_server = null;
 
 if (process.env.SSL === "ON") {
