@@ -16,32 +16,13 @@ import {
     Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
     TableContainer, Table, TableBody,
-    TableRow, TableCell, Tooltip, Select, MenuItem, FormControl, InputLabel,
+    TableRow, Tooltip, Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { tableCellClasses } from '@mui/material/TableCell';
 import {IMAGE_BASE_URL} from "./config";
+import { StyledTableCell, StyledTableRow } from './utils';
 
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
-  },
-  // hide last border
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
 const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
     // hide last border
     '&:last-child td, &:last-child th': {

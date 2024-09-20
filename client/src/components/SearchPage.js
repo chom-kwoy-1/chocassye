@@ -21,67 +21,16 @@ import {
     Autocomplete, Backdrop, Box, Button, Checkbox,
     Chip, CircularProgress, FormControlLabel, Grid,
     Pagination, Paper, Popper, Table, TableBody,
-    TableCell, TableContainer, TableRow, TextField,
+    TableContainer, TableRow, TextField,
     Tooltip, Typography, IconButton, Stack,
 } from '@mui/material';
 import {styled} from '@mui/material/styles';
-import {tableCellClasses} from '@mui/material/TableCell';
-import {
-    amber, blue, cyan, deepOrange,
-    deepPurple, green, indigo,
-    lightBlue, lightGreen, lime,
-    orange, pink, purple, red, teal, yellow,
-} from '@mui/material/colors';
 import {IMAGE_BASE_URL} from "./config";
 import {tooltipClasses} from '@mui/material/Tooltip';
-
-const highlightColors = [
-    orange, pink, indigo,     
-    cyan, lightGreen, amber,      
-    red, deepPurple, lightBlue,  
-    green, yellow, deepOrange,
-    purple, blue, teal, lime, 
-].map((x) => x['A100']);
-
-
-async function postData(url = '', data = {}) {
-    const response = await fetch(url, {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        redirect: 'follow',
-        body: JSON.stringify(data)
-    });
-    return response.json();
-}
-
-
-const zip = (...arr) => Array(Math.max(...arr.map(a => a.length))).fill().map((_,i) => arr.map(a => a[i]));
-
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: theme.palette.action.hover,
-  },
-  // hide last border
-  '&:last-child td, &:last-child th': {
-    border: 0,
-  },
-}));
+import {
+    highlightColors, StyledTableCell, StyledTableRow,
+    postData, zip
+} from './utils';
 
 
 function SearchResultsList(props) {

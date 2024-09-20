@@ -1,15 +1,12 @@
 import React from 'react';
 import './index.css';
 import './i18n';
+import {range} from './utils';
 
 import {
     Box, Grid, Card, Tooltip
 } from '@mui/material';
 import {useTranslation} from "react-i18next";
-
-
-const range = (start, stop, step) =>
-  Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
 
 
 export default function Histogram(props) {
