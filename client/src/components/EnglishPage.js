@@ -22,8 +22,8 @@ async function postData(url = '', data = {}) {
 function TestWrapper(props) {
     const { t, i18n } = useTranslation();
     const [ state, setState ] = React.useState({
-        hangulOutput: "한글이라 좋다",
-        englishInput: "GyeyGilGila cwohta",
+        hangulOutput: "우오티즈디쓰",
+        englishInput: "What is this?",
     });
 
     function handleHangulChange(event) {
