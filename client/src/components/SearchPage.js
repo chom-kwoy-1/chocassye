@@ -473,7 +473,7 @@ function SearchPage(props) {
                 searchParams.set("term", searchTerm);
             }
             return searchParams;
-        })
+        }, { replace: true })
     }
 
     function handleDocChange(doc) {
@@ -484,7 +484,7 @@ function SearchPage(props) {
                 searchParams.set("doc", doc);
             }
             return searchParams;
-        })
+        }, { replace: true })
     }
 
     function handleExcludeModernChange(event) {
@@ -496,7 +496,7 @@ function SearchPage(props) {
                 searchParams.delete("excludeModern");
             }
             return searchParams;
-        })
+        }, { replace: true })
     }
 
     function handleIgnoreSepChange(event) {
@@ -508,7 +508,7 @@ function SearchPage(props) {
                 searchParams.delete("ignoreSep");
             }
             return searchParams;
-        })
+        }, { replace: true })
     }
 
     function handleRomanizeChange(event) {
@@ -529,7 +529,7 @@ function SearchPage(props) {
                 searchParams.set("page", page);
             }
             return searchParams;
-        });
+        }, { replace: true });
     }
 
     function toggleGugyeolInput(e) {
@@ -544,7 +544,7 @@ function SearchPage(props) {
         props.setSearchParams(searchParams => {
             searchParams.set("term", term);
             return searchParams;
-        });
+        }, { replace: true });
     }
 
     let searchTerm = props.term;
@@ -853,13 +853,18 @@ function SearchPageWrapper(props) {
     const prevDocSuggestions = React.useRef(docSuggestions);
 
     const refresh = React.useCallback(
-        (query) => {
+        (query, isInit=false) => {
+            if (!isInit) {
+                setSearchParams(searchParams => {
+                    return searchParams;
+                });  // add to history
+            }
             if (isInited.current && prevQuery.current.page === query.page && query.page !== 1) {
                 // Set page to 1 if term or doc changed
                 setSearchParams(searchParams => {
                     searchParams.set("page", "1");
                     return searchParams;
-                });
+                }, { replace: true });
             } else {
                 let active = true;
 
@@ -958,7 +963,7 @@ function SearchPageWrapper(props) {
     React.useEffect(() => {
         if (prevQuery.current.page !== page || !isInited.current) {
             console.log("Page changed: ", prevQuery.current.page, " -> ", page);
-            const result = refresh({...prevQuery.current, page: page});
+            const result = refresh({...prevQuery.current, page: page}, !isInited.current);
             isInited.current = true;
             prevQuery.current.page = page;
             return result;
