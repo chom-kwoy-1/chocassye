@@ -83,6 +83,7 @@ function SearchResultsList(props) {
                                                 match_ids_in_sentence,
                                                 footnotes,
                                                 props.romanize,
+                                                props.ignoreSep,
                                             )}
                                             allowList={['mark', 'span', 'a']}
                                             allowAttributes={true}
@@ -174,22 +175,22 @@ function pageImagePreview(page, imageURL, t) {
     </React.Fragment>;
 }
 
-function highlight(text, searchTerm, match_ids, footnotes, romanize) {
+function highlight(text, searchTerm, match_ids, footnotes, romanize, ignoreSep) {
     
     // Into HTML for display
     let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, footnotes, romanize);
     
     // Find matches
-    let hlRegex = searchTerm2Regex(searchTerm);
+    let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
     let match_ranges = [
         ...getMatchingRanges(
-            hlRegex, 
-            ...toText(text),
+            hlRegex,
+            ...toText(text, ignoreSep),  // Remove HTML tags, retain tones
             displayHTMLMapping
         ),
         ...getMatchingRanges(
             hlRegex,
-            ...toTextIgnoreTone(text),
+            ...toTextIgnoreTone(text, ignoreSep),  // Remove HTML tags and tones
             displayHTMLMapping
         )
     ];
@@ -234,11 +235,11 @@ const SearchResultsWrapper = React.memo(function (props) {
             let text = sentence.html ?? sentence.text;
 
             // Find matches
-            let hlRegex = searchTerm2Regex(props.resultTerm);
-            let [rawText, rawTextRanges] = toText(text);
+            let hlRegex = searchTerm2Regex(props.resultTerm, props.ignoreSep);
+            let [rawText, rawTextRanges] = toText(text, props.ignoreSep);
             let match_ranges = [
                 ...getMatchingRanges(hlRegex, rawText, rawTextRanges, rawTextRanges),
-                ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text), rawTextRanges),
+                ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text, props.ignoreSep), rawTextRanges),
             ];
 
             // Remove overlapping ranges
@@ -387,18 +388,13 @@ const SearchResultsWrapper = React.memo(function (props) {
 }, arePropsEqual);
 
 function arePropsEqual(oldProps, newProps) {
-    //console.log("Begin comparison");
     let equal = true;
     for (let key of Object.keys(oldProps)) {
-        if (key === 't' || key === 'handleRomanizeChange') {
+        if (key === 'handleRomanizeChange' || key === 'setPage') {
             continue;
         }
         equal &&= Object.is(oldProps[key], newProps[key]);
-        if (!Object.is(oldProps[key], newProps[key])) {
-            //console.log(key, Object.is(oldProps[key], newProps[key]), oldProps[key], newProps[key]);
-        }
     }
-    //console.log("Props equal=", equal);
     return equal;
 }
 
@@ -471,14 +467,22 @@ function SearchPage(props) {
     function handleChange(event) {
         let searchTerm = event.target.value;
         props.setSearchParams(searchParams => {
-            searchParams.set("term", searchTerm);
+            if (searchTerm === "") {
+                searchParams.delete("term");
+            } else {
+                searchParams.set("term", searchTerm);
+            }
             return searchParams;
         })
     }
 
-    function  handleDocChange(doc) {
+    function handleDocChange(doc) {
         props.setSearchParams(searchParams => {
-            searchParams.set("doc", doc);
+            if (doc === "") {
+                searchParams.delete("doc");
+            } else {
+                searchParams.set("doc", doc);
+            }
             return searchParams;
         })
     }
@@ -486,7 +490,11 @@ function SearchPage(props) {
     function handleExcludeModernChange(event) {
         let excludeModern = event.target.checked;
         props.setSearchParams(searchParams => {
-            searchParams.set("excludeModern", excludeModern? "yes" : "no");
+            if (excludeModern) {
+                searchParams.set("excludeModern", "yes");
+            } else {
+                searchParams.delete("excludeModern");
+            }
             return searchParams;
         })
     }
@@ -494,7 +502,11 @@ function SearchPage(props) {
     function handleIgnoreSepChange(event) {
         let ignoreSep = event.target.checked;
         props.setSearchParams(searchParams => {
-            searchParams.set("ignoreSep", ignoreSep? "yes" : "no");
+            if (ignoreSep) {
+                searchParams.set("ignoreSep", "yes");
+            } else {
+                searchParams.delete("ignoreSep");
+            }
             return searchParams;
         })
     }
@@ -511,7 +523,11 @@ function SearchPage(props) {
 
     function setPage(page) {
         props.setSearchParams(searchParams => {
-            searchParams.set("page", page);
+            if (page === 1) {
+                searchParams.delete("page");
+            } else {
+                searchParams.set("page", page);
+            }
             return searchParams;
         });
     }
@@ -646,20 +662,23 @@ function SearchPage(props) {
                                     {t("Exclude modern translations")}
                                 </Typography>
                             }
-                            checked={props.excludeModern === "yes"}
+                            checked={props.excludeModern}
                             onChange={(event) => handleExcludeModernChange(event)}
                         />
                     </Grid>
-                    {/*
                     <Grid item xs="auto" sm="auto">
                         <FormControlLabel
-                            fontSize="tiny"
-                            control={<Checkbox size="tiny" />}
-                            label={this.props.t("Ignore syllable separators")}
-                            checked={this.props.ignoreSep === "yes"}
-                            onChange={(event) => this.handleIgnoreSepChange(event)}
+                            control={<Checkbox size="small" sx={{py: 0}} />}
+                            label={
+                                <Typography sx={{fontSize: "1em"}}>
+                                    {t("Ignore syllable separators")}
+                                </Typography>
+                            }
+                            checked={props.ignoreSep}
+                            onChange={(event) => handleIgnoreSepChange(event)}
                         />
                     </Grid>
+                    {/*
                     <Grid item xs="auto" sm="auto">
                         <FormControlLabel
                             control={<Checkbox size="small" sx={{py: 0}} />}
@@ -707,12 +726,14 @@ function SearchPage(props) {
                         romanize={romanize}
                         handleRomanizeChange={(event) => handleRomanizeChange(event)}
                         ignoreSep={props.ignoreSep}
-                        resultTerm={props.resultTerm}
+                        resultTerm={props.resultTerm}  // for triggering re-render
+                        resultPage={props.resultPage}  // for triggering re-render
+                        resultDoc={props.resultDoc}  // for triggering re-render
                         histogram={props.histogram}
+                        statsTerm={props.statsTerm}  // for triggering re-render
                         pageN={props.pageN}
                         page={props.page}
                         setPage={setPage}
-                        t={props.t}
                     />
                 </Grid>
             </Grid>
@@ -812,7 +833,13 @@ function SearchPageWrapper(props) {
         loaded: false,
     });
 
-    const isInited = React.useRef(result.result_term === term && result.loaded);
+    const isInited = React.useRef(
+        result.result_term === term
+        && result.result_page === page
+        && result.result_doc === doc
+        && result.stats_term === term
+        && result.loaded && result.statsLoaded
+    );
 
     const prevResult = React.useRef(result);
     const prevQuery = React.useRef({
@@ -851,6 +878,7 @@ function SearchPageWrapper(props) {
                                 page_N: page_N,
                                 result_term: query.term,
                                 result_page: query.page,
+                                result_doc: query.doc,
                                 loaded: true
                             });
                         }
@@ -869,6 +897,7 @@ function SearchPageWrapper(props) {
                                 ...prevResult.current,
                                 num_results: numResults,
                                 histogram: histogram,
+                                stats_term: query.term,
                                 statsLoaded: true
                             });
                         }
@@ -998,13 +1027,16 @@ function SearchPageWrapper(props) {
         });
     }
 
-    const startTime = performance.now();
-    const dom = <SearchPage
+    return <SearchPage
         {...props}
         page={page} term={term} doc={doc}
-        excludeModern={excludeModern} ignoreSep={ignoreSep}
+        excludeModern={excludeModern === "yes"}
+        ignoreSep={ignoreSep === "yes"}
         result={result.result}
         resultTerm={result.result_term}
+        resultPage={result.result_page}
+        resultDoc={result.result_doc}
+        statsTerm={result.stats_term}
         pageN={result.page_N}
         loaded={result.loaded}
         numResults={result.num_results}
@@ -1014,11 +1046,7 @@ function SearchPageWrapper(props) {
         onRefresh={forceRefresh}
         docSuggestions={docSuggestions}
         navigate={navigate}
-    />
-    const endTime = performance.now();
-    console.log("SearchPage render time:", endTime - startTime);
-
-    return dom;
+    />;
 }
 
 export default SearchPageWrapper;

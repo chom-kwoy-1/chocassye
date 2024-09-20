@@ -272,11 +272,15 @@ function add_file(file, xml) {
                 if (lang !== "chi") {
                     non_chinese_sentence_count += 1;
                 }
+
+                const text_without_sep = text.replace(/[ .^]/g, '');
                 sentences.push({
                     filename: filename,
                     date: Date(),
                     text: text,
                     text_trigrams: make_ngrams(text, 3),
+                    text_without_sep: text_without_sep,
+                    text_without_sep_trigrams: make_ngrams(text_without_sep, 3),
                     text_with_tone: text_with_tone,
                     html: html,
                     type: type,
@@ -320,6 +324,7 @@ function insert_documents(db) {
         books_collection.deleteMany({}),
     ]).then(() => Promise.all([
         sentences_collection.createIndex({text_trigrams: 1}),
+        sentences_collection.createIndex({text_without_sep_trigrams: 1}),
         sentences_collection.createIndex({year_sort: 1}),
         sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
         sentences_collection.createIndex({year_sort: 1, filename: 1, number_in_book: 1}),

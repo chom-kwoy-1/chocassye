@@ -22,10 +22,12 @@ function App(props) {
         result: [],
         result_term: "",
         result_page: 1,
+        result_doc: "",
         page_N: 50,
         loaded: false,
         num_results: 0,
         histogram: [],
+        stats_term: "",
         statsLoaded: false,
     });
     

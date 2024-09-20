@@ -11,8 +11,11 @@ function serializeTextNode(text) {
     return new XMLSerializer().serializeToString(document.createTextNode(text));
 }
 
-export function searchTerm2Regex(text) {
+export function searchTerm2Regex(text, ignoreSep=false) {
     text = hangul_to_yale(text);
+    if (ignoreSep) {
+        text = text.replace(/[ .^]/g, '');
+    }
 
     let strippedText = text;
     if (text.startsWith('^')) {
@@ -185,7 +188,7 @@ export function replace_and_map(string, pattern, replace_func, prev_mapping=null
     return [string, mapping];
 }
 
-export function toText(sentence) {
+export function toText(sentence, ignoreSep) {
     let mapping;
     
     [sentence, mapping] = replace_and_map(
@@ -201,11 +204,19 @@ export function toText(sentence) {
         },
         mapping
     );
+
+    if (ignoreSep) {
+        [sentence, mapping] = replace_and_map(
+            sentence, /[ .^]/g,
+            function (match) { return ""; },
+            mapping
+        );
+    }
     
     return [sentence, mapping];
 }
 
-export function toTextIgnoreTone(sentence) {
+export function toTextIgnoreTone(sentence, ignoreSep) {
     let mapping;
     
     [sentence, mapping] = replace_and_map(
@@ -221,7 +232,15 @@ export function toTextIgnoreTone(sentence) {
         },
         mapping
     );
-    
+
+    if (ignoreSep) {
+        [sentence, mapping] = replace_and_map(
+            sentence, /[ .^]/g,
+            function (match) { return ""; },
+            mapping
+        );
+    }
+
     return [sentence, mapping];
 }
 

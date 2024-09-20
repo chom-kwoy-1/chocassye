@@ -95,25 +95,29 @@ function makeCorpusQuery(query) {
     let doc = query.doc;
     let excludeModern = query.excludeModern === "yes";
     let ignoreSep = query.ignoreSep === "yes";
-    // FIXME: set ignoreSep to false for now
-    ignoreSep = false;
 
     if (text === '%%') {
         return null;
     }
+
+    const text_field = ignoreSep? "text_without_sep" : "text";
+    const text_trigrams_field = ignoreSep? "text_without_sep_trigrams" : "text_trigrams";
 
     let searchPattern;
     if (text.startsWith('%') && text.endsWith('%')
         && !text.slice(1, text.length - 1).includes('%')
         && !text.slice(1, text.length - 1).includes('_')
         && text.slice(1, text.length - 1).length >= 3) {
-        const query = text.slice(1, text.length - 1);
+        let queryText = text.slice(1, text.length - 1);
+        if (ignoreSep) {
+            queryText = queryText.replace(/[ .^]/g, "");
+        }
         searchPattern = {
-            text_trigrams: {$all: make_ngrams(query, 3)},
-            text: {$regex: makeSearchRegex(text)},
+            [text_trigrams_field]: {$all: make_ngrams(queryText, 3)},
+            [text_field]: {$regex: new RegExp(escapeStringRegexp(queryText))},
         };
     } else {
-        searchPattern = {text: {$regex: makeSearchRegex(text)}};
+        searchPattern = {[text_field]: {$regex: makeSearchRegex(text)}};
     }
 
     return [
@@ -238,7 +242,8 @@ db_client.connect().then(function() {
             return;
         }
 
-        const offset = (req.body.page - 1) * PAGE_N;
+        const page = req.body.page ?? 1;
+        const offset = (page - 1) * PAGE_N;
 
         pipeline = [
             ...pipeline,
@@ -249,6 +254,7 @@ db_client.connect().then(function() {
             }},
             {$skip: offset},
             {$limit: PAGE_N},
+            {$project: {_id: 1}},
         ];
 
         const sentences_collection = db.collection('sentences');
@@ -257,6 +263,10 @@ db_client.connect().then(function() {
                 // Workaround for weird MongoDB behavior
                 {$match: {
                     _id: {$in: results.map(result => result._id)}
+                }},
+                {$project: {
+                    text_trigrams: 0,
+                    text_without_sep_trigrams: 0,
                 }},
                 {$group: {
                     _id: "$filename",
