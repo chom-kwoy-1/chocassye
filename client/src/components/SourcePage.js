@@ -114,11 +114,10 @@ function SourcePage(props) {
     function handleExcludeChineseChange(event) {
         let excludeChinese = event.target.checked;
         if (excludeChinese) {
-            props.setSearchParams({
-                name: props.bookName,
-                n: 0,
-                hl: props.highlightWord
-            });
+            props.setSearchParams(searchParams => {
+                searchParams.set("n", 0);
+                return searchParams;
+            })
         }
         props.setExcludeChinese(excludeChinese);
     }
@@ -234,7 +233,7 @@ function SourcePage(props) {
                         <Select
                             labelId="view-count-select-label"
                             id="view-count-select"
-                            label={props.t("Results per page")}
+                            label={t("Results per page")}
                             value={props.viewCount}
                             onChange={(event) => handleViewCountChange(event)}
                             >
@@ -265,10 +264,9 @@ function SourcePage(props) {
                             if (newPage !== page) {
                                 newN = newPage * PAGE;
                             }
-                            props.setSearchParams({
-                                name: props.bookName,
-                                n: newN,
-                                hl: props.highlightWord
+                            props.setSearchParams(searchParams => {
+                                searchParams.set("n", newN);
+                                return searchParams;
                             });
                         }}
                     />
@@ -305,10 +303,9 @@ function SourcePage(props) {
                             if (newPage !== page) {
                                 newN = newPage * PAGE;
                             }
-                            props.setSearchParams({
-                                name: props.bookName,
-                                n: newN,
-                                hl: props.highlightWord
+                            props.setSearchParams(searchParams => {
+                                searchParams.set("n", newN);
+                                return searchParams;
                             });
                         }}
                     />

@@ -3,8 +3,7 @@ import './i18n';
 import { useTranslation } from 'react-i18next';
 import { Trans } from 'react-i18next';
 import {
-    Grid, Typography, FormControlLabel,
-    Checkbox, Box, Pagination, Paper,
+    Typography, Box, Paper,
     TableContainer, Table, TableHead, TableBody,
     TableRow, TableCell, Divider, Stack
 } from '@mui/material';
@@ -34,7 +33,7 @@ function MarkdownListItem(props) {
 }
 
 function HowToPageWrapper(props) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     return <Stack spacing={2} sx={{px: 2}}>
         

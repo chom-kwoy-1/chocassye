@@ -379,12 +379,11 @@ const SearchResultsWrapper = React.memo(function (props) {
                         size="small"
                         onDelete={() => null}
                         clickable>
-                        {<span
-                            className={disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                            onClick={(event) => {toggleMatch(event, i)}}>
+                        {/*<span className={disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
+                               onClick={(event) => {toggleMatch(event, i)}}>
                             <span className={"".concat("colorShower s", i)}></span>
                             <span className="matchLegendWord">{part}</span>
-                        </span>}
+                        </span>*/}
                     </Chip>
                 </Grid>
             )}
@@ -542,34 +541,35 @@ function SearchPage(props) {
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
 
-    function setSearchParams(args) {
-        props.setSearchParams({
-            term: props.term,
-            doc: props.doc,
-            page: props.page,
-            excludeModern: props.excludeModern,
-            ignoreSep: props.ignoreSep,
-            ...args
-        });
-    }
-
     function handleChange(event) {
         let searchTerm = event.target.value;
-        setSearchParams({term: searchTerm});
+        props.setSearchParams(searchParams => {
+            searchParams.set("term", searchTerm);
+            return searchParams;
+        })
     }
 
     function  handleDocChange(doc) {
-        setSearchParams({doc: doc});
+        props.setSearchParams(searchParams => {
+            searchParams.set("doc", doc);
+            return searchParams;
+        })
     }
 
     function handleExcludeModernChange(event) {
         let excludeModern = event.target.checked;
-        setSearchParams({excludeModern: excludeModern? "yes" : "no"});
+        props.setSearchParams(searchParams => {
+            searchParams.set("excludeModern", excludeModern? "yes" : "no");
+            return searchParams;
+        })
     }
 
     function handleIgnoreSepChange(event) {
         let ignoreSep = event.target.checked;
-        setSearchParams({ignoreSep: ignoreSep? "yes" : "no"});
+        props.setSearchParams(searchParams => {
+            searchParams.set("ignoreSep", ignoreSep? "yes" : "no");
+            return searchParams;
+        })
     }
 
     function handleRomanizeChange(event) {
@@ -583,7 +583,10 @@ function SearchPage(props) {
     }
 
     function setPage(page) {
-        setSearchParams({page: page});
+        props.setSearchParams(searchParams => {
+            searchParams.set("page", page);
+            return searchParams;
+        });
     }
 
     function toggleGugyeolInput(e) {
@@ -595,12 +598,9 @@ function SearchPage(props) {
     function replaceGugyeol(suggestion) {
         let term = props.term;
         term = term.slice(0, term.length - suggestion.replaceLength) + suggestion.gugyeol;
-        props.setSearchParams({
-            term: term,
-            doc: props.doc,
-            page: props.page,
-            excludeModern: props.excludeModern,
-            ignoreSep: props.ignoreSep,
+        props.setSearchParams(searchParams => {
+            searchParams.set("term", term);
+            return searchParams;
         });
     }
 
@@ -887,12 +887,9 @@ function SearchPageWrapper(props) {
     const refresh = React.useCallback(
         (term, doc, page, excludeModern, ignoreSep) => {
             if (isInited.current && prevPage.current === page && page !== 1) {
-                setSearchParams({
-                    page: "1",
-                    term: prevTerm.current,
-                    doc: prevDoc.current,
-                    excludeModern: prevExcludeModern.current,
-                    ignoreSep: prevIgnoreSep.current,
+                setSearchParams(searchParams => {
+                    searchParams.set("page", "1");
+                    return searchParams;
                 });
             } else {
                 let active = true;

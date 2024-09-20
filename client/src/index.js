@@ -10,7 +10,6 @@ import SearchPage from './components/SearchPage';
 import SourcePage from './components/SourcePage';
 import HowToPage from './components/HowToPage';
 import AboutPage from './components/AboutPage';
-import TestPage from './components/TestPage';
 import EnglishPage from './components/EnglishPage';
 import theme from './theme';
 
@@ -28,7 +27,6 @@ ReactDOM.render((
                         <Route exact path='/howtouse' element={<HowToPage />}></Route>
                         <Route exact path='/about' element={<AboutPage />}></Route>
                         <Route exact path='/source' element={<SourcePage />}></Route>
-                        <Route exact path='/test' element={<TestPage />}></Route>
                         <Route exact path='/english' element={<EnglishPage />}> </Route>
                     </Routes>
                     </App>

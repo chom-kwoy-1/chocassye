@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 
 function AboutWrapper(props) {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     return <div>
     <h1>{t('About')}</h1>
@@ -12,7 +12,7 @@ function AboutWrapper(props) {
     <h2>序</h2>
 
     <div className='paragraph'>
-        <p>國語之根甚, 從古有以文記</p>
+        <p>國語之根深, 從古有以文記</p>
         <p>나라의 말씀이 뿌리가 깊건마는, 예로부터 문자로 기록된 것이 있어도,</p>
 
         <p>乎罔易探之法淺</p>
