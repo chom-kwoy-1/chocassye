@@ -5,6 +5,7 @@ import jsdom from 'jsdom';
 import {promisify} from 'util';
 import {MongoClient} from 'mongodb';
 import {hangul_to_yale} from './client/src/components/YaleToHangul.mjs';
+import {make_ngrams} from './ngram.js';
 
 
 function uni(str) {
@@ -275,6 +276,7 @@ function add_file(file, xml) {
                     filename: filename,
                     date: Date(),
                     text: text,
+                    text_trigrams: make_ngrams(text, 3),
                     text_with_tone: text_with_tone,
                     html: html,
                     type: type,
@@ -284,6 +286,8 @@ function add_file(file, xml) {
                     number_in_page: number_in_page,
                     number_in_book: index,
                     hasImages: hasImages,
+                    year_sort: book_details.year_sort,
+                    decade_sort: book_details.decade_sort,
                 });
                 index += 1;
             } catch (error) {
@@ -311,18 +315,11 @@ function insert_documents(db) {
     const DOMParser = dom.window.DOMParser;
     const parser = new DOMParser;
 
-    const result = sentences_collection.dropIndex("text").then(() => {
-        console.log("Index dropped")
-    }).catch((err) => console.log(err))
-    .then(() => Promise.all([
+    return Promise.all([
         sentences_collection.deleteMany({}),
         books_collection.deleteMany({}),
-    ])).then(() => Promise.all([
-        sentences_collection.createIndex(
-            {text: "text", text_with_tone: "text"},
-            {default_language: "none", name: "text"}
-        ),
-        sentences_collection.createIndex({text: 1}),
+    ]).then(() => Promise.all([
+        sentences_collection.createIndex({text_trigrams: 1}),
         sentences_collection.createIndex({year_sort: 1}),
         sentences_collection.createIndex({year_sort: 1, number_in_book: 1}),
         sentences_collection.createIndex({year_sort: 1, filename: 1, number_in_book: 1}),
@@ -362,7 +359,7 @@ function insert_documents(db) {
                     return parser.parseFromString(data, "text/xml");
                 })
                 .then((xml) => {
-                    const [ sentences, book_details ] = add_file(file, xml);
+                    const [sentences, book_details] = add_file(file, xml);
 
                     return Promise.all([
                         sentences_collection.insertMany(sentences),
@@ -377,8 +374,6 @@ function insert_documents(db) {
                 });
         }
     });
-
-    return result;
 }
 
 

@@ -104,7 +104,7 @@ function SearchResultsList(props) {
                             <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
                                 <Grid item sx={{ py: 0.4 }}>
                                     <Tooltip title={book.year_string}>
-                                        {
+                                        <Box>{
                                             book.year === null ? (
                                                 t("Unknown year")
                                             ) : (
@@ -112,7 +112,7 @@ function SearchResultsList(props) {
                                                 'c.\u00a0' + book.year
                                                 ) : book.year
                                             )
-                                        }
+                                        }</Box>
                                     </Tooltip>
                                 </Grid>
                             </StyledTableCell>
@@ -344,11 +344,7 @@ const SearchResultsWrapper = React.memo(function (props) {
 
     return <React.Fragment>
 
-        <Histogram
-            data={props.histogram}
-            setPage={props.setPage}
-            pageN={props.pageN}
-        />
+        <Histogram data={props.histogram} setPage={props.setPage} pageN={props.pageN}/>
 
         {/* Show highlight match legend */}
         <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
@@ -735,12 +731,11 @@ function SearchPage(props) {
                     {t('number Results', { numResults: props.numResults })}&ensp;
                     {
                         props.result.length > 0?
-                        t('current page', { startYear: props.result[0].year, endYear: props.result[props.result.length - 1].year})
+                        t('current page', { startYear: props.result[0].year, endYear: props.result[props.result.length - 1].year })
                         : <span></span>
                     }
                 </Typography>
             </Grid>
-
 
             <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
                 <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
@@ -777,8 +772,8 @@ function SearchPage(props) {
 }
 
 
-function search(word, doc, page, excludeModern, ignoreSep, callback) {
-    let term = hangul_to_yale(word);
+function makeQuery(query) {
+    let term = hangul_to_yale(query.term);
 
     let prefix = "%";
     let suffix = "%";
@@ -791,24 +786,42 @@ function search(word, doc, page, excludeModern, ignoreSep, callback) {
         suffix = "";
     }
     term = "".concat(prefix, term, suffix);
-    console.log("Search:", term);
 
-    postData('/api/search', {
-        term: term,
-        doc: doc,
-        page: page,
-        excludeModern: excludeModern,
-        ignoreSep: ignoreSep
-    }).then((result) => {
+    query = {...query, term: term};
+
+    return query;
+}
+
+
+function search(query, callback, errorCallback) {
+    query = makeQuery(query);
+
+    postData('/api/search', query).then((result) => {
         if (result.status === 'success') {
-            callback(result.results, result.total_rows, result.histogram, result.page_N);
+            callback(result.results, result.page_N);
         } else {
-            callback([], 0);
+            console.log(result);
+            errorCallback('Server responded with error');
         }
-    })
-    .catch((err) => {
+    }).catch((err) => {
         console.log(err);
-        callback([], 0);
+        errorCallback('Could not connect to server');
+    });
+}
+
+function getStats(query, callback, errorCallback) {
+    query = makeQuery(query);
+
+    postData('/api/search_stats', query).then((result) => {
+        if (result.status === 'success') {
+            callback(result.num_results, result.histogram);
+        } else {
+            console.log(result);
+            errorCallback('Server responded with error');
+        }
+    }).catch((err) => {
+        console.log(err);
+        errorCallback('Could not connect to server');
     });
 }
 
@@ -819,11 +832,13 @@ function suggest(doc, callback) {
             callback(result.results, result.total_rows);
         } else {
             callback([], 0);
+            // TODO: handle error
         }
     })
     .catch((err) => {
         console.log(err);
         callback([], 0);
+        // TODO: handle error
     });
 }
 
@@ -842,11 +857,12 @@ function SearchPageWrapper(props) {
 
     let [result, setResult] = React.useState({
         result: [],
-        histogram: [],
-        num_results: 0,
         result_term: "",
-        page_N: 20,
-        loaded: false
+        page_N: 50,
+        loaded: false,
+        num_results: 0,
+        histogram: [],
+        statsLoaded: false,
     });
     let [docSuggestions, setDocSuggestions] = React.useState({
         result: [],
@@ -855,19 +871,22 @@ function SearchPageWrapper(props) {
     });
 
     const isInited = React.useRef(false);
-    const prevResult = React.useRef(result);
-    const prevTerm = React.useRef(term);
-    const prevDoc = React.useRef(doc);
-    const prevPage = React.useRef(page);
 
-    const prevExcludeModern = React.useRef(excludeModern);
-    const prevIgnoreSep = React.useRef(ignoreSep);
-    
+    const prevResult = React.useRef(result);
+    const prevQuery = React.useRef({
+        term: term,
+        doc: doc,
+        page: page,
+        excludeModern: excludeModern,
+        ignoreSep: ignoreSep,
+    });
+
     const prevDocSuggestions = React.useRef(docSuggestions);
 
     const refresh = React.useCallback(
-        (term, doc, page, excludeModern, ignoreSep) => {
-            if (isInited.current && prevPage.current === page && page !== 1) {
+        (query) => {
+            if (isInited.current && prevQuery.current.page === query.page && query.page !== 1) {
+                // Set page to 1 if term or doc changed
                 setSearchParams(searchParams => {
                     searchParams.set("page", "1");
                     return searchParams;
@@ -881,18 +900,39 @@ function SearchPageWrapper(props) {
                 });
 
                 search(
-                    term, doc, page, excludeModern, ignoreSep,
-                    async (result, num_results, histogram, page_N) => {
+                    query,
+                    async (result, page_N) => {
                         if (active) {
                             setResult({
+                                ...prevResult.current,
                                 result: result,
-                                num_results: num_results,
                                 page_N: page_N,
-                                histogram: histogram,
-                                result_term: term,
+                                result_term: query.term,
                                 loaded: true
                             });
                         }
+                    },
+                    async (error) => {
+                        console.error(error);
+                        // TODO: handle error
+                    }
+                );
+
+                getStats(
+                    query,
+                    async (numResults, histogram) => {
+                        if (active) {
+                            setResult({
+                                ...prevResult.current,
+                                num_results: numResults,
+                                histogram: histogram,
+                                statsLoaded: true
+                            });
+                        }
+                    },
+                    async (error) => {
+                        console.error(error);
+                        // TODO: handle error
                     }
                 );
 
@@ -931,89 +971,58 @@ function SearchPageWrapper(props) {
     );
 
     React.useEffect(() => {
-        if (prevTerm.current !== term) {
+        if (prevQuery.current.term !== term) {
             if (ENABLE_SEARCH_AS_YOU_TYPE) {
-                const result = refresh(
-                    term,
-                    prevDoc.current,
-                    prevPage.current,
-                    prevExcludeModern.current,
-                    prevIgnoreSep.current
-                );
+                const result = refresh({...prevQuery.current, term: term});
                 isInited.current = true;
-                prevTerm.current = term;
+                prevQuery.current.term = term;
                 return result;
-            }
-            else {
-                prevTerm.current = term;
+            } else {
+                prevQuery.current.term = term;
             }
         }
     }, [term, refresh]);
 
     React.useEffect(() => {
-        if (prevPage.current !== page || !isInited.current) {
-            console.log("Page changed: ", prevPage.current, " -> ", page);
-            const result = refresh(
-                prevTerm.current,
-                prevDoc.current,
-                page,
-                prevExcludeModern.current,
-                prevIgnoreSep.current
-            );
+        if (prevQuery.current.page !== page || !isInited.current) {
+            console.log("Page changed: ", prevQuery.current.page, " -> ", page);
+            const result = refresh({...prevQuery.current, page: page});
             isInited.current = true;
-            prevPage.current = page;
+            prevQuery.current.page = page;
             return result;
         }
     }, [page, refresh]);
 
     React.useEffect(() => {
-        if (prevDoc.current !== doc) {
-            console.log("Doc changed: ", prevDoc.current, " -> ", doc);
+        if (prevQuery.current.doc !== doc) {
+            console.log("Doc changed: ", prevQuery.current.doc, " -> ", doc);
             if (ENABLE_SEARCH_AS_YOU_TYPE) {
-                const result = refresh(
-                    prevTerm.current,
-                    doc,
-                    prevPage.current,
-                    prevExcludeModern.current,
-                    prevIgnoreSep.current
-                );
+                const result = refresh({...prevQuery.current, doc: doc});
                 isInited.current = true;
-                prevDoc.current = doc;
+                prevQuery.current.doc = doc;
                 return result;
             } else {
-                prevDoc.current = doc;
+                prevQuery.current.doc = doc;
             }
         }
     }, [doc, refresh]);
 
     React.useEffect(() => {
-        if (prevExcludeModern.current !== excludeModern) {
-            console.log("Exclude modern changed: ", prevExcludeModern.current, " -> ", excludeModern);
-            const result = refresh(
-                prevTerm.current,
-                prevDoc.current,
-                prevPage.current,
-                excludeModern,
-                prevIgnoreSep.current
-            );
+        if (prevQuery.current.excludeModern !== excludeModern) {
+            console.log("Exclude modern changed: ", prevQuery.current.excludeModern, " -> ", excludeModern);
+            const result = refresh({...prevQuery.current, excludeModern: excludeModern});
             isInited.current = true;
-            prevExcludeModern.current = excludeModern;
+            prevQuery.current.excludeModern = excludeModern;
             return result;
         }
     }, [excludeModern, refresh]);
 
     React.useEffect(() => {
-        if (prevIgnoreSep.current !== ignoreSep) {
-            console.log("Ignore separator changed: ", prevIgnoreSep.current, " -> ", ignoreSep);
-            const result = refresh(
-                prevTerm.current,
-                prevDoc.current,
-                prevPage.current,
-                prevExcludeModern.current,
-                ignoreSep
-            );
+        if (prevQuery.current.ignoreSep !== ignoreSep) {
+            console.log("Ignore separator changed: ", prevQuery.current.ignoreSep, " -> ", ignoreSep);
+            const result = refresh({...prevQuery.current, ignoreSep: ignoreSep});
             isInited.current = true;
-            prevIgnoreSep.current = ignoreSep;
+            prevQuery.current.ignoreSep = ignoreSep;
             return result;
         }
     }, [ignoreSep, refresh]);
@@ -1037,24 +1046,32 @@ function SearchPageWrapper(props) {
     }, [docSuggestions]);
 
     function forceRefresh() {
-        return refresh(term, doc, page, excludeModern, ignoreSep);
+        return refresh({
+            term: term,
+            doc: doc,
+            page: page,
+            excludeModern: excludeModern,
+            ignoreSep: ignoreSep,
+        });
     }
 
     const startTime = performance.now();
-    const dom = <SearchPage {...props}
+    const dom = <SearchPage
+        {...props}
         page={page} term={term} doc={doc}
         excludeModern={excludeModern} ignoreSep={ignoreSep}
         result={result.result}
-        numResults={result.num_results}
         resultTerm={result.result_term}
         pageN={result.page_N}
-        histogram={result.histogram}
         loaded={result.loaded}
+        numResults={result.num_results}
+        histogram={result.histogram}
+        statsLoaded={result.statsLoaded}
         setSearchParams={setSearchParams}
         onRefresh={forceRefresh}
         docSuggestions={docSuggestions}
         navigate={navigate}
-    />;
+    />
     const endTime = performance.now();
     console.log("SearchPage render time:", endTime - startTime);
 

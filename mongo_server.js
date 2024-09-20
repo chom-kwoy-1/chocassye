@@ -8,6 +8,7 @@ import fs from "fs";
 import {MongoClient} from "mongodb";
 import escapeStringRegexp from 'escape-string-regexp';
 import nodecallspython from 'node-calls-python';
+import {make_ngrams} from './ngram.js';
 
 const __dirname = path.resolve();
 
@@ -37,6 +38,90 @@ if (process.env.SSL === "ON") {
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));
 
+
+function makeSearchRegex(text) {
+    let strippedText = text;
+    if (text.startsWith('%')) {
+        strippedText = strippedText.substring(1);
+    }
+    if (text.endsWith('%')) {
+        strippedText = strippedText.substring(0, strippedText.length - 1);
+    }
+    let regex = "";
+    let isEscaping = false;
+    for (let i = 0; i < strippedText.length; i++) {
+        if (strippedText[i] === '%' && !isEscaping) {
+            regex += ".*?";
+            continue;
+        }
+        if (strippedText[i] === '_' && !isEscaping) {
+            regex += ".";
+            continue;
+        }
+        if (isEscaping) {
+            isEscaping = false;
+            regex += escapeStringRegexp(strippedText[i]);
+            continue;
+        }
+        if (strippedText[i] === '\\') {
+            isEscaping = true;
+            continue;
+        }
+        regex += escapeStringRegexp(strippedText[i]);
+    }
+    if (!text.startsWith('%')) {
+        regex = `^${regex}`;
+    }
+    if (!text.endsWith('%')) {
+        regex = `${regex}$`;
+    }
+    console.log(`regex=${regex}`);
+    let textRegex = new RegExp(regex);
+    return textRegex;
+}
+
+
+function makeCorpusQuery(query) {
+    let text = query.term;
+    let doc = query.doc;
+    let excludeModern = query.excludeModern === "yes";
+    let ignoreSep = query.ignoreSep === "yes";
+    // FIXME: set ignoreSep to false for now
+    ignoreSep = false;
+
+    if (text === '%%') {
+        return null;
+    }
+
+    let searchPattern;
+    if (text.startsWith('%') && text.endsWith('%')
+        && !text.slice(1, text.length - 1).includes('%')
+        && !text.slice(1, text.length - 1).includes('_')
+        && text.slice(1, text.length - 1).length >= 3) {
+        const query = text.slice(1, text.length - 1);
+        searchPattern = {
+            text_trigrams: {$all: make_ngrams(query, 3)},
+            text: {$regex: makeSearchRegex(text)},
+        };
+    } else {
+        searchPattern = {text: {$regex: makeSearchRegex(text)}};
+    }
+
+    return [
+        {$match: {
+            ...searchPattern,
+            filename: new RegExp(escapeStringRegexp(doc)),
+            ...(excludeModern? {
+                lang: {
+                    $nin: ["mod", "modern translation", "pho"],
+                    $not: /역$/,
+                }
+            } : {})
+        }},
+    ];
+}
+
+const PAGE_N = 50;
 
 // Use connect method to connect to the Server
 db_client.connect().then(function() {
@@ -119,77 +204,44 @@ db_client.connect().then(function() {
     });
 
     app.post('/api/search', (req, res) => {
-        let text = req.body.term;
-        let doc = req.body.doc;
-        let excludeModern = req.body.excludeModern === "yes";
-        let ignoreSep = req.body.ignoreSep === "yes";
-        // FIXME: set ignoreSep to false for now
-        ignoreSep = false;
+        // Get current time
+        const beginTime = new Date();
 
-        let N = 50;
-        if (text === '%%') {
+        // Get current timestamp
+        const timestamp = new Date().toISOString();
+        console.log(`${timestamp} ip=${req.socket.remoteAddress} | Search text=${req.body.term} doc=${req.body.doc}`);
+
+        const pipeline = makeCorpusQuery(req.body, PAGE_N);
+
+        if (pipeline === null) {
             res.send({
                 status: "success",
-                total_rows: 0,
                 results: [],
-                histogram: [],
-                page_N: N
+                page_N: PAGE_N,
             });
             return;
         }
-        console.log(`search text=${text} doc=${doc} exMod=${excludeModern} igSep=${ignoreSep} ip=${req.socket.remoteAddress}`);
 
-        let strippedText = text;
-        if (text.startsWith('%')) {
-            strippedText = strippedText.substring(1);
-        }
-        if (text.endsWith('%')) {
-            strippedText = strippedText.substring(0, strippedText.length - 1);
-        }
-        let regex = "";
-        let isEscaping = false;
-        for (let i = 0; i < strippedText.length; i++) {
-            if (strippedText[i] === '%' && !isEscaping) {
-                regex += ".*?";
-                continue;
-            }
-            if (strippedText[i] === '_' && !isEscaping) {
-                regex += ".";
-                continue;
-            }
-            if (isEscaping) {
-                isEscaping = false;
-                regex += escapeStringRegexp(strippedText[i]);
-                continue;
-            }
-            if (strippedText[i] === '\\') {
-                isEscaping = true;
-                continue;
-            }
-            regex += escapeStringRegexp(strippedText[i]);
-        }
-        if (!text.startsWith('%')) {
-            regex = `^${regex}`;
-        }
-        if (!text.endsWith('%')) {
-            regex = `${regex}$`;
-        }
-        console.log(`regex=${regex}`);
-        let textRegex = new RegExp(regex);
-        let offset = (req.body.page - 1) * N;
+        const offset = (req.body.page - 1) * PAGE_N;
 
         const sentences_collection = db.collection('sentences');
         sentences_collection.aggregate([
-            {$match: {
-                text: textRegex,
-                filename: new RegExp(escapeStringRegexp(doc)),
-                ...(excludeModern? {
-                    lang: {
-                        $nin: ["mod", "modern translation", "pho"],
-                        $not: /역$/,
-                    }
-                } : {})
+            ...pipeline,
+            {$sort: {
+                year_sort: 1,
+                filename: 1,
+                number_in_book: 1,
             }},
+            {$skip: offset},
+            {$limit: PAGE_N},
+            {$group: {
+                _id: "$filename",
+                filename: {$first: "$filename"},
+                year_sort: {$first: "$year_sort"},
+                count: {$sum: 1},
+                sentences: {$push: "$$ROOT"}
+            }},
+            {$sort: {year_sort: 1, _id: 1}},
             {$lookup: {
                 from: "books",
                 localField: "filename",
@@ -197,53 +249,80 @@ db_client.connect().then(function() {
                 as: "book_info",
             }},
             {$unwind: "$book_info"},
+            {$project: {
+                _id: 0,
+                name: "$filename",
+                year: "$book_info.year",
+                year_start: "$book_info.year_start",
+                year_end: "$book_info.year_end",
+                year_string: "$book_info.year_string",
+                year_sort: "$book_info.year_sort",
+                sentences: 1,
+                count: 1
+            }},
+        ]).toArray().then((results) => {
+            const elapsed = new Date() - beginTime;
+            console.log("Successfully retrieved search results in " + elapsed + "ms");
+            res.send({
+                status: "success",
+                results: results,
+                page_N: PAGE_N,
+            });
+        }).catch(err => {
+            console.log(err.message);
+            res.send({
+                status: "error",
+                msg: err.message
+            });
+        });
+    });
+
+    app.post('/api/search_stats', (req, res) => {
+        // Get current time
+        const beginTime = new Date();
+
+        // Get current timestamp
+        const timestamp = new Date().toISOString();
+        console.log(`${timestamp} ip=${req.socket.remoteAddress} | SearchStats text=${req.body.term} doc=${req.body.doc}`);
+
+        const pipeline = makeCorpusQuery(req.body, PAGE_N);
+
+        if (pipeline === null) {
+            res.send({
+                status: "success",
+                num_results: 0,
+                histogram: [],
+            });
+            return;
+        }
+
+        const sentences_collection = db.collection('sentences');
+        sentences_collection.aggregate([
+            ...pipeline,
             {$facet: {
-                total: [{$count: "count"}],
-                results: [
-                    {$sort: {"book_info.year_sort": 1, filename: 1, number_in_book: 1}},
-                    {$skip: offset},
-                    {$limit: N},
-                    {$group: {
-                        _id: "$filename",
-                        name: {$first: "$filename"},
-                        year: {$first: "$book_info.year"},
-                        year_start: {$first: "$book_info.year_start"},
-                        year_end: {$first: "$book_info.year_end"},
-                        year_string: {$first: "$book_info.year_string"},
-                        year_sort: {$first: "$book_info.year_sort"},
-                        count: {$sum: 1},
-                        sentences: {$push: "$$ROOT"}
-                    }},
-                    {$sort: {year_sort: 1, _id: 1}}
-                ],
+                count: [{$count: "count"}],
                 histogram: [
                     {$group: {
-                        _id: "$book_info.decade_sort",
-                        period: {$first: "$book_info.decade_sort"},
+                        _id: "$decade_sort",
+                        period: {$first: "$decade_sort"},
                         num_hits: {$sum: 1}
-                    }}
-                ],
+                    }},
+                    {$project: {
+                        _id: 0,
+                        period: 1,
+                        num_hits: 1,
+                    }},
+                    {$sort: {period: 1}}
+                ]
             }}
         ]).toArray().then((results) => {
-            console.log("Successfully retrieved search results");
-            if (results[0].total.length === 0) {
-                res.send({
-                    status: "success",
-                    total_rows: 0,
-                    results: [],
-                    histogram: [],
-                    page_N: N
-                });
-            }
-            else {
-                res.send({
-                    status: "success",
-                    total_rows: results[0].total[0].count,
-                    results: results[0].results,
-                    histogram: results[0].histogram,
-                    page_N: N,
-                });
-            }
+            const elapsed = new Date() - beginTime;
+            console.log("Successfully retrieved search stats in " + elapsed + "ms");
+            res.send({
+                status: "success",
+                num_results: results[0].count[0].count,
+                histogram: results[0].histogram,
+            });
         }).catch(err => {
             console.log(err.message);
             res.send({
