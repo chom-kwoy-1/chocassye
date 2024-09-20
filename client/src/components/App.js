@@ -51,7 +51,13 @@ function App(props) {
     let prideMonth = today.getMonth() === 5; // June is month 5
     if (prideMonth) {
         // rainbow gradient
-        appbarStyle = {background: "linear-gradient(180deg, rgba(152,0,0,1) 13.9%, rgba(134,70,0,1) 14%, rgba(134,70,0,1) 27.9%, rgba(121,119,0,1) 28%, rgba(121,119,0,1) 42.9%, rgba(21,110,0,1) 43%, rgba(21,110,0,1) 56.9%, rgba(0,74,119,1) 57%, rgba(0,74,119,1) 70.9%, rgba(0,22,84,1) 71%, rgba(0,22,84,1) 85.9%, rgba(88,0,124,1) 86%)"};
+        appbarStyle = {
+            background: "linear-gradient(180deg, rgba(152,0,0,1) 13.9%, rgba(134,70,0,1) 14%, " +
+                "rgba(134,70,0,1) 27.9%, rgba(121,119,0,1) 28%, rgba(121,119,0,1) 42.9%, " +
+                "rgba(21,110,0,1) 43%, rgba(21,110,0,1) 56.9%, rgba(0,74,119,1) 57%, " +
+                "rgba(0,74,119,1) 70.9%, rgba(0,22,84,1) 71%, rgba(0,22,84,1) 85.9%, " +
+                "rgba(88,0,124,1) 86%)"
+        };
     }
 
     return (

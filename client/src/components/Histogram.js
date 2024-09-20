@@ -30,7 +30,7 @@ export default function Histogram(props) {
         .map((decade) => decade.num_hits)
         .reduce((a, b) => a + b, 0);
 
-    return <Grid item container xs={12}>
+    return <Grid container>
         <Grid item xs={12}>
             <Card elevation={3}>
                 <Box position="relative">
@@ -72,7 +72,7 @@ export default function Histogram(props) {
                             return <Tooltip key={i} title={tooltip}>
                                 <Box
                                     sx={{
-                                        bgcolor: 'secondary.main',
+                                        bgcolor: 'secondary.dark',
                                         opacity: opacity,
                                         cursor: 'pointer',
                                         borderColor: 'text.disabled',
