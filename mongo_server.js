@@ -106,8 +106,7 @@ function makeCorpusQuery(query) {
     let searchPattern;
     if (text.startsWith('%') && text.endsWith('%')
         && !text.slice(1, text.length - 1).includes('%')
-        && !text.slice(1, text.length - 1).includes('_')
-        && text.slice(1, text.length - 1).length >= 3) {
+        && !text.slice(1, text.length - 1).includes('_')) {
         let queryText = text.slice(1, text.length - 1);
         if (ignoreSep) {
             queryText = queryText.replace(/[ .^]/g, "");
