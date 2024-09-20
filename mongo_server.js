@@ -15,6 +15,7 @@ const __dirname = path.resolve();
 // create app
 const app = express();
 const port = process.env.PORT || 5000;
+const sslport = process.env.SSLPORT || 5001;
 
 // Connection URL
 const db_url = 'mongodb://localhost:27017';
@@ -31,7 +32,7 @@ if (process.env.SSL === "ON") {
     const certificate = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/cert.pem");
     const ca = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/chain.pem");
     const credentials = { key: privateKey, cert: certificate, ca: ca };
-    https_server = https.createServer(credentials, app).listen(443, () => console.log('Listening on port 443 with SSL'));
+    https_server = https.createServer(credentials, app).listen(sslport, () => console.log('Listening on port 443 with SSL'));
 }
 
 
@@ -131,11 +132,18 @@ db_client.connect().then(function() {
     app.post('/api/parse', (req, res) => {
         nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
             nodecallspython.call(pymodule, "parse_into_json", req.body.text).then(result => {
-                console.log(result);
-                res.send({
-                    status: "success",
-                    data: JSON.parse(result),
-                });
+                result = JSON.parse(result);
+                if (result.error !== undefined) {
+                    res.send({
+                        status: "error",
+                        msg: result.error
+                    });
+                } else {
+                    res.send({
+                        status: "success",
+                        data: result,
+                    });
+                }
             }).catch(err => {
                 console.log(err);
                 res.send({
