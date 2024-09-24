@@ -1,6 +1,6 @@
 import React from 'react';
 import './i18n';
-import {postData} from './utils';
+import {postData} from './utils.js';
 import {
     Box,
     Button,

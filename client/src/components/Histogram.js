@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 import './i18n';
-import {range} from './utils';
+import {range} from './common_utils.mjs';
 
 import {
     Box, Grid, Card, Tooltip

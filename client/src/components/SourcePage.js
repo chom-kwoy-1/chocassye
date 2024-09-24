@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "./config";
-import { StyledTableCell, StyledTableRow } from './utils';
+import { StyledTableCell, StyledTableRow } from './utils.js';
 
 
 const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({

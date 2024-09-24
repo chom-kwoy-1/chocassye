@@ -1,19 +1,22 @@
+'use strict';
+
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
 import jsdom from 'jsdom';
 import {promisify} from 'util';
-import {MongoClient} from 'mongodb';
-import {hangul_to_yale} from './client/src/components/YaleToHangul.mjs';
-import {make_ngrams} from './ngram.js';
 
+import pg from 'pg';
+import { format } from 'node-pg-format';
+
+import {make_ngrams} from './ngram.js';
+import {hangul_to_yale} from './client/src/components/YaleToHangul.mjs';
 
 function uni(str) {
     return str.replace(/{{{[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]}}}/g, function(ch) {
         return String.fromCharCode(parseInt(ch.slice(3, 8), 16));
     });
 }
-
 
 function find_year(doc) {
     let year_elem = doc.querySelectorAll('meta year');
@@ -85,25 +88,10 @@ function year_and_bookname_from_filename(file) {
     return {filename: filename, year_string: year_string};
 }
 
-function add_txt_file(collection, book_collection, file, data) {
-    let {filename, year_string} = year_and_bookname_from_filename(file);
-
-    // for each line
-    for (const line of data.split('\n')) {
-        // trim line
-        let line = line.trim();
-        // parse line as single xml tag
-
-        // TODO
-    }
-}
-
 function parse_year_string(year_string) {
     let ys_norm = year_string.replace(/\[[^\]]*\]/g, '').replace(/\([^\)]*\)/g, '');
 
-    let year = null;
-    let year_start = null;
-    let year_end = null;
+    let year, year_start, year_end;
     if (ys_norm.match(/^[0-9][0-9][0-9][0-9]$/) !== null ||
         ys_norm.match(/^[0-9][0-9][0-9][0-9]년$/) !== null ||
         ys_norm.match(/^[0-9][0-9][0-9][0-9]年$/) !== null) {
@@ -160,6 +148,10 @@ function parse_year_string(year_string) {
         year_start = year_end = year;
     }
 
+    year = Number.isNaN(year)? null : year;
+    year_start = Number.isNaN(year_start)? null : year_start;
+    year_end = Number.isNaN(year_end)? null : year_end;
+
     return {year: year, year_start: year_start, year_end: year_end};
 }
 
@@ -204,8 +196,8 @@ function add_file(file, xml) {
     let book_details = {
         filename: filename,
         year: year,
-        year_sort: Number.isNaN(year)? 9999 : year,
-        decade_sort: Number.isNaN(year)? 9999 : Math.floor(year / 10) * 10,
+        year_sort: year?? 9999,
+        decade_sort: year === null ? 9999 : Math.floor(year / 10) * 10,
         year_start: year_start,
         year_end: year_end,
         year_string: year_string,
@@ -228,7 +220,6 @@ function add_file(file, xml) {
 
             sentences.push({
                 filename: filename,
-                date: Date(),
                 text: text,
                 type: type,
                 number_in_book: index
@@ -276,21 +267,8 @@ function add_file(file, xml) {
                 const text_without_sep = text.replace(/[ .^]/g, '');
                 sentences.push({
                     filename: filename,
-                    date: Date(),
                     text: text,
-                    text_ngrams: [
-                        ...make_ngrams(text, 1),
-                        ...make_ngrams(text, 2),
-                        ...make_ngrams(text, 3),
-                        ...make_ngrams(text, 4),
-                    ],
                     text_without_sep: text_without_sep,
-                    text_without_sep_ngrams: [
-                        ...make_ngrams(text_without_sep, 1),
-                        ...make_ngrams(text_without_sep, 2),
-                        ...make_ngrams(text_without_sep, 3),
-                        ...make_ngrams(text_without_sep, 4),
-                    ],
                     text_with_tone: text_with_tone,
                     html: html,
                     type: type,
@@ -314,17 +292,28 @@ function add_file(file, xml) {
 
     book_details['non_chinese_sentence_count'] = non_chinese_sentence_count;
 
-    return [ sentences, book_details ];
+    return [ book_details, sentences ];
 }
 
-function insert_documents(db) {
+function parse_xml(parser, data) {
+    data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function (ch) {
+        return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
+    });
+    return parser.parseFromString(data, "text/xml");
+}
 
-    // Get the sentences collection
-    const sentences_collection = db.collection('sentences');
+function deadlock_retry(pool, query, args=[]) {
+    return pool.query(query, args).catch((err) => {
+        if (err.code === '40P01') {
+            console.error("Deadlock detected, retrying...");
+            return deadlock_retry(pool, query, args);
+        } else {
+            throw err;
+        }
+    });
+}
 
-    // Get the books collection
-    const books_collection = db.collection('books');
-
+function insert_documents(pool) {
     const dom = new jsdom.JSDOM("");
     const DOMParser = dom.window.DOMParser;
     const parser = new DOMParser;
@@ -333,94 +322,247 @@ function insert_documents(db) {
         promisify(glob)("chocassye-corpus/data/*/*.xml"),
         promisify(glob)("chocassye-corpus/data/*/*.txt"),
     ]).then(async ([xmlFiles, txtFiles]) => {
-        console.log("total", xmlFiles.length, "files");
-        console.dir(xmlFiles, {depth: null, 'maxArrayLength': null});
-
-        /*
-        for (let [i, file] of txtFiles.entries()) {
-            promises.push(promisify(fs.readFile)(file, "utf8")
-                .then((data) => {
-                    data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function (ch) {
-                        return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
-                    });
-                    return data;
-                })
-                .then((data) => {
-                    const [ sentences, book_details ] = add_txt_file(sentences, books, file, data);
-                })
-                .catch((err) => {
-                    console.error(i, "ERROR", file, err.stack);
-                }));
-        }
-        */
+        console.log("Total", xmlFiles.length, "files");
 
         let promises = [];
         for (let [i, file] of xmlFiles.entries()) {
             const pushTask = promisify(fs.readFile)(file, "utf8")
                 .then((data) => {
-                    data = data.replace(/^\uFEFF/, '').replace(/[^\0-~]/g, function (ch) {
-                        return "{{{" + ("0000" + ch.charCodeAt().toString(16)).slice(-5) + "}}}";
-                    });
-                    return parser.parseFromString(data, "text/xml");
+                    return parse_xml(parser, data);
                 })
-                .then((xml) => {
-                    const [sentences, book_details] = add_file(file, xml);
+                .then(async (xml) => {
+                    const [book_details, sentences] = add_file(file, xml);
 
-                    return Promise.all([
-                        sentences_collection.insertMany(sentences),
-                        books_collection.insertOne(book_details),
+                    await deadlock_retry(pool, `
+                        INSERT INTO books (
+                            filename, year, year_sort, decade_sort, year_start, year_end, year_string,
+                            attributions, bibliography, num_sentences, non_chinese_sentence_count
+                        ) VALUES (
+                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+                        );
+                    `, [
+                        book_details.filename,
+                        book_details.year,
+                        book_details.year_sort,
+                        book_details.decade_sort,
+                        book_details.year_start,
+                        book_details.year_end,
+                        book_details.year_string,
+                        JSON.stringify(book_details.attributions),
+                        book_details.bibliography,
+                        book_details.num_sentences,
+                        book_details.non_chinese_sentence_count,
                     ]);
+
+                    for (let sentence of sentences) {
+                        await deadlock_retry(pool, `
+                            INSERT INTO sentences (
+                                filename, text, text_without_sep, text_with_tone, html, 
+                                type, lang, page, orig_tag, number_in_page, number_in_book, hasImages, 
+                                year_sort, decade_sort
+                            ) VALUES (
+                                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+                            ) RETURNING id;
+                        `, [
+                            sentence.filename,
+                            sentence.text,
+                            sentence.text_without_sep,
+                            sentence.text_with_tone,
+                            sentence.html,
+                            sentence.type,
+                            sentence.lang,
+                            sentence.page,
+                            sentence.orig_tag,
+                            sentence.number_in_page,
+                            sentence.number_in_book,
+                            sentence.hasImages,
+                            sentence.year_sort,
+                            sentence.decade_sort,
+                        ]).then((sentence_result) => {
+                            const sentence_id = sentence_result.rows[0].id;
+
+                            let data = "";
+                            let cnt = 0;
+
+                            const text = sentence.text;
+                            const text_ngrams = [
+                                ...make_ngrams(text, 1),
+                                ...make_ngrams(text, 2),
+                                ...make_ngrams(text, 3),
+                                ...make_ngrams(text, 4),
+                            ];
+                            for (let ngram of text_ngrams) {
+                                data += format('(%L, false),', ngram);
+                                cnt += 1;
+                            }
+
+                            if (sentence.text_without_sep !== undefined) {
+                                const text_without_sep = sentence.text_without_sep;
+                                const text_without_sep_ngrams = [
+                                    ...make_ngrams(text_without_sep, 1),
+                                    ...make_ngrams(text_without_sep, 2),
+                                    ...make_ngrams(text_without_sep, 3),
+                                    ...make_ngrams(text_without_sep, 4),
+                                ];
+                                for (let ngram of text_without_sep_ngrams) {
+                                    data += format('(%L, true),', ngram);
+                                    cnt += 1;
+                                }
+                            }
+
+                            if (cnt === 0) {
+                                return Promise.resolve();
+                            }
+
+                            data = data.slice(0, -1);
+
+                            const query = (`
+                                WITH 
+                                    input_rows(ngram, is_without_sep) AS (VALUES ${data}),
+                                    ins AS (
+                                        INSERT INTO ngrams(ngram, is_without_sep)
+                                        SELECT * FROM input_rows
+                                        ON CONFLICT DO NOTHING
+                                        RETURNING id
+                                    )
+                                INSERT INTO ngram_rel(ngram_id, sentence_id)
+                                    SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
+                                        UNION ALL
+                                    SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
+                                        input_rows JOIN ngrams n USING (ngram, is_without_sep)
+                                    ON CONFLICT DO NOTHING;
+                            `);
+
+                            return deadlock_retry(pool, query);
+                        });
+                    }
                 })
                 .then(() => {
-                    // TODO: indicate progress
                     console.log(i, "DONE", file);
                 })
                 .catch((err) => {
-                    console.error(i, "ERROR", file, err.stack);
+                    console.error(i, "ERROR", file, err.code, err.stack);
                 });
             promises.push(pushTask);
 
-            if (i % (process.env.BATCH || 16) === 0) {
+            const BATCH_SIZE = process.env.BATCH || 16;
+            if (i % BATCH_SIZE === BATCH_SIZE - 1) {
                 await Promise.all(promises);
                 promises = [];
             }
         }
         await Promise.all(promises);
-    }).then(() => {
-        console.log("Finished inserting documents!");
-        return Promise.all([
-            sentences_collection.createIndex({text_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}), // for search
-            sentences_collection.createIndex({text_without_sep_ngrams: 1, year_sort: 1, filename: 1, number_in_book: 1}),  // for search
-            sentences_collection.createIndex({text_ngrams: 1, decade_sort: 1}),  // for stats
-            sentences_collection.createIndex({text_without_sep_ngrams: 1, decade_sort: 1}),  // for stats
-            sentences_collection.createIndex({year_sort: 1, filename: 1}),  // for doc suggest
-            sentences_collection.createIndex({filename: 1, number_in_book: 1}),  // for source view
-        ]);
-    }).then(() => {
-        console.log("Finished creating indexes!");
     });
 }
 
 
 function populate_db() {
-    // Connection URL
-    const url = 'mongodb://0.0.0.0:27017';
-
-    // Create a new MongoClient
-    const client = new MongoClient(url);
-
-    // Use connect method to connect to the Server
-    client.connect().then(function() {
-        console.log("Connected successfully to server");
-        const db = client.db("chocassye");
-        return db.dropDatabase();
-    }).then(() => {
-        console.log("Dropped database");
-        const db = client.db("chocassye");
-        return insert_documents(db);
-    }).then(() => {
-        console.log("Finished inserting documents!");
-        return client.close();
+    const { Pool } = pg;
+    const pool = new Pool({
+        user: 'postgres',
+        host: 'localhost',
+        database: 'chocassye',
+        password: 'password',
     });
+    console.log("Connected successfully to server");
+
+    // drop tables `books` and `sentences`
+    return pool.query('DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;')
+        .then(() => {
+            console.log("Dropped tables.");
+            const create_books = `
+                CREATE TABLE books (
+                    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                    filename TEXT,
+                    year INTEGER,
+                    year_sort INTEGER, 
+                    decade_sort INTEGER, 
+                    year_start INTEGER, 
+                    year_end INTEGER, 
+                    year_string TEXT, 
+                    attributions JSONB, 
+                    bibliography TEXT, 
+                    num_sentences INTEGER, 
+                    non_chinese_sentence_count INTEGER
+                );
+            `;
+            const create_sentences = `
+                CREATE TABLE sentences (
+                    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                    filename TEXT,
+                    text TEXT,
+                    text_without_sep TEXT,
+                    text_with_tone TEXT,
+                    html TEXT, 
+                    type TEXT, 
+                    lang TEXT, 
+                    page TEXT, 
+                    orig_tag TEXT, 
+                    number_in_page TEXT, 
+                    number_in_book INTEGER, 
+                    hasImages BOOLEAN, 
+                    year_sort INTEGER, 
+                    decade_sort INTEGER
+                );
+            `;
+            const create_ngrams = `
+                CREATE TABLE ngrams (
+                    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                    ngram VARCHAR(4),
+                    is_without_sep BOOLEAN,
+                    UNIQUE(ngram, is_without_sep)
+                );
+            `;
+            return Promise.all([
+                pool.query(create_books),
+                pool.query(create_sentences),
+                pool.query(create_ngrams),
+            ]);
+        })
+        .then(() => {
+            const create_ngram_rel = `
+                CREATE TABLE ngram_rel (
+                    ngram_id INTEGER REFERENCES ngrams(id),
+                    sentence_id INTEGER REFERENCES sentences(id),
+                    PRIMARY KEY(ngram_id, sentence_id)
+                );
+            `;
+            return pool.query(create_ngram_rel);
+        })
+        .then(() => {
+            return insert_documents(pool);
+        })
+        .then(() => {
+            console.log("Populated tables.");
+            console.log("Creating indexes...");
+            return pool.query(`
+                CREATE INDEX IF NOT EXISTS sentence_id
+                    ON public.ngram_rel USING btree
+                    (sentence_id ASC NULLS LAST)
+                    WITH (deduplicate_items=True)
+                    TABLESPACE pg_default; 
+           `);
+        })
+        .then(() => {
+            return pool.query(`
+                CREATE INDEX IF NOT EXISTS decade_sort
+                    ON public.sentences USING btree
+                    (decade_sort ASC NULLS LAST)
+                    WITH (deduplicate_items=True)
+                    TABLESPACE pg_default;
+           `);
+        })
+        .then(() => {
+            return pool.query(`
+                CREATE INDEX IF NOT EXISTS sentences_year_sort_filename_number_in_book_idx
+                    ON public.sentences USING btree
+                    (year_sort ASC NULLS LAST, filename COLLATE pg_catalog."default" ASC NULLS LAST, number_in_book ASC NULLS LAST)
+                    WITH (deduplicate_items=True)
+                    TABLESPACE pg_default;
+           `);
+        })
+        .then(() => {
+            console.log("Created indexes.");
+        });
 }
 populate_db();

@@ -27,10 +27,8 @@ import {
 import {styled} from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "./config";
 import {tooltipClasses} from '@mui/material/Tooltip';
-import {
-    highlightColors, StyledTableCell, StyledTableRow,
-    postData, zip
-} from './utils';
+import {highlightColors, StyledTableCell, StyledTableRow, postData} from './utils.js';
+import {zip} from './common_utils.mjs';
 import {SearchResultContext} from "./SearchContext";
 
 
