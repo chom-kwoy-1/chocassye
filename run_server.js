@@ -453,5 +453,4 @@ process.on('SIGINT', () => {
         https_server.close();
     }
     http_server.close();
-    db_client.close();
 });
