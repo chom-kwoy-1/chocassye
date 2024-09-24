@@ -305,7 +305,7 @@ app.post('/api/search', (req, res) => {
         console.log("Successfully retrieved search results in " + elapsed + "ms");
         let books = [];
         for (const row of results.rows) {
-            if (books.length === 0 || books[books.length - 1].filename !== row.filename) {
+            if (books.length === 0 || books[books.length - 1].name !== row.filename) {
                 books.push({
                     name: row.filename,
                     year: row.year,
