@@ -849,6 +849,7 @@ function SearchPageWrapper(props) {
 
     React.useEffect(() => {
         commitQuery();
+        forceRefresh.current = false;
     }, [page, excludeModern, ignoreSep]);
 
     React.useEffect(() => {
