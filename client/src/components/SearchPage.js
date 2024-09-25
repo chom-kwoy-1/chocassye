@@ -711,6 +711,7 @@ function SearchPageWrapper(props) {
     const prevQuery = React.useRef(curQuery);
 
     const pageValid = React.useRef(true);
+    const forceRefresh = React.useRef(false);
 
     function refreshSearchResults(query) {
         let active = true;
@@ -851,6 +852,13 @@ function SearchPageWrapper(props) {
     }, [page, excludeModern, ignoreSep]);
 
     React.useEffect(() => {
+        if (forceRefresh.current) {
+            commitQuery();
+            forceRefresh.current = false;
+        }
+    }, [term, doc]);
+
+    React.useEffect(() => {
         console.log("SearchParams changed to ", searchParams);
         const params = parseSearchParams(searchParams);
         if (params.term !== term ||
@@ -864,6 +872,7 @@ function SearchPageWrapper(props) {
             setExcludeModern(params.excludeModern);
             setIgnoreSep(params.ignoreSep);
             pageValid.current = true;
+            forceRefresh.current = true;
         }
     }, [searchParams]);
 
