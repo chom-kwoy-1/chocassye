@@ -1,6 +1,6 @@
 import React from 'react';
 import './index.css';
-import {hangul_to_yale, yale_to_hangul} from './YaleToHangul';
+import {yale_to_hangul} from './YaleToHangul';
 import {Link, useNavigate, useSearchParams} from "react-router-dom";
 import {
     addHighlights,
@@ -201,7 +201,7 @@ function highlight(text, searchTerm, match_ids, footnotes, romanize, ignoreSep) 
     return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
 }
 
-function SearchResultsWrapper(props) {
+let SearchResultsWrapper = function (props) {
     const { t } = useTranslation();
 
     const [disabledMatches, setDisabledMatches] = React.useState(new Set());
@@ -657,7 +657,7 @@ function SearchPage(props) {
                         numResults={props.numResults}
                         romanize={romanize}
                         handleRomanizeChange={setRomanize}
-                        ignoreSep={props.ignoreSep}
+                        ignoreSep={props.resultIgnoreSep}
                         resultTerm={props.resultTerm}  // for triggering re-render
                         resultPage={props.resultPage}  // for triggering re-render
                         resultDoc={props.resultDoc}  // for triggering re-render
@@ -683,6 +683,50 @@ function parseSearchParams(searchParams) {
         excludeModern: searchParams.get("excludeModern") === "yes",
         ignoreSep: searchParams.get("ignoreSep") === "yes",
     };
+}
+
+function makeSearchParams(query) {
+    let params = {};
+    if (query.term !== "") {
+        params.term = query.term;
+    }
+    if (query.doc !== "") {
+        params.doc = query.doc;
+    }
+    if (query.page !== 1) {
+        params.page = query.page;
+    }
+    if (query.excludeModern) {
+        params.excludeModern = "yes";
+    }
+    if (query.ignoreSep) {
+        params.ignoreSep = "yes";
+    }
+    return params;
+}
+
+function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams) {
+    // Reset page when search query changes
+    if (query.page !== 1 && !pageValid.current && (
+        query.term !== curQuery.term ||
+        query.doc !== curQuery.doc ||
+        query.excludeModern !== curQuery.excludeModern ||
+        query.ignoreSep !== curQuery.ignoreSep)) {
+        setPage(1);
+    }
+    else {
+        setCurQuery(query);
+
+        const params = parseSearchParams(searchParams);
+        if (params.term !== query.term ||
+            params.doc !== query.doc ||
+            params.page !== query.page ||
+            params.excludeModern !== query.excludeModern ||
+            params.ignoreSep !== query.ignoreSep) {
+            setSearchParams(makeSearchParams(query));
+        }
+    }
+    pageValid.current = false;
 }
 
 function SearchPageWrapper(props) {
@@ -711,7 +755,7 @@ function SearchPageWrapper(props) {
     const prevQuery = React.useRef(curQuery);
 
     const pageValid = React.useRef(true);
-    const forceRefresh = React.useRef(false);
+    const forceRefresh = React.useRef(true);
 
     function refreshSearchResults(query) {
         let active = true;
@@ -785,52 +829,6 @@ function SearchPageWrapper(props) {
         }
     }
 
-    function commitQuery() {
-        // Reset page when search query changes
-        if (page !== 1 && !pageValid.current &&
-            (term !== curQuery.term ||
-            doc !== curQuery.doc ||
-            excludeModern !== curQuery.excludeModern ||
-            ignoreSep !== curQuery.ignoreSep)) {
-            setPage(1);
-        }
-        else {
-            setCurQuery({
-                term: term,
-                doc: doc,
-                page: page,
-                excludeModern: excludeModern,
-                ignoreSep: ignoreSep,
-            });
-
-            const params = parseSearchParams(searchParams);
-            if (params.term !== term ||
-                params.doc !== doc ||
-                params.page !== page ||
-                params.excludeModern !== excludeModern ||
-                params.ignoreSep !== ignoreSep) {
-                let params = {};
-                if (term !== "") {
-                    params.term = term;
-                }
-                if (doc !== "") {
-                    params.doc = doc;
-                }
-                if (page !== 1) {
-                    params.page = page;
-                }
-                if (excludeModern) {
-                    params.excludeModern = "yes";
-                }
-                if (ignoreSep) {
-                    params.ignoreSep = "yes";
-                }
-                setSearchParams(params);
-            }
-        }
-        pageValid.current = false;
-    }
-
     React.useEffect(() => {
         if (prevQuery.current.term !== curQuery.term ||
             prevQuery.current.doc !== curQuery.doc ||
@@ -848,16 +846,21 @@ function SearchPageWrapper(props) {
     }, [result]);
 
     React.useEffect(() => {
-        commitQuery();
-        forceRefresh.current = false;
-    }, [page, excludeModern, ignoreSep]);
-
-    React.useEffect(() => {
-        if (forceRefresh.current) {
-            commitQuery();
+        if (forceRefresh.current ||
+            page !== curQuery.page ||
+            excludeModern !== curQuery.excludeModern ||
+            ignoreSep !== curQuery.ignoreSep) {
+            const query = {
+                term: term,
+                doc: doc,
+                page: page,
+                excludeModern: excludeModern,
+                ignoreSep: ignoreSep,
+            };
+            commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
             forceRefresh.current = false;
         }
-    }, [term, doc]);
+    }, [term, doc, page, excludeModern, ignoreSep]);
 
     React.useEffect(() => {
         console.log("SearchParams changed to ", searchParams);
@@ -876,6 +879,17 @@ function SearchPageWrapper(props) {
             forceRefresh.current = true;
         }
     }, [searchParams]);
+
+    function forceRefreshResults() {
+        const query = {
+            term: term,
+            doc: doc,
+            page: page,
+            excludeModern: excludeModern,
+            ignoreSep: ignoreSep,
+        };
+        commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
+    }
 
     // Document suggestions
     let [docSuggestions, setDocSuggestions] = React.useState({
@@ -934,6 +948,8 @@ function SearchPageWrapper(props) {
         resultTerm={result.result_term}
         resultPage={result.result_page}
         resultDoc={result.result_doc}
+        resultExcludeModern={result.excludeModern}
+        resultIgnoreSep={result.ignoreSep}
         // Current Stats
         statsLoaded={result.statsLoaded}
         statsTerm={result.stats_term}
@@ -941,7 +957,7 @@ function SearchPageWrapper(props) {
         numResults={result.num_results}
         histogram={result.histogram}
         // Callbacks
-        onRefresh={commitQuery}
+        onRefresh={forceRefreshResults}
         docSuggestions={docSuggestions}
     />;
 }

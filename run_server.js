@@ -154,7 +154,7 @@ function makeCorpusQuery(query) {
     }
 
     if (excludeModern) {
-        queryString += " AND s.lang NOT IN ('mod', 'modern translation', 'pho') AND NOT s.lang LIKE '%역'";
+        queryString += " AND (s.lang IS NULL OR (s.lang NOT IN ('mod', 'modern translation', 'pho') AND s.lang NOT LIKE '%역'))";
     }
 
     return queryString;
