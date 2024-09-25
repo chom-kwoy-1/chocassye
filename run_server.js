@@ -105,8 +105,8 @@ function makeSearchRegex(text, ignoreSep=false) {
 function makeCorpusQuery(query) {
     let text = query.term;
     let doc = query.doc;
-    let excludeModern = query.excludeModern === "yes";
-    let ignoreSep = query.ignoreSep === "yes";
+    let excludeModern = query.excludeModern;
+    let ignoreSep = query.ignoreSep;
 
     if (text === '%%') {
         return null;

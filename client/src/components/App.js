@@ -19,16 +19,20 @@ function App(props) {
     const [anchorElUser, setAnchorElUser] = React.useState(null);
 
     let [searchResult, setSearchResult] = React.useState({
+        // Search query
+        loaded: true,
         result: [],
         result_term: "",
         result_page: 1,
         result_doc: "",
+        excludeModern: false,
+        ignoreSep: false,
+        // Search stats
+        statsLoaded: true,
         page_N: 50,
-        loaded: false,
         num_results: 0,
         histogram: [],
         stats_term: "",
-        statsLoaded: false,
     });
     
     function handleOpenNavMenu(event) {

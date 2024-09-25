@@ -27,9 +27,10 @@ import {
 import {styled} from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "./config";
 import {tooltipClasses} from '@mui/material/Tooltip';
-import {highlightColors, StyledTableCell, StyledTableRow, postData} from './utils.js';
+import {highlightColors, StyledTableCell, StyledTableRow} from './utils.js';
 import {zip} from './common_utils.mjs';
 import {SearchResultContext} from "./SearchContext";
+import {search, getStats, suggest} from "./api";
 
 
 function SearchResultsList(props) {
@@ -200,7 +201,7 @@ function highlight(text, searchTerm, match_ids, footnotes, romanize, ignoreSep) 
     return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
 }
 
-const SearchResultsWrapper = React.memo(function (props) {
+function SearchResultsWrapper(props) {
     const { t } = useTranslation();
 
     const [disabledMatches, setDisabledMatches] = React.useState(new Set());
@@ -335,7 +336,7 @@ const SearchResultsWrapper = React.memo(function (props) {
                     </Typography>
                 }
                 checked={props.romanize}
-                onChange={(event) => props.handleRomanizeChange(event)}
+                onChange={(event) => props.handleRomanizeChange(event.target.checked)}
             />
         </Grid>
 
@@ -393,28 +394,27 @@ const SearchResultsWrapper = React.memo(function (props) {
             </Box>
         </Grid>
     </React.Fragment>;
-
-}, arePropsEqual);
+}
 
 function arePropsEqual(oldProps, newProps) {
     let equal = true;
     for (let key of Object.keys(oldProps)) {
-        if (key === 'handleRomanizeChange' || key === 'setPage') {
-            continue;
-        }
-        equal &&= Object.is(oldProps[key], newProps[key]);
+        const isEqual = Object.is(oldProps[key], newProps[key]);
+        equal &&= isEqual;
     }
     return equal;
 }
+SearchResultsWrapper = React.memo(SearchResultsWrapper, arePropsEqual);
 
 function DocSelector(props) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const [open, setOpen] = React.useState(false);
     
     function handleChange(ev, doc, reason) {
         if (reason === 'selectOption') {
-            props.navigate(`/source?name=${doc.name}`);
+            navigate(`/source?name=${doc.name}`);
         }
     }
 
@@ -473,72 +473,10 @@ function SearchPage(props) {
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
 
-    function handleChange(event) {
-        let searchTerm = event.target.value;
-        props.setSearchParams(searchParams => {
-            if (searchTerm === "") {
-                searchParams.delete("term");
-            } else {
-                searchParams.set("term", searchTerm);
-            }
-            return searchParams;
-        }, { replace: true })
-    }
-
-    function handleDocChange(doc) {
-        props.setSearchParams(searchParams => {
-            if (doc === "") {
-                searchParams.delete("doc");
-            } else {
-                searchParams.set("doc", doc);
-            }
-            return searchParams;
-        }, { replace: true })
-    }
-
-    function handleExcludeModernChange(event) {
-        let excludeModern = event.target.checked;
-        props.setSearchParams(searchParams => {
-            if (excludeModern) {
-                searchParams.set("excludeModern", "yes");
-            } else {
-                searchParams.delete("excludeModern");
-            }
-            return searchParams;
-        })
-    }
-
-    function handleIgnoreSepChange(event) {
-        let ignoreSep = event.target.checked;
-        props.setSearchParams(searchParams => {
-            if (ignoreSep) {
-                searchParams.set("ignoreSep", "yes");
-            } else {
-                searchParams.delete("ignoreSep");
-            }
-            return searchParams;
-        })
-    }
-
-    function handleRomanizeChange(event) {
-        setRomanize(event.target.checked);
-    }
-
     function handleKeyDown(ev) {
         if (ev.key === "Enter") {
             props.onRefresh();
         }
-    }
-
-    function setPage(page) {
-        props.setSearchParams(searchParams => {
-            if (page === 1) {
-                searchParams.delete("page");
-            } else {
-                searchParams.set("page", page);
-            }
-            return searchParams;
-        });
     }
 
     function toggleGugyeolInput(e) {
@@ -576,7 +514,7 @@ function SearchPage(props) {
                         variant="filled"
                         value={searchTerm}
                         label={t("Search term...")}
-                        onChange={(event) => handleChange(event)}
+                        onChange={(event) => props.setTerm(event.target.value)}
                         onKeyDown={(event) => handleKeyDown(event)}
                         fullWidth
                     />
@@ -623,7 +561,7 @@ function SearchPage(props) {
                 <Button
                     variant="contained"
                     fullWidth
-                    onClick={(e) => props.onRefresh(e)}>
+                    onClick={() => props.onRefresh()}>
                     {t("Search")}
                 </Button>
             </Grid>
@@ -635,8 +573,7 @@ function SearchPage(props) {
                 <DocSelector
                     doc={props.doc}
                     docSuggestions={props.docSuggestions}
-                    navigate={props.navigate}
-                    handleDocChange={(ev) => handleDocChange(ev)}
+                    handleDocChange={(doc) => props.setDoc(doc)}
                     onRefresh={() => props.onRefresh()}
                 />
             </Grid>
@@ -672,7 +609,7 @@ function SearchPage(props) {
                                 </Typography>
                             }
                             checked={props.excludeModern}
-                            onChange={(event) => handleExcludeModernChange(event)}
+                            onChange={(event) => props.setExcludeModern(event.target.checked)}
                         />
                     </Grid>
                     <Grid item xs="auto" sm="auto">
@@ -684,23 +621,9 @@ function SearchPage(props) {
                                 </Typography>
                             }
                             checked={props.ignoreSep}
-                            onChange={(event) => handleIgnoreSepChange(event)}
+                            onChange={(event) => props.setIgnoreSep(event.target.checked)}
                         />
                     </Grid>
-                    {/*
-                    <Grid item xs="auto" sm="auto">
-                        <FormControlLabel
-                            control={<Checkbox size="small" sx={{py: 0}} />}
-                            label={
-                                <Typography sx={{fontSize: "1em"}}>
-                                    {this.props.t("Regex")}
-                                </Typography>
-                            }
-                            checked={this.props.excludeModern === "yes"}
-                            onChange={(event) => this.handleExcludeModernChange(event)}
-                        />
-                    </Grid>
-                    */}
                 </Grid>
             </Grid>
 
@@ -733,7 +656,7 @@ function SearchPage(props) {
                         results={props.result}
                         numResults={props.numResults}
                         romanize={romanize}
-                        handleRomanizeChange={(event) => handleRomanizeChange(event)}
+                        handleRomanizeChange={setRomanize}
                         ignoreSep={props.ignoreSep}
                         resultTerm={props.resultTerm}  // for triggering re-render
                         resultPage={props.resultPage}  // for triggering re-render
@@ -743,7 +666,7 @@ function SearchPage(props) {
                         statsTerm={props.statsTerm}  // for triggering re-render
                         pageN={props.pageN}
                         page={props.page}
-                        setPage={setPage}
+                        setPage={props.setPage}
                     />
                 </Grid>
             </Grid>
@@ -752,197 +675,205 @@ function SearchPage(props) {
     );
 }
 
-
-function makeQuery(query) {
-    let term = hangul_to_yale(query.term);
-
-    let prefix = "%";
-    let suffix = "%";
-    if (term.startsWith('^')) {
-        term = term.slice(1);
-        prefix = "";
-    }
-    if (term.endsWith('$')) {
-        term = term.slice(0, term.length - 1);
-        suffix = "";
-    }
-    term = "".concat(prefix, term, suffix);
-
-    query = {...query, term: term};
-
-    return query;
+function parseSearchParams(searchParams) {
+    return {
+        term: searchParams.get("term") ?? "",
+        doc: searchParams.get("doc") ?? "",
+        page: parseInt(searchParams.get("page") ?? 1),
+        excludeModern: searchParams.get("excludeModern") === "yes",
+        ignoreSep: searchParams.get("ignoreSep") === "yes",
+    };
 }
-
-
-function search(query, callback, errorCallback) {
-    query = makeQuery(query);
-
-    postData('/api/search', query).then((result) => {
-        if (result.status === 'success') {
-            callback(result.results, result.page_N);
-        } else {
-            console.log(result);
-            errorCallback('Server responded with error');
-        }
-    }).catch((err) => {
-        console.log(err);
-        errorCallback('Could not connect to server');
-    });
-}
-
-function getStats(query, callback, errorCallback) {
-    query = makeQuery(query);
-
-    postData('/api/search_stats', query).then((result) => {
-        if (result.status === 'success') {
-            callback(result.num_results, result.histogram);
-        } else {
-            console.log(result);
-            errorCallback('Server responded with error');
-        }
-    }).catch((err) => {
-        console.log(err);
-        errorCallback('Could not connect to server');
-    });
-}
-
-function suggest(doc, callback) {
-    postData('/api/doc_suggest', { doc: doc })
-    .then((result) => {
-        if (result.status === 'success') {
-            callback(result.results, result.total_rows);
-        } else {
-            callback([], 0);
-            // TODO: handle error
-        }
-    })
-    .catch((err) => {
-        console.log(err);
-        callback([], 0);
-        // TODO: handle error
-    });
-}
-
-const ENABLE_SEARCH_AS_YOU_TYPE = false;
 
 function SearchPageWrapper(props) {
-    let navigate = useNavigate();
-    let [searchParams, setSearchParams] = useSearchParams();
-    let page = parseInt(searchParams.get('page') ?? '1');
-    let term = searchParams.get('term') ?? "";
-    let doc = searchParams.get('doc') ?? "";
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    // Search options
-    let excludeModern = searchParams.get('excludeModern') ?? 'no';
-    let ignoreSep = searchParams.get('ignoreSep') ?? 'no';
+    // Currently displayed search query
+    const initialQuery = parseSearchParams(searchParams);
+    const [term, setTerm] = React.useState(initialQuery.term);
+    const [doc, setDoc] = React.useState(initialQuery.doc);
+    const [page, setPage] = React.useState(initialQuery.page);
+    const [excludeModern, setExcludeModern] = React.useState(initialQuery.excludeModern);
+    const [ignoreSep, setIgnoreSep] = React.useState(initialQuery.ignoreSep);
+
+    // Currently displayed search results
     const [result, setResult] = React.useContext(SearchResultContext);
+    const prevResult = React.useRef(result);  // for preventing infinite loops
 
+    // Previously sent search query (may be on the run)
+    const [curQuery, setCurQuery] = React.useState({
+        term: result.result_term,
+        doc: result.result_doc,
+        page: result.result_page,
+        excludeModern: result.excludeModern,
+        ignoreSep: result.ignoreSep,
+    });
+    const prevQuery = React.useRef(curQuery);
+
+    const pageValid = React.useRef(true);
+
+    function refreshSearchResults(query) {
+        let active = true;
+
+        search(
+            query,
+            async (result, page_N) => {
+                if (active) {
+                    setResult({
+                        ...prevResult.current,
+                        loaded: true,
+                        result: result,
+                        page_N: page_N,
+                        result_term: query.term,
+                        result_page: query.page,
+                        result_doc: query.doc,
+                        excludeModern: query.excludeModern,
+                        ignoreSep: query.ignoreSep,
+                    });
+
+                    // Scroll to top of the page when result changes
+                    window.scroll({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
+            },
+            async (error) => {
+                // TODO: handle error
+                console.error(error);
+            }
+        );
+
+        let invalidateStats = (
+            prevQuery.current.term !== query.term ||
+            prevQuery.current.doc !== query.doc ||
+            prevQuery.current.excludeModern !== query.excludeModern ||
+            prevQuery.current.ignoreSep !== query.ignoreSep
+        );
+
+        // Do not update stats when only page changes
+        if (invalidateStats) {
+            getStats(
+                query,
+                async (numResults, histogram) => {
+                    if (active) {
+                        setResult({
+                            ...prevResult.current,
+                            statsLoaded: true,
+                            num_results: numResults,
+                            histogram: histogram,
+                            stats_term: query.term,
+                        });
+                    }
+                },
+                async (error) => {
+                    console.error(error);
+                    // TODO: handle error
+                }
+            );
+        }
+
+        setResult({
+            ...prevResult.current,
+            statsLoaded: invalidateStats? false : prevResult.current.statsLoaded,
+            loaded: false,
+        });
+
+        return () => {
+            active = false;
+        }
+    }
+
+    function commitQuery() {
+        // Reset page when search query changes
+        if (page !== 1 && !pageValid.current &&
+            (term !== curQuery.term ||
+            doc !== curQuery.doc ||
+            excludeModern !== curQuery.excludeModern ||
+            ignoreSep !== curQuery.ignoreSep)) {
+            setPage(1);
+        }
+        else {
+            setCurQuery({
+                term: term,
+                doc: doc,
+                page: page,
+                excludeModern: excludeModern,
+                ignoreSep: ignoreSep,
+            });
+
+            const params = parseSearchParams(searchParams);
+            if (params.term !== term ||
+                params.doc !== doc ||
+                params.page !== page ||
+                params.excludeModern !== excludeModern ||
+                params.ignoreSep !== ignoreSep) {
+                let params = {};
+                if (term !== "") {
+                    params.term = term;
+                }
+                if (doc !== "") {
+                    params.doc = doc;
+                }
+                if (page !== 1) {
+                    params.page = page;
+                }
+                if (excludeModern) {
+                    params.excludeModern = "yes";
+                }
+                if (ignoreSep) {
+                    params.ignoreSep = "yes";
+                }
+                setSearchParams(params);
+            }
+        }
+        pageValid.current = false;
+    }
+
+    React.useEffect(() => {
+        if (prevQuery.current.term !== curQuery.term ||
+            prevQuery.current.doc !== curQuery.doc ||
+            prevQuery.current.page !== curQuery.page ||
+            prevQuery.current.excludeModern !== curQuery.excludeModern ||
+            prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
+            const result = refreshSearchResults(curQuery);
+            prevQuery.current = curQuery;
+            return result;
+        }
+    }, [curQuery]);
+
+    React.useEffect(() => {
+        prevResult.current = result;
+    }, [result]);
+
+    React.useEffect(() => {
+        commitQuery();
+    }, [page, excludeModern, ignoreSep]);
+
+    React.useEffect(() => {
+        console.log("SearchParams changed to ", searchParams);
+        const params = parseSearchParams(searchParams);
+        if (params.term !== term ||
+            params.doc !== doc ||
+            params.page !== page ||
+            params.excludeModern !== excludeModern ||
+            params.ignoreSep !== ignoreSep) {
+            setTerm(params.term);
+            setDoc(params.doc);
+            setPage(params.page);
+            setExcludeModern(params.excludeModern);
+            setIgnoreSep(params.ignoreSep);
+            pageValid.current = true;
+        }
+    }, [searchParams]);
+
+    // Document suggestions
     let [docSuggestions, setDocSuggestions] = React.useState({
+        loaded: false,
         result: [],
         num_results: 0,
-        loaded: false,
     });
-
-    const isInited = React.useRef(
-        result.result_term === term
-        && result.result_page === page
-        && result.result_doc === doc
-        && result.stats_term === term
-        && result.loaded && result.statsLoaded
-    );
-
-    const prevResult = React.useRef(result);
-    const prevQuery = React.useRef({
-        term: term,
-        doc: doc,
-        page: page,
-        excludeModern: excludeModern,
-        ignoreSep: ignoreSep,
-    });
-
     const prevDocSuggestions = React.useRef(docSuggestions);
-
-    const refresh = React.useCallback(
-        (query) => {
-            if (isInited.current && prevQuery.current.page === query.page && query.page !== 1) {
-                // Set page to 1 if term or doc changed
-                setSearchParams(searchParams => {
-                    searchParams.set("page", "1");
-                    return searchParams;
-                }, { replace: true });
-            } else {
-                let active = true;
-
-                search(
-                    query,
-                    async (result, page_N) => {
-                        if (active) {
-                            setResult({
-                                ...prevResult.current,
-                                result: result,
-                                page_N: page_N,
-                                result_term: query.term,
-                                result_page: query.page,
-                                result_doc: query.doc,
-                                loaded: true
-                            });
-
-                            // Scroll to top of the page when result changes
-                            window.scroll({
-                                top: 0,
-                                behavior: 'smooth'
-                            });
-                        }
-                    },
-                    async (error) => {
-                        console.error(error);
-                        // TODO: handle error
-                    }
-                );
-
-                if (prevQuery.current.term !== query.term ||
-                    prevQuery.current.excludeModern !== query.excludeModern ||
-                    prevQuery.current.ignoreSep !== query.ignoreSep ||
-                    !isInited.current) {
-
-                    setResult({
-                        ...prevResult.current,
-                        loaded: false,
-                        statsLoaded: false,
-                    });
-
-                    getStats(
-                        query,
-                        async (numResults, histogram) => {
-                            if (active) {
-                                setResult({
-                                    ...prevResult.current,
-                                    num_results: numResults,
-                                    histogram: histogram,
-                                    stats_term: query.term,
-                                    statsLoaded: true
-                                });
-                            }
-                        },
-                        async (error) => {
-                            console.error(error);
-                            // TODO: handle error
-                        }
-                    );
-                } else {
-                    setResult({
-                        ...prevResult.current,
-                        loaded: false,
-                    });
-                }
-
-                return () => {
-                    active = false;
-                }
-            }
-        },
-        [setSearchParams, setResult],
-    );
 
     const suggest_doc = React.useCallback(
         (doc) => {
@@ -952,7 +883,7 @@ function SearchPageWrapper(props) {
                 ...prevDocSuggestions.current,
                 loaded: false,
             });
-            
+
             suggest(doc, (result, num_results) => {
                 if (active) {
                     setDocSuggestions({
@@ -971,59 +902,7 @@ function SearchPageWrapper(props) {
     );
 
     React.useEffect(() => {
-        if (prevQuery.current.term !== term) {
-            if (ENABLE_SEARCH_AS_YOU_TYPE) {
-                const result = refresh({...prevQuery.current, term: term});
-                isInited.current = true;
-                prevQuery.current.term = term;
-                return result;
-            }
-        }
-    }, [term, refresh]);
-
-    React.useEffect(() => {
-        if (prevQuery.current.page !== page || !isInited.current) {
-            const result = refresh({...prevQuery.current, page: page});
-            isInited.current = true;
-            prevQuery.current.page = page;
-            return result;
-        }
-    }, [page, refresh]);
-
-    React.useEffect(() => {
-        if (prevQuery.current.doc !== doc) {
-            if (ENABLE_SEARCH_AS_YOU_TYPE) {
-                const result = refresh({...prevQuery.current, doc: doc});
-                isInited.current = true;
-                prevQuery.current.doc = doc;
-                return result;
-            }
-        }
-    }, [doc, refresh]);
-
-    React.useEffect(() => {
-        if (prevQuery.current.excludeModern !== excludeModern) {
-            const result = refresh({...prevQuery.current, excludeModern: excludeModern});
-            isInited.current = true;
-            prevQuery.current.excludeModern = excludeModern;
-            return result;
-        }
-    }, [excludeModern, refresh]);
-
-    React.useEffect(() => {
-        if (prevQuery.current.ignoreSep !== ignoreSep) {
-            const result = refresh({...prevQuery.current, ignoreSep: ignoreSep});
-            isInited.current = true;
-            prevQuery.current.ignoreSep = ignoreSep;
-            return result;
-        }
-    }, [ignoreSep, refresh]);
-
-    React.useEffect(() => {
-        prevResult.current = result;
-    }, [result]);
-
-    React.useEffect(() => {
+        // Retrieve document suggestions when doc changes
         return suggest_doc(doc);
     }, [doc, suggest_doc]);
 
@@ -1031,39 +910,29 @@ function SearchPageWrapper(props) {
         prevDocSuggestions.current = docSuggestions;
     }, [docSuggestions]);
 
-    function forceRefresh() {
-        let query = {
-            term: term,
-            doc: doc,
-            page: page,
-            excludeModern: excludeModern,
-            ignoreSep: ignoreSep,
-        };
-        const result = refresh(query);
-        isInited.current = true;
-        prevQuery.current = query;
-        return result;
-    }
-
     return <SearchPage
         {...props}
-        page={page} term={term} doc={doc}
-        excludeModern={excludeModern === "yes"}
-        ignoreSep={ignoreSep === "yes"}
+        // Search parameters
+        term={term} setTerm={setTerm}
+        doc={doc} setDoc={setDoc}
+        page={page} setPage={setPage}
+        excludeModern={excludeModern} setExcludeModern={setExcludeModern}
+        ignoreSep={ignoreSep} setIgnoreSep={setIgnoreSep}
+        // Current Results
+        loaded={result.loaded}
         result={result.result}
         resultTerm={result.result_term}
         resultPage={result.result_page}
         resultDoc={result.result_doc}
+        // Current Stats
+        statsLoaded={result.statsLoaded}
         statsTerm={result.stats_term}
         pageN={result.page_N}
-        loaded={result.loaded}
         numResults={result.num_results}
         histogram={result.histogram}
-        statsLoaded={result.statsLoaded}
-        setSearchParams={setSearchParams}
-        onRefresh={forceRefresh}
+        // Callbacks
+        onRefresh={commitQuery}
         docSuggestions={docSuggestions}
-        navigate={navigate}
     />;
 }
 
