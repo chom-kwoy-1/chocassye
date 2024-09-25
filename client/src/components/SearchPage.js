@@ -399,6 +399,9 @@ let SearchResultsWrapper = function (props) {
 function arePropsEqual(oldProps, newProps) {
     let equal = true;
     for (let key of Object.keys(oldProps)) {
+        if (key === 'setPage') {
+            continue;
+        }
         const isEqual = Object.is(oldProps[key], newProps[key]);
         equal &&= isEqual;
     }
@@ -731,18 +734,18 @@ function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchPar
 
 function SearchPageWrapper(props) {
     const [searchParams, setSearchParams] = useSearchParams();
+    const refSearchParams = React.useRef(searchParams);
 
     // Currently displayed search query
     const initialQuery = parseSearchParams(searchParams);
-    const [term, setTerm] = React.useState(initialQuery.term);
-    const [doc, setDoc] = React.useState(initialQuery.doc);
-    const [page, setPage] = React.useState(initialQuery.page);
-    const [excludeModern, setExcludeModern] = React.useState(initialQuery.excludeModern);
-    const [ignoreSep, setIgnoreSep] = React.useState(initialQuery.ignoreSep);
+    const [query, setQuery] = React.useState(initialQuery);
+    const refQuery = React.useRef(query);
+    React.useEffect(() => { refQuery.current = query; }, [query]);
 
     // Currently displayed search results
     const [result, setResult] = React.useContext(SearchResultContext);
     const prevResult = React.useRef(result);  // for preventing infinite loops
+    React.useEffect(() => { prevResult.current = result; }, [result]);
 
     // Previously sent search query (may be on the run)
     const [curQuery, setCurQuery] = React.useState({
@@ -754,82 +757,81 @@ function SearchPageWrapper(props) {
     });
     const prevQuery = React.useRef(curQuery);
 
-    const pageValid = React.useRef(true);
-    const forceRefresh = React.useRef(true);
+    // Refresh search results when curQuery changes
+    React.useEffect(() => {
 
-    function refreshSearchResults(query) {
-        let active = true;
+        function refreshSearchResults(query) {
+            let active = true;
 
-        search(
-            query,
-            async (result, page_N) => {
-                if (active) {
-                    setResult({
-                        ...prevResult.current,
-                        loaded: true,
-                        result: result,
-                        page_N: page_N,
-                        result_term: query.term,
-                        result_page: query.page,
-                        result_doc: query.doc,
-                        excludeModern: query.excludeModern,
-                        ignoreSep: query.ignoreSep,
-                    });
-
-                    // Scroll to top of the page when result changes
-                    window.scroll({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                }
-            },
-            async (error) => {
-                // TODO: handle error
-                console.error(error);
-            }
-        );
-
-        let invalidateStats = (
-            prevQuery.current.term !== query.term ||
-            prevQuery.current.doc !== query.doc ||
-            prevQuery.current.excludeModern !== query.excludeModern ||
-            prevQuery.current.ignoreSep !== query.ignoreSep
-        );
-
-        // Do not update stats when only page changes
-        if (invalidateStats) {
-            getStats(
+            search(
                 query,
-                async (numResults, histogram) => {
+                async (result, page_N) => {
                     if (active) {
                         setResult({
                             ...prevResult.current,
-                            statsLoaded: true,
-                            num_results: numResults,
-                            histogram: histogram,
-                            stats_term: query.term,
+                            loaded: true,
+                            result: result,
+                            page_N: page_N,
+                            result_term: query.term,
+                            result_page: query.page,
+                            result_doc: query.doc,
+                            excludeModern: query.excludeModern,
+                            ignoreSep: query.ignoreSep,
+                        });
+
+                        // Scroll to top of the page when result changes
+                        window.scroll({
+                            top: 0,
+                            behavior: 'smooth'
                         });
                     }
                 },
                 async (error) => {
-                    console.error(error);
                     // TODO: handle error
+                    console.error(error);
                 }
             );
+
+            let invalidateStats = (
+                prevQuery.current.term !== query.term ||
+                prevQuery.current.doc !== query.doc ||
+                prevQuery.current.excludeModern !== query.excludeModern ||
+                prevQuery.current.ignoreSep !== query.ignoreSep
+            );
+
+            // Do not update stats when only page changes
+            if (invalidateStats) {
+                getStats(
+                    query,
+                    async (numResults, histogram) => {
+                        if (active) {
+                            setResult({
+                                ...prevResult.current,
+                                statsLoaded: true,
+                                num_results: numResults,
+                                histogram: histogram,
+                                stats_term: query.term,
+                            });
+                        }
+                    },
+                    async (error) => {
+                        console.error(error);
+                        // TODO: handle error
+                    }
+                );
+            }
+
+            setResult({
+                ...prevResult.current,
+                statsLoaded: invalidateStats? false : prevResult.current.statsLoaded,
+                loaded: false,
+            });
+
+            return () => {
+                active = false;
+            }
         }
 
-        setResult({
-            ...prevResult.current,
-            statsLoaded: invalidateStats? false : prevResult.current.statsLoaded,
-            loaded: false,
-        });
-
-        return () => {
-            active = false;
-        }
-    }
-
-    React.useEffect(() => {
         if (prevQuery.current.term !== curQuery.term ||
             prevQuery.current.doc !== curQuery.doc ||
             prevQuery.current.page !== curQuery.page ||
@@ -839,55 +841,43 @@ function SearchPageWrapper(props) {
             prevQuery.current = curQuery;
             return result;
         }
-    }, [curQuery]);
+    }, [curQuery, setResult]);
 
-    React.useEffect(() => {
-        prevResult.current = result;
-    }, [result]);
+    // Convenience function to set page
+    const setPage = React.useCallback((page) => {
+        setQuery((query) => { return {...query, page: page}; });
+    }, [setQuery]);
 
+    const pageValid = React.useRef(true);  // true if page is valid, false if page needs to be reset
+    const forceRefresh = React.useRef(true);  // true if search results need to be refreshed
+
+    // Update query and results when page, excludeModern, or ignoreSep changes or when forceRefresh is set
     React.useEffect(() => {
         if (forceRefresh.current ||
-            page !== curQuery.page ||
-            excludeModern !== curQuery.excludeModern ||
-            ignoreSep !== curQuery.ignoreSep) {
-            const query = {
-                term: term,
-                doc: doc,
-                page: page,
-                excludeModern: excludeModern,
-                ignoreSep: ignoreSep,
-            };
-            commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
+            query.page !== prevQuery.current.page ||
+            query.excludeModern !== prevQuery.current.excludeModern ||
+            query.ignoreSep !== prevQuery.current.ignoreSep) {
+            commitQuery(query, pageValid, setPage, prevQuery.current, setCurQuery, refSearchParams.current, setSearchParams);
             forceRefresh.current = false;
         }
-    }, [term, doc, page, excludeModern, ignoreSep]);
+    }, [query, setPage, setSearchParams]);
 
+    // Update query and results when back button is pressed
     React.useEffect(() => {
-        console.log("SearchParams changed to ", searchParams);
         const params = parseSearchParams(searchParams);
-        if (params.term !== term ||
-            params.doc !== doc ||
-            params.page !== page ||
-            params.excludeModern !== excludeModern ||
-            params.ignoreSep !== ignoreSep) {
-            setTerm(params.term);
-            setDoc(params.doc);
-            setPage(params.page);
-            setExcludeModern(params.excludeModern);
-            setIgnoreSep(params.ignoreSep);
+        if (params.term !== refQuery.current.term ||
+            params.doc !== refQuery.current.doc ||
+            params.page !== refQuery.current.page ||
+            params.excludeModern !== refQuery.current.excludeModern ||
+            params.ignoreSep !== refQuery.current.ignoreSep) {
+            setQuery(params);
             pageValid.current = true;
             forceRefresh.current = true;
         }
+        refSearchParams.current = searchParams;
     }, [searchParams]);
 
     function forceRefreshResults() {
-        const query = {
-            term: term,
-            doc: doc,
-            page: page,
-            excludeModern: excludeModern,
-            ignoreSep: ignoreSep,
-        };
         commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
     }
 
@@ -898,6 +888,7 @@ function SearchPageWrapper(props) {
         num_results: 0,
     });
     const prevDocSuggestions = React.useRef(docSuggestions);
+    React.useEffect(() => { prevDocSuggestions.current = docSuggestions; }, [docSuggestions]);
 
     const suggest_doc = React.useCallback(
         (doc) => {
@@ -927,21 +918,22 @@ function SearchPageWrapper(props) {
 
     React.useEffect(() => {
         // Retrieve document suggestions when doc changes
-        return suggest_doc(doc);
-    }, [doc, suggest_doc]);
-
-    React.useEffect(() => {
-        prevDocSuggestions.current = docSuggestions;
-    }, [docSuggestions]);
+        return suggest_doc(query.doc);
+    }, [query.doc, suggest_doc]);
 
     return <SearchPage
         {...props}
         // Search parameters
-        term={term} setTerm={setTerm}
-        doc={doc} setDoc={setDoc}
-        page={page} setPage={setPage}
-        excludeModern={excludeModern} setExcludeModern={setExcludeModern}
-        ignoreSep={ignoreSep} setIgnoreSep={setIgnoreSep}
+        term={query.term}
+        setTerm={(value) => setQuery({...query, term: value})}
+        doc={query.doc}
+        setDoc={(value) => setQuery({...query, doc: value})}
+        page={query.page}
+        setPage={(value) => setQuery({...query, page: value})}
+        excludeModern={query.excludeModern}
+        setExcludeModern={(value) => setQuery({...query, excludeModern: value})}
+        ignoreSep={query.ignoreSep}
+        setIgnoreSep={(value) => setQuery({...query, ignoreSep: value})}
         // Current Results
         loaded={result.loaded}
         result={result.result}
