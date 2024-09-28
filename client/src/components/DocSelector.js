@@ -4,7 +4,7 @@ import React from "react";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {suggest} from "./api";
 
-export function DocSelector(props) {
+export default function DocSelector(props) {
     const {t} = useTranslation();
     const navigate = useNavigate();
 
