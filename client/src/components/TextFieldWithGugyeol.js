@@ -1,5 +1,5 @@
 import {useTranslation} from "react-i18next";
-import React, {useId} from "react";
+import React from "react";
 import {suggestGugyeol} from "./Gugyeol";
 import {
     Box,
@@ -20,7 +20,7 @@ import {StyledTableCell} from "./utils";
 
 export default function TextFieldWithGugyeol(props) {
     const {t} = useTranslation();
-    const uniqueId = useId();
+    const uniqueId = "#textfield-with-gugyeol-" + Math.random().toString(36).substring(7);
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
@@ -33,12 +33,9 @@ export default function TextFieldWithGugyeol(props) {
     }
 
     function replaceGugyeol(suggestion) {
-        let term = props.term;
+        let term = props.value;
         term = term.slice(0, term.length - suggestion.replaceLength) + suggestion.gugyeol;
-        props.setSearchParams(searchParams => {
-            searchParams.set("term", term);
-            return searchParams;
-        }, {replace: true});
+        props.onChange({target: {value: term}});
     }
 
     let text = props.value;

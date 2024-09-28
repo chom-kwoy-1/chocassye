@@ -72,47 +72,13 @@ function SearchResultsList(props) {
                                     {zip(book.sentences, match_ids_in_book)
                                         .map(([sentence, match_ids_in_sentence], i) =>
                                             <Grid item key={i} sx={{ py: 0.4 }}>
-
-                                                {/* Highlighted sentence */}
-                                                <Interweave
-                                                    content={highlight(
-                                                        sentence.html ?? sentence.text,
-                                                        props.resultTerm,
-                                                        match_ids_in_sentence,
-                                                        footnotes,
-                                                        props.romanize,
-                                                        props.ignoreSep,
-                                                    )}
-                                                    allowList={['mark', 'span', 'a']}
-                                                    allowAttributes={true}
-                                                />&#8203;
-
-                                                {/* Add source link */}
-                                                <span style={{color: '#888'}}>
-                                                    &lang;
-                                                    <Link className="sourceLink"
-                                                          to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${props.resultTerm}`}
-                                                          style={{textDecoration: "underline dotted lightgrey"}}>
-                                                        {sentence.page === null? book.name : `${book.name}:`}
-                                                    </Link>
-                                                    {sentence.hasImages && sentence.page !== '' ?
-                                                        sentence.page.split('-').map((page, i) => {
-                                                            const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
-                                                            return <ImageTooltip title={pageImagePreview(page, imageURL, t)}
-                                                                                 placement="right" key={i}>
-                                                    <span>
-                                                        <a className="pageNum"
-                                                           style={{color: '#888', textDecoration: 'underline'}}
-                                                           href={imageURL}
-                                                           target="blank"
-                                                           key={i}>{page}</a>
-                                                        {i < sentence.page.split('-').length - 1? "-" : null}
-                                                    </span>
-                                                            </ImageTooltip>
-                                                        }) : (sentence.page !== '' ? sentence.page : null)}
-                                                    &rang;
-                                                </span>
-
+                                                <SentenceAndPage
+                                                    sentence={sentence}
+                                                    book={book}
+                                                    match_ids_in_sentence={match_ids_in_sentence}
+                                                    footnotes={footnotes}
+                                                    highlightTerm={props.resultTerm}
+                                                />
                                             </Grid>
                                         )}
 
@@ -155,19 +121,21 @@ const ImageTooltip = styled(({ className, ...props }) => (
 }));
 
 
-function pageImagePreview(page, imageURL, t) {
+function PageImagePreview(props) {
+    const { t } = useTranslation();
+
     return <React.Fragment>
         <Grid container>
             <Grid item xs={12}>
-                <img src={imageURL}
-                     alt={t("Image for page", { page: page })}
+                <img src={props.imageURL}
+                     alt={t("Image for page", { page: props.page })}
                      height={window.innerHeight - 50}
                      width={window.innerWidth - 50}
                      style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
                 />
             </Grid>
             <Grid item xs={12}>
-                {t("Image for page", { page: page })}
+                {t("Image for page", { page: props.page })}
             </Grid>
         </Grid>
     </React.Fragment>;
@@ -198,6 +166,59 @@ function highlight(text, searchTerm, match_ids, footnotes, romanize, ignoreSep) 
 
     // Add highlights
     return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
+}
+
+function SentenceAndPage(props) {
+    let pageLink;
+    if (props.sentence.hasImages && props.sentence.page !== '') {
+        pageLink = props.sentence.page.split('-').map((page, i) => {
+            const imageURL = IMAGE_BASE_URL + props.book.name + '/' + page + '.jpg';
+            return <ImageTooltip
+                title={<PageImagePreview page={page} imageURL={imageURL} />}
+                placement="right" key={i}>
+                <span>
+                    <a className="pageNum"
+                       style={{color: '#888', textDecoration: 'underline'}}
+                       href={imageURL}
+                       target="blank"
+                       key={i}>{page}</a>
+                    {i < props.sentence.page.split('-').length - 1? "-" : null}
+                </span>
+            </ImageTooltip>;
+        });
+    } else {
+        pageLink = props.sentence.page !== '' ? props.sentence.page : null;
+    }
+
+    return <React.Fragment>
+
+        {/* Highlighted sentence */}
+        <Interweave
+            content={highlight(
+                props.sentence.html ?? props.sentence.text,
+                props.highlightTerm,
+                props.match_ids_in_sentence,
+                props.footnotes,
+                props.romanize,
+                props.ignoreSep,
+            )}
+            allowList={['mark', 'span', 'a']}
+            allowAttributes={true}
+        />&#8203;
+
+        {/* Add source link */}
+        <span style={{color: '#888'}}>
+            &lang;
+            <Link className="sourceLink"
+                  to={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}`}
+                  style={{textDecoration: "underline dotted lightgrey"}}>
+                  {props.sentence.page === null? props.book.name : `${props.book.name}:`}
+            </Link>
+            {pageLink}
+            &rang;
+        </span>
+
+    </React.Fragment>;
 }
 
 let SearchResultsWrapper = function (props) {

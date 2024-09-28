@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -15,8 +15,7 @@ import ParsePage from './components/ParsePage';
 import theme from './theme';
 
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
+ReactDOM.render((
     //<React.StrictMode>
         <BrowserRouter>
             <StyledEngineProvider injectFirst>
@@ -37,4 +36,5 @@ root.render(
             </StyledEngineProvider>
         </BrowserRouter>
     //</React.StrictMode>
+  ), document.getElementById('root')
 );

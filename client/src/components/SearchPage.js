@@ -354,6 +354,8 @@ function SearchPageWrapper(props) {
         commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
     }
 
+    console.log(result.loaded);
+
     return <SearchPage
         {...props}
         // Search parameters
