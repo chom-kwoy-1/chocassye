@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 import {yale_to_hangul} from './YaleToHangul';
-import {Link, useNavigate, useSearchParams} from "react-router-dom";
+import {Link, useSearchParams} from "react-router-dom";
 import {
     addHighlights,
     getMatchingRanges,
@@ -18,7 +18,7 @@ import HowToPageWrapper from './HowToPage';
 import Histogram from './Histogram';
 import {suggestGugyeol} from './Gugyeol';
 import {
-    Autocomplete, Backdrop, Box, Button, Checkbox,
+    Backdrop, Box, Button, Checkbox,
     Chip, CircularProgress, FormControlLabel, Grid,
     Pagination, Paper, Popper, Table, TableBody,
     TableContainer, TableRow, TextField,
@@ -30,7 +30,8 @@ import {tooltipClasses} from '@mui/material/Tooltip';
 import {highlightColors, StyledTableCell, StyledTableRow} from './utils.js';
 import {zip} from './common_utils.mjs';
 import {SearchResultContext} from "./SearchContext";
-import {search, getStats, suggest} from "./api";
+import {getStats, search, suggest} from "./api";
+import {DocSelector} from "./DocSelector";
 
 
 function SearchResultsList(props) {
@@ -409,65 +410,6 @@ function arePropsEqual(oldProps, newProps) {
 }
 SearchResultsWrapper = React.memo(SearchResultsWrapper, arePropsEqual);
 
-function DocSelector(props) {
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-
-    const [open, setOpen] = React.useState(false);
-    
-    function handleChange(ev, doc, reason) {
-        if (reason === 'selectOption') {
-            navigate(`/source?name=${doc.name}`);
-        }
-    }
-
-    function handleKeyDown(ev) {
-        if (ev.key === "Enter") {
-            props.onRefresh();
-        }
-    }
-
-    function handleDocChange(ev, value, reason) {
-        if (reason === 'input') {
-            props.handleDocChange(value);
-        }
-    }
-
-    let docCandLoading = !props.docSuggestions.loaded;
-
-    return <Autocomplete
-        fullWidth
-        open={open}
-        onOpen={() => setOpen(true)}
-        onClose={() => setOpen(false)}
-        options={props.docSuggestions.result}
-        getOptionLabel={(doc) => typeof doc === 'string'? doc : `${doc.name} (${doc.year_string})`}
-        loading={docCandLoading}
-        freeSolo
-        onChange={(ev, value, reason) => handleChange(ev, value, reason)}
-        onInputChange={(ev, value, reason) => handleDocChange(ev, value, reason)}
-        onKeyDown={(ev) => handleKeyDown(ev)}
-        filterOptions={(x) => x}
-        inputValue={props.doc}
-        renderInput={(params) => (
-            <TextField
-                {...params}
-                variant="standard"
-                label={t("document name...")}
-                InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                        <React.Fragment>
-                            {docCandLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                        </React.Fragment>
-                    ),
-                }}
-            />
-        )}
-    />;
-}
-
 function SearchPage(props) {
     const { t } = useTranslation();
 
@@ -575,7 +517,6 @@ function SearchPage(props) {
             <Grid item xs={12} sm={4}>
                 <DocSelector
                     doc={props.doc}
-                    docSuggestions={props.docSuggestions}
                     handleDocChange={(doc) => props.setDoc(doc)}
                     onRefresh={() => props.onRefresh()}
                 />
@@ -881,46 +822,6 @@ function SearchPageWrapper(props) {
         commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
     }
 
-    // Document suggestions
-    let [docSuggestions, setDocSuggestions] = React.useState({
-        loaded: false,
-        result: [],
-        num_results: 0,
-    });
-    const prevDocSuggestions = React.useRef(docSuggestions);
-    React.useEffect(() => { prevDocSuggestions.current = docSuggestions; }, [docSuggestions]);
-
-    const suggest_doc = React.useCallback(
-        (doc) => {
-            let active = true;
-
-            setDocSuggestions({
-                ...prevDocSuggestions.current,
-                loaded: false,
-            });
-
-            suggest(doc, (result, num_results) => {
-                if (active) {
-                    setDocSuggestions({
-                        result: result,
-                        num_results: num_results,
-                        loaded: true,
-                    });
-                }
-            });
-
-            return () => {
-                active = false;
-            }
-        },
-        []
-    );
-
-    React.useEffect(() => {
-        // Retrieve document suggestions when doc changes
-        return suggest_doc(query.doc);
-    }, [query.doc, suggest_doc]);
-
     return <SearchPage
         {...props}
         // Search parameters
@@ -950,7 +851,6 @@ function SearchPageWrapper(props) {
         histogram={result.histogram}
         // Callbacks
         onRefresh={forceRefreshResults}
-        docSuggestions={docSuggestions}
     />;
 }
 
