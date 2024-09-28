@@ -30,7 +30,7 @@ import {
 } from "./Highlight";
 import {yale_to_hangul} from "./YaleToHangul.mjs";
 import Histogram from "./Histogram";
-import HowToPageWrapper from "./HowToPage";
+import HowToPage from "./HowToPage";
 
 function SearchResultsList(props) {
     const { t } = useTranslation();
@@ -71,49 +71,49 @@ function SearchResultsList(props) {
                                     {/* For each sentence */}
                                     {zip(book.sentences, match_ids_in_book)
                                         .map(([sentence, match_ids_in_sentence], i) =>
-                                                <Grid item key={i} sx={{ py: 0.4 }}>
+                                            <Grid item key={i} sx={{ py: 0.4 }}>
 
-                                                    {/* Highlighted sentence */}
-                                                    <Interweave
-                                                        content={highlight(
-                                                            sentence.html ?? sentence.text,
-                                                            props.resultTerm,
-                                                            match_ids_in_sentence,
-                                                            footnotes,
-                                                            props.romanize,
-                                                            props.ignoreSep,
-                                                        )}
-                                                        allowList={['mark', 'span', 'a']}
-                                                        allowAttributes={true}
-                                                    />&#8203;
+                                                {/* Highlighted sentence */}
+                                                <Interweave
+                                                    content={highlight(
+                                                        sentence.html ?? sentence.text,
+                                                        props.resultTerm,
+                                                        match_ids_in_sentence,
+                                                        footnotes,
+                                                        props.romanize,
+                                                        props.ignoreSep,
+                                                    )}
+                                                    allowList={['mark', 'span', 'a']}
+                                                    allowAttributes={true}
+                                                />&#8203;
 
-                                                    {/* Add source link */}
-                                                    <span style={{color: '#888'}}>
-                                            &lang;
-                                                        <Link className="sourceLink"
-                                                              to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${props.resultTerm}`}
-                                                              style={{textDecoration: "underline dotted lightgrey"}}>
-                                                {sentence.page === null? book.name : `${book.name}:`}
-                                            </Link>
-                                                        {sentence.hasImages && sentence.page !== '' ?
-                                                            sentence.page.split('-').map((page, i) => {
-                                                                const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
-                                                                return <ImageTooltip title={pageImagePreview(page, imageURL, t)}
-                                                                                     placement="right" key={i}>
-                                                        <span>
-                                                            <a className="pageNum"
-                                                               style={{color: '#888', textDecoration: 'underline'}}
-                                                               href={imageURL}
-                                                               target="blank"
-                                                               key={i}>{page}</a>
-                                                            {i < sentence.page.split('-').length - 1? "-" : null}
-                                                        </span>
-                                                                </ImageTooltip>
-                                                            }) : (sentence.page !== '' ? sentence.page : null)}
-                                                        &rang;
-                                        </span>
+                                                {/* Add source link */}
+                                                <span style={{color: '#888'}}>
+                                                    &lang;
+                                                    <Link className="sourceLink"
+                                                          to={`/source?name=${book.name}&n=${sentence.number_in_book}&hl=${props.resultTerm}`}
+                                                          style={{textDecoration: "underline dotted lightgrey"}}>
+                                                        {sentence.page === null? book.name : `${book.name}:`}
+                                                    </Link>
+                                                    {sentence.hasImages && sentence.page !== '' ?
+                                                        sentence.page.split('-').map((page, i) => {
+                                                            const imageURL = IMAGE_BASE_URL + book.name + '/' + page + '.jpg';
+                                                            return <ImageTooltip title={pageImagePreview(page, imageURL, t)}
+                                                                                 placement="right" key={i}>
+                                                    <span>
+                                                        <a className="pageNum"
+                                                           style={{color: '#888', textDecoration: 'underline'}}
+                                                           href={imageURL}
+                                                           target="blank"
+                                                           key={i}>{page}</a>
+                                                        {i < sentence.page.split('-').length - 1? "-" : null}
+                                                    </span>
+                                                            </ImageTooltip>
+                                                        }) : (sentence.page !== '' ? sentence.page : null)}
+                                                    &rang;
+                                                </span>
 
-                                                </Grid>
+                                            </Grid>
                                         )}
 
                                 </StyledTableCell>
@@ -363,7 +363,7 @@ let SearchResultsWrapper = function (props) {
                 null:
                 <div>
                     <Trans i18nKey='No match. Please follow the instructions below for better results.' />
-                    <HowToPageWrapper title=""/>
+                    <HowToPage title=""/>
                 </div>
             }
         </Grid>

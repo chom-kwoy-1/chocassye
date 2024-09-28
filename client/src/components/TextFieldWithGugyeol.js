@@ -1,5 +1,5 @@
 import {useTranslation} from "react-i18next";
-import React from "react";
+import React, {useId} from "react";
 import {suggestGugyeol} from "./Gugyeol";
 import {
     Box,
@@ -20,13 +20,14 @@ import {StyledTableCell} from "./utils";
 
 export default function TextFieldWithGugyeol(props) {
     const {t} = useTranslation();
+    const uniqueId = useId();
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
 
     function toggleGugyeolInput(e) {
-        setAnchorEl(document.getElementById('searchTermField'));
+        setAnchorEl(document.getElementById(uniqueId));
         setGugyeolInputOpen(!gugyeolInputOpen);
         setIsFocused(!gugyeolInputOpen);
     }
@@ -54,7 +55,7 @@ export default function TextFieldWithGugyeol(props) {
     return <Box>
         <Box position="relative">
             <TextField
-                id={"searchTermField"}  // FIXME: This should be a unique ID
+                id={uniqueId}  // FIXME: This should be a unique ID
                 variant="filled"
                 value={props.value}
                 label={props.label}
