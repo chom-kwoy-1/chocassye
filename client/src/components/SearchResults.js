@@ -35,7 +35,7 @@ import HowToPage from "./HowToPage";
 function SearchResultsList(props) {
     const { t } = useTranslation();
 
-    let footnotes = [];
+    let footnotes = [];  // TODO: fix footnotes
 
     return <React.Fragment>
 
@@ -76,7 +76,6 @@ function SearchResultsList(props) {
                                                     sentence={sentence}
                                                     book={book}
                                                     match_ids_in_sentence={match_ids_in_sentence}
-                                                    footnotes={footnotes}
                                                     highlightTerm={props.resultTerm}
                                                 />
                                             </Grid>
@@ -124,45 +123,39 @@ const ImageTooltip = styled(({ className, ...props }) => (
 function PageImagePreview(props) {
     const { t } = useTranslation();
 
-    return <React.Fragment>
-        <Grid container>
-            <Grid item xs={12}>
-                <img src={props.imageURL}
-                     alt={t("Image for page", { page: props.page })}
-                     height={window.innerHeight - 50}
-                     width={window.innerWidth - 50}
-                     style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
-                />
-            </Grid>
-            <Grid item xs={12}>
-                {t("Image for page", { page: props.page })}
-            </Grid>
+    return <Grid container>
+        <Grid item xs={12}>
+            <img src={props.imageURL}
+                 alt={t("Image for page", { page: props.page })}
+                 height={window.innerHeight - 50}
+                 width={window.innerWidth - 50}
+                 style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
+            />
         </Grid>
-    </React.Fragment>;
+        <Grid item xs={12}>
+            {t("Image for page", { page: props.page })}
+        </Grid>
+    </Grid>;
 }
 
-function highlight(text, searchTerm, match_ids, footnotes, romanize, ignoreSep) {
-
-    // Into HTML for display
-    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, footnotes, romanize);
-
+function findMatchingRanges(originalText, displayText, displayTextMapping, searchTerm, ignoreSep) {
     // Find matches
     let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
     let match_ranges = [
-        ...getMatchingRanges(
-            hlRegex,
-            ...toText(text, ignoreSep),  // Remove HTML tags, retain tones
-            displayHTMLMapping
-        ),
-        ...getMatchingRanges(
-            hlRegex,
-            ...toTextIgnoreTone(text, ignoreSep),  // Remove HTML tags and tones
-            displayHTMLMapping
-        )
+        ...getMatchingRanges(hlRegex, ...toText(originalText, ignoreSep), displayTextMapping),
+        ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
     ];
 
     // Remove overlapping ranges
-    match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
+    return removeOverlappingRanges(match_ranges, displayText.length);
+}
+
+function highlight(text, searchTerm, match_ids, romanize, ignoreSep) {
+    // Into HTML for display
+    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, romanize);
+
+    // Find matches
+    const match_ranges = findMatchingRanges(text, displayHTML, displayHTMLMapping, searchTerm, ignoreSep);
 
     // Add highlights
     return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
@@ -198,7 +191,6 @@ function SentenceAndPage(props) {
                 props.sentence.html ?? props.sentence.text,
                 props.highlightTerm,
                 props.match_ids_in_sentence,
-                props.footnotes,
                 props.romanize,
                 props.ignoreSep,
             )}
@@ -221,52 +213,23 @@ function SentenceAndPage(props) {
     </React.Fragment>;
 }
 
-let SearchResultsWrapper = function (props) {
-    const { t } = useTranslation();
-
-    const [disabledMatches, setDisabledMatches] = React.useState(new Set());
-
-    let num_pages = Math.ceil(props.numResults / props.pageN);
-
-    // Determine highlight colors
+function getResultMatches(results, searchTerm, ignoreSep) {
     let matches = [];
 
-    function toggleMatch(_, i) {
-        let disabledMatches_ = new Set(disabledMatches);
-        if (disabledMatches_.has(i)) {
-            disabledMatches_.delete(i);
-        }
-        else {
-            disabledMatches_.add(i);
-        }
-
-        setDisabledMatches(disabledMatches_);
-    }
-
-    React.useEffect(() => {
-        setDisabledMatches(new Set());
-    }, [props.resultTerm, props.page, props.doc]);
-
-    for (const book of props.results) {
+    for (const book of results) {
         let book_parts = [];
         for (const sentence of book.sentences) {
-
             let text = sentence.html ?? sentence.text;
 
-            // Find matches
-            let hlRegex = searchTerm2Regex(props.resultTerm, props.ignoreSep);
-            let [rawText, rawTextRanges] = toText(text, props.ignoreSep);
-            let match_ranges = [
-                ...getMatchingRanges(hlRegex, rawText, rawTextRanges, rawTextRanges),
-                ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(text, props.ignoreSep), rawTextRanges),
-            ];
+            let [rawText, rawTextMapping] = toText(text, ignoreSep);
 
-            // Remove overlapping ranges
-            match_ranges = removeOverlappingRanges(match_ranges, rawText.length);
+            let match_ranges = findMatchingRanges(
+                text, rawText, rawTextMapping, searchTerm, ignoreSep
+            );
 
             let parts = [];
             for (let range of match_ranges) {
-                parts.push(yale_to_hangul(rawText.slice(...range)));
+                parts.push(yale_to_hangul(rawText.slice(range[0], range[1])));
             }
 
             book_parts.push(parts);
@@ -275,10 +238,36 @@ let SearchResultsWrapper = function (props) {
     }
 
     // List of unique matches in current page
-    let uniqueMatches = [...new Set(matches.flat(2))];
+    return matches;
+}
+
+let SearchResultsWrapper = function (props) {
+    const { t } = useTranslation();
+
+    const [disabledMatches, setDisabledMatches] = React.useState(new Set());
+
+    function toggleMatch(_, i) {
+        let newDisabledMatches = new Set(disabledMatches);
+        if (newDisabledMatches.has(i)) {
+            newDisabledMatches.delete(i);
+        } else {
+            newDisabledMatches.add(i);
+        }
+        setDisabledMatches(newDisabledMatches);
+        console.log(newDisabledMatches);
+    }
+
+    React.useEffect(() => {
+        setDisabledMatches(new Set());
+    }, [props.resultTerm, props.page, props.doc]);
+
+    let num_pages = Math.ceil(props.numResults / props.pageN);
+
+    const matches = getResultMatches(props.results, props.resultTerm, props.ignoreSep);
+    const uniqueMatches = [...new Set(matches.flat(2))];
 
     // Array(book)[Array(sentence)[Array(matches)[int]]]
-    let match_ids = matches.map(
+    const matchIndices = matches.map(
         (matches_in_book) => matches_in_book.map(
             (matches_in_sentence) => matches_in_sentence.map(
                 (match) => uniqueMatches.indexOf(match)
@@ -286,26 +275,22 @@ let SearchResultsWrapper = function (props) {
         )
     );
 
-    let filtered_results_list = zip(
-        props.results,
-        match_ids
-    )
-        //.filter(
-        //    ([_, match_ids_in_book]) => // filter out entire book if there are no valid matches in it
-        //        !match_ids_in_book.flat().every(
-        //            id => props.disabledMatches.has(id)
-        //        )
-        //)
-        .map(([book, match_ids_in_book]) => { // filter out sentence if there are no valid matches in it
+    const filtered_results_list =
+        zip(props.results, matchIndices)
+        .filter(
+            ([_, match_ids_in_book]) => // filter out entire book if all matches in it are disabled
+                !match_ids_in_book.flat().every(id => disabledMatches.has(id)) ||
+                match_ids_in_book.flat().length === 0
+        )
+        .map(([book, match_ids_in_book]) => { // filter out sentence if all matches in it are disabled
 
             let sentences_and_indices =
-                zip(book.sentences, match_ids_in_book);
-            //.filter(
-            //    ([_, match_ids_in_sentence]) =>
-            //        !match_ids_in_sentence.every(
-            //            id => props.disabledMatches.has(id)
-            //        )
-            //);
+                zip(book.sentences, match_ids_in_book)
+                .filter(
+                    ([_, match_ids_in_sentence]) =>
+                        !match_ids_in_sentence.every(id => disabledMatches.has(id)) ||
+                        match_ids_in_sentence.flat().length === 0
+                );
 
             let [sentences, indices] = zip(...sentences_and_indices);
 
@@ -329,22 +314,22 @@ let SearchResultsWrapper = function (props) {
 
         {/* Show highlight match legend */}
         <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
-            {uniqueMatches.map((part, i) =>
-                <Grid key={i} item xs="auto">
+            {uniqueMatches.map((part, i) => {
+                const isEnabled = !disabledMatches.has(i);
+                const color = isEnabled ? highlightColors[i % highlightColors.length] : "lightgrey";
+                return <Grid key={i} item xs="auto">
                     <Chip
                         label={part}
-                        sx={{backgroundColor: highlightColors[i % highlightColors.length]}}
+                        sx={{backgroundColor: color}}
                         size="small"
-                        onDelete={() => null}
+                        onDelete={(event) => {
+                            toggleMatch(event, i)
+                        }}
+                        variant={isEnabled?  "filled" : "outlined"}
                         clickable>
-                        {/*<span className={disabledMatches.has(i)? "matchLegendItem disabled" : "matchLegendItem"}
-                               onClick={(event) => {toggleMatch(event, i)}}>
-                            <span className={"".concat("colorShower s", i)}></span>
-                            <span className="matchLegendWord">{part}</span>
-                        </span>*/}
                     </Chip>
-                </Grid>
-            )}
+                </Grid>;
+            })}
         </Grid>
 
         <Grid item sm="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>

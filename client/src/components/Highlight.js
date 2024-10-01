@@ -56,11 +56,9 @@ export function searchTerm2Regex(text, ignoreSep=false) {
     return new RegExp(regex, 'g');
 }
 
-
+// TODO: Generate these from YaleToHangul.js
 const HANGUL_REGEX = /((?:ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᅟ)(?:ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)(?:ᆨ|ᆪ|ᆫ|ᆮ|ᆯ|ᆰ|ᆱ|ᆲ|ᆳ|ᆷ|ᆸ|ᆹ|ᆺ|ᆼ|ᇆ|ᇇ|ᇈ|ᇌ|ᇗ|ᇙ|ᇜ|ᇝ|ᇟ|ᇢ|ᇦ|ᇫ|ᇰ|ᇹ|ᇱ|))(〮|〯|)/g;
-
 const TONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(L|H|R|)(?![^<]*>)/g;
-
 const UNTONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(?![^<]*>)/g;
 
 export function invert_mapping(mapping) {
@@ -190,15 +188,17 @@ export function replace_and_map(string, pattern, replace_func, prev_mapping=null
 
 export function toText(sentence, ignoreSep) {
     let mapping;
-    
+
+    // Remove HTML tags
     [sentence, mapping] = replace_and_map(
         sentence, /(<[^>]*>)/g,
         function (match) {
             return ".";
         });
 
+    // Select full syllables
     [sentence, mapping] = replace_and_map(
-        sentence, TONED_SYLLABLE_REGEX,
+        sentence, UNTONED_SYLLABLE_REGEX,
         function (_, syllable) {
             return syllable;
         },
@@ -206,6 +206,7 @@ export function toText(sentence, ignoreSep) {
     );
 
     if (ignoreSep) {
+        // Remove spaces, periods, and caret if ignoreSep is set
         [sentence, mapping] = replace_and_map(
             sentence, /[ .^]/g,
             function (match) { return ""; },
@@ -218,13 +219,15 @@ export function toText(sentence, ignoreSep) {
 
 export function toTextIgnoreTone(sentence, ignoreSep) {
     let mapping;
-    
+
+    // Remove HTML tags
     [sentence, mapping] = replace_and_map(
         sentence, /(<[^>]*>)/g,
         function (match) {
             return ".";
         });
-    
+
+    // Replace toned syllables with untoned syllables
     [sentence, mapping] = replace_and_map(
         sentence, TONED_SYLLABLE_REGEX,
         function (_, syllable, tone) {
@@ -234,6 +237,7 @@ export function toTextIgnoreTone(sentence, ignoreSep) {
     );
 
     if (ignoreSep) {
+        // Remove spaces, periods, and caret if ignoreSep is set
         [sentence, mapping] = replace_and_map(
             sentence, /[ .^]/g,
             function (match) { return ""; },
@@ -244,8 +248,8 @@ export function toTextIgnoreTone(sentence, ignoreSep) {
     return [sentence, mapping];
 }
 
-export function toDisplayHTML(sentence, comments=[], romanize=false) {
-    
+export function toDisplayHTML(sentence, romanize=false) {
+    let comments = [];
     let mapping = null;
 
     // yale to hangul (ignoring tags)
@@ -327,7 +331,7 @@ export function toDisplayHTML(sentence, comments=[], romanize=false) {
     );
     
     return [sentence, mapping];
-};
+}
 
 export function getMatchingRanges(hlRegex, targetText, targetMapping, displayHTMLMapping=null) {
     let inv_mapping = invert_mapping(targetMapping);
