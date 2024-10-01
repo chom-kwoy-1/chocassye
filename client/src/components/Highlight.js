@@ -1,17 +1,9 @@
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { GUGYEOL_READINGS, GUGYEOL_REGEX } from './Gugyeol'
 import escapeStringRegexp from "escape-string-regexp";
+import {highlightColors} from "./utils";
 
-
-function escapeRegex(string) {
-    return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-
-function serializeTextNode(text) {
-    return new XMLSerializer().serializeToString(document.createTextNode(text));
-}
-
-export function searchTerm2Regex(text, ignoreSep=false) {
+function searchTerm2Regex(text, ignoreSep=false) {
     text = hangul_to_yale(text);
     if (ignoreSep) {
         text = text.replace(/[ .^]/g, '');
@@ -61,7 +53,7 @@ const HANGUL_REGEX = /((?:ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|�
 const TONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(L|H|R|)(?![^<]*>)/g;
 const UNTONED_SYLLABLE_REGEX = /((?:psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`)(?:ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)(?:lth|lph|nth|lks|mch|ngs|kk|ks|nc|nh|lk|lm|lp|ls|lh|ps|ss|ch|kh|th|ph|nt|ns|nz|lz|lq|mk|mp|ms|mz|sk|st|ng|pl|k|n|t|l|m|p|s|G|c|h|M|W|z|f|q|))(?![^<]*>)/g;
 
-export function invert_mapping(mapping) {
+function invert_mapping(mapping) {
     if (mapping.length === 0) {
         return [];
     }
@@ -89,7 +81,7 @@ export function invert_mapping(mapping) {
 }
 
 
-export function replace_and_map(string, pattern, replace_func, prev_mapping=null) {
+function replace_and_map(string, pattern, replace_func, prev_mapping=null) {
 
     let inv_mapper_begin, inv_mapper_end;
     let mapping_size;
@@ -333,7 +325,7 @@ export function toDisplayHTML(sentence, romanize=false) {
     return [sentence, mapping];
 }
 
-export function getMatchingRanges(hlRegex, targetText, targetMapping, displayHTMLMapping=null) {
+function getMatchingRanges(hlRegex, targetText, targetMapping, displayHTMLMapping=null) {
     let inv_mapping = invert_mapping(targetMapping);
     
     let match_ranges = [];
@@ -357,7 +349,7 @@ export function getMatchingRanges(hlRegex, targetText, targetMapping, displayHTM
     return match_ranges;
 }
 
-export function removeOverlappingRanges(match_ranges, max_length) {
+function removeOverlappingRanges(match_ranges, max_length) {
     let match_ranges_unique = [];
     let matched = Array(max_length).fill(false);
     for (let range of match_ranges) {
@@ -373,7 +365,7 @@ export function removeOverlappingRanges(match_ranges, max_length) {
     return match_ranges_unique;
 }
 
-export function addHighlights(displayHTML, match_ranges, highlightIds=null, highlightColors=null) {
+function addHighlights(displayHTML, match_ranges, highlightIds=null, highlightColors=null) {
     let output = "";
     let last_idx = 0;
     let hl_idx = 0;
@@ -395,3 +387,25 @@ export function addHighlights(displayHTML, match_ranges, highlightIds=null, high
     return output;
 }
 
+export function findMatchingRanges(originalText, displayText, displayTextMapping, searchTerm, ignoreSep) {
+    // Find matches
+    let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
+    let match_ranges = [
+        ...getMatchingRanges(hlRegex, ...toText(originalText, ignoreSep), displayTextMapping),
+        ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
+    ];
+
+    // Remove overlapping ranges
+    return removeOverlappingRanges(match_ranges, displayText.length);
+}
+
+export function highlight(text, searchTerm, match_ids, romanize, ignoreSep) {
+    // Into HTML for display
+    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, romanize);
+
+    // Find matches
+    const match_ranges = findMatchingRanges(text, displayHTML, displayHTMLMapping, searchTerm, ignoreSep);
+
+    // Add highlights
+    return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
+}

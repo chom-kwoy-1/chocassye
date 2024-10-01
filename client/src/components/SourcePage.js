@@ -1,15 +1,7 @@
 import React from 'react';
 import './index.css';
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { 
-    searchTerm2Regex, 
-    toDisplayHTML,
-    getMatchingRanges,
-    toText,
-    toTextIgnoreTone,
-    removeOverlappingRanges,
-    addHighlights,
-} from './Highlight';
+import { highlight } from './Highlight';
 import { Interweave } from 'interweave';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,31 +26,14 @@ const allowList = ['mark', 'abbr', 'span'];
 
 
 function showSentence(bookname, sentence, highlight_term, t, i) {
-    let text = sentence.html ?? sentence.text;
-    
-    // Into HTML for display
-    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text);
-    
-    // Find matches
-    let hlRegex = searchTerm2Regex(highlight_term);
-    let match_ranges = [
-        ...getMatchingRanges(
-            hlRegex, 
-            ...toText(text),
-            displayHTMLMapping
-        ),
-        ...getMatchingRanges(
-            hlRegex, 
-            ...toTextIgnoreTone(text),
-            displayHTMLMapping
-        )
-    ];
-    
-    // Remove overlapping ranges
-    match_ranges = removeOverlappingRanges(match_ranges, displayHTML.length);
-    
-    // Add highlights
-    let html = addHighlights(displayHTML, match_ranges);
+    const text = sentence.html ?? sentence.text;
+    const html = highlight(
+        text,
+        highlight_term,
+        null,
+        false,
+        false
+    );
     
     return (
         <StyledTableRow key={i}>

@@ -20,13 +20,7 @@ import {IMAGE_BASE_URL} from "./config";
 import {styled} from "@mui/material/styles";
 import {tooltipClasses} from "@mui/material/Tooltip";
 import {
-    addHighlights,
-    getMatchingRanges,
-    removeOverlappingRanges,
-    searchTerm2Regex,
-    toDisplayHTML,
-    toText,
-    toTextIgnoreTone
+    toText, highlight, findMatchingRanges
 } from "./Highlight";
 import {yale_to_hangul} from "./YaleToHangul.mjs";
 import Histogram from "./Histogram";
@@ -136,29 +130,6 @@ function PageImagePreview(props) {
             {t("Image for page", { page: props.page })}
         </Grid>
     </Grid>;
-}
-
-function findMatchingRanges(originalText, displayText, displayTextMapping, searchTerm, ignoreSep) {
-    // Find matches
-    let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
-    let match_ranges = [
-        ...getMatchingRanges(hlRegex, ...toText(originalText, ignoreSep), displayTextMapping),
-        ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
-    ];
-
-    // Remove overlapping ranges
-    return removeOverlappingRanges(match_ranges, displayText.length);
-}
-
-function highlight(text, searchTerm, match_ids, romanize, ignoreSep) {
-    // Into HTML for display
-    let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, romanize);
-
-    // Find matches
-    const match_ranges = findMatchingRanges(text, displayHTML, displayHTMLMapping, searchTerm, ignoreSep);
-
-    // Add highlights
-    return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
 }
 
 function SentenceAndPage(props) {
