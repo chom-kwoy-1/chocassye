@@ -26,6 +26,7 @@ export function search(query, callback, errorCallback) {
 
     postData('/api/search', query).then((result) => {
         if (result.status === 'success') {
+            console.log(result);
             callback(result.results, result.page_N);
         } else {
             console.log(result);

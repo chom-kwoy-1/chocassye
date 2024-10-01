@@ -108,6 +108,7 @@ const ImageTooltip = styled(({ className, ...props }) => (
         backgroundColor: '#f5f5f9',
         color: 'rgba(0, 0, 0, 0.87)',
         maxWidth: window.innerWidth * 0.3,
+        maxHeight: Math.min(window.innerHeight, window.innerWidth * 0.3 * 1.6),
         fontSize: theme.typography.pxToRem(12),
         border: '1px solid #dadde9',
     },
@@ -121,9 +122,8 @@ function PageImagePreview(props) {
         <Grid item xs={12}>
             <img src={props.imageURL}
                  alt={t("Image for page", { page: props.page })}
-                 height={window.innerHeight - 50}
-                 width={window.innerWidth - 50}
                  style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
+                 width="400px" height="600px"
             />
         </Grid>
         <Grid item xs={12}>
@@ -134,7 +134,7 @@ function PageImagePreview(props) {
 
 function SentenceAndPage(props) {
     let pageLink;
-    if (props.sentence.hasImages && props.sentence.page !== '') {
+    if (props.sentence.hasimages && props.sentence.page !== '') {
         pageLink = props.sentence.page.split('-').map((page, i) => {
             const imageURL = IMAGE_BASE_URL + props.book.name + '/' + page + '.jpg';
             return <ImageTooltip
