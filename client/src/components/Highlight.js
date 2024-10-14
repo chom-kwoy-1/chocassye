@@ -395,6 +395,8 @@ export function findMatchingRanges(originalText, displayText, displayTextMapping
         ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
     ];
 
+    console.log(ignoreSep, toText(originalText, ignoreSep)[0], hlRegex);
+
     // Remove overlapping ranges
     return removeOverlappingRanges(match_ranges, displayText.length);
 }

@@ -71,6 +71,8 @@ function SearchResultsList(props) {
                                                     book={book}
                                                     match_ids_in_sentence={match_ids_in_sentence}
                                                     highlightTerm={props.resultTerm}
+                                                    ignoreSep={props.ignoreSep}
+                                                    romanize={props.romanize}
                                                 />
                                             </Grid>
                                         )}
