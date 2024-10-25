@@ -5,13 +5,10 @@ import {
     Box,
     Button,
     Card,
-    CardContent, FormControl,
+    CardContent,
     Grid,
-    InputLabel,
-    MenuItem,
     Paper,
-    Select,
-    Stack,
+    Stack, Tab, Tabs,
     TextField
 } from "@mui/material";
 import {useTranslation} from "react-i18next";
@@ -62,7 +59,6 @@ function makeName(parseTree) {
     return result.join(' + ');
 }
 
-
 function ParsePage(props) {
     const { t } = useTranslation();
 
@@ -107,32 +103,6 @@ function ParsePage(props) {
     });
 
     return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
-        <Grid item xs={12}>
-            <Card elevation={1} style={{backgroundColor: "#FAFBFB"}}>
-                <CardContent>
-                    <Stack spacing={3}>
-                        <FormControl fullWidth>
-                            <InputLabel id="parse-selector">{t("Parse")}</InputLabel>
-                            <Select variant="filled"
-                                    value={selectedParseIndex}
-                                    onChange={(event) => setSelectedParseIndex(event.target.value)}
-                                    id="parse-selector">
-                                {filteredResults.map((result, i) => {
-                                    return <MenuItem key={i} value={i}>
-                                        {`${makeName(result)} (${(result['prob'] / pr_sum * 100).toFixed(1)}%)`}
-                                    </MenuItem>
-                                })}
-                            </Select>
-                        </FormControl>
-                        <Box display="flex"
-                             justifyContent="center"
-                             alignItems="center">
-                            {parseTreeDOM}
-                        </Box>
-                    </Stack>
-                </CardContent>
-            </Card>
-        </Grid>
         <Grid item xs={9} sm={10} md={11}>
             <TextField
                 id={"searchTermField"}
@@ -149,7 +119,37 @@ function ParsePage(props) {
                 {t("Parse")}
             </Button>
         </Grid>
-    </Grid>;
+        <Grid item xs={12} container>
+            <Grid item xs={3}>
+                <Tabs
+                    orientation="vertical"
+                    variant="scrollable"
+                    value={selectedParseIndex}
+                    onChange={(event, index) => setSelectedParseIndex(index)}
+                    sx={{borderRight: 1, borderColor: 'divider', height: 600}}
+                >
+                    {filteredResults.map((result, i) => {
+                        return <Tab
+                            key={i}
+                            label={`${makeName(result)} (${(result['prob'] / pr_sum * 100).toFixed(1)}%)`}
+                        />
+                    })}
+                </Tabs>
+            </Grid>
+            <Grid item xs={9}>
+                <Card elevation={1} style={{backgroundColor: "#FAFBFB"}}>
+                    <CardContent>
+                        <Box display="flex"
+                             justifyContent="center"
+                             alignItems="center">
+                            {parseTreeDOM}
+                        </Box>
+                    </CardContent>
+                </Card>
+            </Grid>
+        </Grid>
+    </Grid>
+;
 }
 
 export default ParsePage;
