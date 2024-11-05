@@ -25,18 +25,23 @@ const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
 const allowList = ['mark', 'abbr', 'span'];
 
 
-function showSentence(bookname, sentence, highlight_term, t, i) {
+function Sentence(props) {
+    const { t } = useTranslation();
+    const bookname = props.bookname;
+    const sentence = props.sentence;
+    const highlight_term = props.highlight_term;
+    const ignoreSep = props.ignoreSep;
     const text = sentence.html ?? sentence.text;
     const html = highlight(
         text,
         highlight_term,
         null,
         false,
-        false
+        ignoreSep,
     );
     
     return (
-        <StyledTableRow key={i}>
+        <StyledTableRow>
             <StyledTableCell className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
                 <Typography
                     component='span'
@@ -234,7 +239,13 @@ function SourcePage(props) {
                     <Table size="small">
                         <TableBody>
                             {props.result.data.sentences.map(
-                                (sentence, i) => showSentence(props.bookName, sentence, hl, t, i)
+                                (sentence, i) => <Sentence
+                                    key={i}
+                                    bookname={props.bookName}
+                                    sentence={sentence}
+                                    highlight_term={hl}
+                                    ignoreSep={props.ignoreSep}
+                                />
                             )}
                         </TableBody>
                     </Table>
@@ -301,6 +312,7 @@ function SoucePageWrapper(props) {
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
     let highlightWord = searchParams.get("hl");
+    let ignoreSep = (searchParams.get("is") ?? 'no') === 'yes';
     let [excludeChinese, setExcludeChinese] = React.useState(false);
     let [viewCount, setViewCount] = React.useState(20);
     let [result, setResult] = React.useState({
@@ -358,7 +370,8 @@ function SoucePageWrapper(props) {
         );
     }
 
-    return <SourcePage {...props}
+    return <SourcePage
+        {...props}
         navigate={useNavigate()}
         bookName={bookName}
         numberInSource={numberInSource}
@@ -366,6 +379,7 @@ function SoucePageWrapper(props) {
         setSearchParams={setSearchParams}
         initialize={initialize}
         highlightWord={highlightWord}
+        ignoreSep={ignoreSep}
         excludeChinese={excludeChinese}
         setExcludeChinese={setExcludeChinese}
         viewCount={viewCount}

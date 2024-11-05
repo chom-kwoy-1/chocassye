@@ -149,7 +149,6 @@ function ParsePage(props) {
             </Grid>
         </Grid>
     </Grid>
-;
 }
 
 export default ParsePage;

@@ -175,7 +175,7 @@ function SentenceAndPage(props) {
         <span style={{color: '#888'}}>
             &lang;
             <Link className="sourceLink"
-                  to={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}`}
+                  to={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
                   style={{textDecoration: "underline dotted lightgrey"}}>
                   {props.sentence.page === null? props.book.name : `${props.book.name}:`}
             </Link>
@@ -194,7 +194,7 @@ function getResultMatches(results, searchTerm, ignoreSep) {
         for (const sentence of book.sentences) {
             let text = sentence.html ?? sentence.text;
 
-            let [rawText, rawTextMapping] = toText(text, ignoreSep);
+            let [rawText, rawTextMapping] = toText(text, false);
 
             let match_ranges = findMatchingRanges(
                 text, rawText, rawTextMapping, searchTerm, ignoreSep
