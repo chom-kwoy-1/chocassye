@@ -1,10 +1,18 @@
 import React from 'react';
 import './index.css';
-import {yale_to_hangul} from './YaleToHangul';
+import {hangul_to_yale, yale_to_hangul} from './YaleToHangul';
 import {useSearchParams} from "react-router-dom";
 import './i18n';
 import {useTranslation} from 'react-i18next';
-import {Backdrop, Button, Checkbox, CircularProgress, FormControlLabel, Grid, Typography} from '@mui/material';
+import {
+    Backdrop, Box,
+    Button,
+    Checkbox,
+    CircularProgress,
+    FormControlLabel,
+    Grid,
+    Typography
+} from '@mui/material';
 import {SearchResultContext} from "./SearchContext";
 import {getStats, search} from "./api";
 import DocSelector from "./DocSelector";
@@ -16,12 +24,20 @@ function SearchPage(props) {
     const { t } = useTranslation();
 
     const [romanize, setRomanize] = React.useState(false);
+    const [displayHangul, setDisplayHangul] = React.useState(true);
 
     function handleKeyDown(ev) {
         if (ev.key === "Enter") {
             props.onRefresh();
         }
     }
+
+    function toggleDisplayHangul() {
+        setDisplayHangul(!displayHangul);
+    }
+
+    const hangulSearchTerm = yale_to_hangul(props.term);
+    const normalizedSearchTerm = hangul_to_yale(props.term);
 
     return (
         <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
@@ -55,51 +71,47 @@ function SearchPage(props) {
             </Grid>
 
             <Grid item xs={12} sm={12}>
-                <Typography
-                    variant="h5"
-                    noWrap
-                    sx={{
-                        mr: 2,
-                        display: 'flex',
-                        flexGrow: 1,
-                        fontWeight: 500,
-                        color: 'inherit',
-                        textDecoration: 'none',
-                    }}>
-                    {yale_to_hangul(props.term)}
-                </Typography>
+                <Box style={{display: "inline"}}>{t("Preview")}:&nbsp;</Box>
+                <Button variant="outlined" style={{textTransform: 'none'}}
+                        onClick={() => toggleDisplayHangul()}>
+                    <Typography
+                        sx={{
+                            fontSize: "1.5em",
+                            fontWeight: 500,
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            fontFamily: displayHangul ? 'inherit' : 'monospace',
+                        }}>
+                        {displayHangul ? hangulSearchTerm : normalizedSearchTerm}
+                    </Typography>
+                </Button>
             </Grid>
 
-            <Grid item xs="auto" sm="auto">
-                <Grid
-                    container
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="center">
-                    <Grid item xs="auto" sm="auto">
-                        <FormControlLabel
-                            control={<Checkbox size="small" sx={{py: 0}} />}
-                            label={
-                                <Typography sx={{fontSize: "1em"}}>
-                                    {t("Exclude modern translations")}
-                                </Typography>
-                            }
-                            checked={props.excludeModern}
-                            onChange={(event) => props.setExcludeModern(event.target.checked)}
-                        />
-                    </Grid>
-                    <Grid item xs="auto" sm="auto">
-                        <FormControlLabel
-                            control={<Checkbox size="small" sx={{py: 0}} />}
-                            label={
-                                <Typography sx={{fontSize: "1em"}}>
-                                    {t("Ignore syllable separators")}
-                                </Typography>
-                            }
-                            checked={props.ignoreSep}
-                            onChange={(event) => props.setIgnoreSep(event.target.checked)}
-                        />
-                    </Grid>
+            <Grid item xs={12} container columnSpacing={1}
+                  direction="row" justifyContent="flex-start" alignItems="center">
+                <Grid item xs="auto">
+                    <FormControlLabel
+                        control={<Checkbox size="small" sx={{py: 0}} />}
+                        label={
+                            <Typography sx={{fontSize: "1em"}}>
+                                {t("Exclude modern translations")}
+                            </Typography>
+                        }
+                        checked={props.excludeModern}
+                        onChange={(event) => props.setExcludeModern(event.target.checked)}
+                    />
+                </Grid>
+                <Grid item xs="auto">
+                    <FormControlLabel
+                        control={<Checkbox size="small" sx={{py: 0}} />}
+                        label={
+                            <Typography sx={{fontSize: "1em"}}>
+                                {t("Ignore syllable separators")}
+                            </Typography>
+                        }
+                        checked={props.ignoreSep}
+                        onChange={(event) => props.setIgnoreSep(event.target.checked)}
+                    />
                 </Grid>
             </Grid>
 
