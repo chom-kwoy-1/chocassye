@@ -50,6 +50,7 @@ const resources = {
       "Toggle Gugyeol Input": "Toggle Gugyeol Input",
       "Results per page": "Results per page",
       "Unknown year": "-",
+      "Preview": "Preview",
     }
   },
   ko: {
@@ -98,6 +99,7 @@ const resources = {
       "Toggle Gugyeol Input": "구결자 입력기",
       "Results per page": "개씩 보기",
       "Unknown year": "연도미상",
+      "Preview": "보기",
     }
   }
 };

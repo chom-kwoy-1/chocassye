@@ -10,9 +10,10 @@ import {
     Checkbox,
     CircularProgress,
     FormControlLabel,
-    Grid,
+    Grid, IconButton, Snackbar,
     Typography
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import {SearchResultContext} from "./SearchContext";
 import {getStats, search} from "./api";
 import DocSelector from "./DocSelector";
@@ -25,16 +26,7 @@ function SearchPage(props) {
 
     const [romanize, setRomanize] = React.useState(false);
     const [displayHangul, setDisplayHangul] = React.useState(true);
-
-    function handleKeyDown(ev) {
-        if (ev.key === "Enter") {
-            props.onRefresh();
-        }
-    }
-
-    function toggleDisplayHangul() {
-        setDisplayHangul(!displayHangul);
-    }
+    const [copyNotifOpen, setCopyNotifOpen] = React.useState(false);
 
     const hangulSearchTerm = yale_to_hangul(props.term);
     const normalizedSearchTerm = hangul_to_yale(props.term);
@@ -47,7 +39,11 @@ function SearchPage(props) {
                     setTerm={props.setTerm}
                     label={t("Search term...")}
                     onChange={(event) => props.setTerm(event.target.value)}
-                    onKeyDown={(event) => handleKeyDown(event)}
+                    onKeyDown={(ev) => {
+                        if (ev.key === "Enter") {
+                            props.onRefresh();
+                        }
+                    }}
                 />
             </Grid>
             <Grid item xs={3} sm={1}>
@@ -70,22 +66,36 @@ function SearchPage(props) {
                 />
             </Grid>
 
-            <Grid item xs={12} sm={12}>
-                <Box style={{display: "inline"}}>{t("Preview")}:&nbsp;</Box>
-                <Button variant="outlined" style={{textTransform: 'none'}}
-                        onClick={() => toggleDisplayHangul()}>
-                    <Typography
-                        sx={{
-                            fontSize: "1.5em",
-                            fontWeight: 500,
-                            color: 'inherit',
-                            textDecoration: 'none',
-                            fontFamily: displayHangul ? 'inherit' : 'monospace',
+            {props.term !== ""?
+                <Grid item xs={12} sm={12}>
+                    <Box style={{display: "inline"}}>{t("Preview")}:&nbsp;</Box>
+                    <Button variant="outlined" style={{textTransform: 'none'}}
+                            onClick={() => {setDisplayHangul(!displayHangul);}}>
+                        <Typography
+                            sx={{
+                                fontSize: "1.5em",
+                                fontWeight: 500,
+                                color: 'inherit',
+                                textDecoration: 'none',
+                                fontFamily: displayHangul ? 'inherit' : 'monospace',
+                            }}>
+                            {displayHangul ? hangulSearchTerm : normalizedSearchTerm}
+                        </Typography>
+                    </Button>
+                    {displayHangul?
+                        <IconButton aria-label="copy" onClick={async () => {
+                            await navigator.clipboard.writeText(hangulSearchTerm);
+                            setCopyNotifOpen(true);
                         }}>
-                        {displayHangul ? hangulSearchTerm : normalizedSearchTerm}
-                    </Typography>
-                </Button>
-            </Grid>
+                            <ContentCopyIcon />
+                        </IconButton> : null}
+                </Grid> : null}
+            <Snackbar
+                open={copyNotifOpen}
+                autoHideDuration={1000}
+                onClose={() => {setCopyNotifOpen(false)}}
+                message={`Copied ‘${hangulSearchTerm}’ to clipboard.`}
+            />
 
             <Grid item xs={12} container columnSpacing={1}
                   direction="row" justifyContent="flex-start" alignItems="center">
