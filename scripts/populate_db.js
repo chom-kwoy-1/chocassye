@@ -9,8 +9,8 @@ import {promisify} from 'util';
 import pg from 'pg';
 import { format } from 'node-pg-format';
 
-import {make_ngrams} from './ngram.js';
-import {hangul_to_yale} from './client/src/components/YaleToHangul.mjs';
+import {make_ngrams} from '../ngram.js';
+import {hangul_to_yale} from '../client/src/components/YaleToHangul.mjs';
 
 function uni(str) {
     return str.replace(/{{{[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]}}}/g, function(ch) {

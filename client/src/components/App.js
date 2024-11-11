@@ -94,6 +94,9 @@ function App(props) {
                             <Link to="/search">
                                 <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('Search')}</Button>
                             </Link>
+                            <Link to="/sourcelist">
+                                <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('Sources')}</Button>
+                            </Link>
                             <Link to="/howtouse">
                                 <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('How to Use')}</Button>
                             </Link>

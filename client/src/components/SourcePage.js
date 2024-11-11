@@ -321,10 +321,6 @@ function SoucePageWrapper(props) {
     });
 
     const prevResult = React.useRef(result);
-    const prevBookName = React.useRef(bookName);
-    const prevNumberInSource = React.useRef(numberInSource);
-    const prevExcludeChinese = React.useRef(excludeChinese);
-    const prevViewCount = React.useRef(viewCount);
 
     const refresh = React.useCallback(
         (bookName, numberInSource, excludeChinese, viewCount) => {
@@ -354,21 +350,8 @@ function SoucePageWrapper(props) {
     );
 
     React.useEffect(() => {
-        prevBookName.current = bookName;
-        prevNumberInSource.current = numberInSource;
-        prevExcludeChinese.current = excludeChinese;
-        prevViewCount.current = viewCount;
         return refresh(bookName, numberInSource, excludeChinese, viewCount);
     }, [bookName, numberInSource, excludeChinese, viewCount, refresh]);
-
-    function initialize() {
-        refresh(
-            prevBookName.current, 
-            prevNumberInSource.current, 
-            prevExcludeChinese.current,
-            prevViewCount.current,
-        );
-    }
 
     return <SourcePage
         {...props}
@@ -377,7 +360,6 @@ function SoucePageWrapper(props) {
         numberInSource={numberInSource}
         result={result}
         setSearchParams={setSearchParams}
-        initialize={initialize}
         highlightWord={highlightWord}
         ignoreSep={ignoreSep}
         excludeChinese={excludeChinese}

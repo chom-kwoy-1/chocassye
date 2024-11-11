@@ -100,6 +100,11 @@ const resources = {
       "Results per page": "개씩 보기",
       "Unknown year": "연도미상",
       "Preview": "보기",
+      "Sources": "자료",
+      "List of Sources": "자료 목록",
+      "Title": "제목",
+      "Period": "시기",
+      "No. of Sentences": "문장 수",
     }
   }
 };

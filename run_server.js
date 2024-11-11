@@ -19,6 +19,7 @@ const __dirname = path.resolve();
 const app = express();
 const port = process.env.PORT || 5000;
 const sslport = process.env.SSLPORT || 5001;
+const PAGE_N = process.env.PAGE_N || 50;
 
 const { Pool } = pg;
 const pool = new Pool({
@@ -159,64 +160,6 @@ function makeCorpusQuery(query) {
 
     return queryString;
 }
-
-const PAGE_N = 50;
-
-app.post('/api/parse', (req, res) => {
-    nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
-        nodecallspython.call(pymodule, "parse_into_json", req.body.text, 20).then(result => {
-            result = JSON.parse(result);
-            if (result.error !== undefined) {
-                res.send({
-                    status: "error",
-                    msg: result.error
-                });
-            } else {
-                res.send({
-                    status: "success",
-                    data: result,
-                });
-            }
-        }).catch(err => {
-            console.log(err);
-            res.send({
-                status: "error",
-                msg: err.msg
-            });
-        });
-    }).catch(err => {
-        console.log(err);
-        res.send({
-            status: "error",
-            msg: err.msg
-        });
-    });
-});
-
-app.post('/api/hangulize', (req, res) => {
-    let text = req.body.text;
-    nodecallspython.import("./english_hangul.py").then(async function (pymodule) {
-        nodecallspython.call(pymodule, "hangulize", text).then(result => {
-            res.send({
-                status: "success",
-                phonemes: result[0],
-                hangul: result[1],
-            });
-        }).catch(err => {
-            console.log(err);
-            res.send({
-                status: "error",
-                msg: err.msg
-            });
-        });
-    }).catch(err => {
-        console.log(err);
-        res.send({
-            status: "error",
-            msg: err.msg
-        });
-    })
-});
 
 app.post('/api/doc_suggest', (req, res) => {
     let doc = req.body.doc;
@@ -385,16 +328,16 @@ app.post('/api/search_stats', (req, res) => {
 app.get('/api/source', (req, res) => {
     let n = req.query.number_in_source;
     let excludeChinese = req.query.exclude_chinese === "true";
-    const PAGE = parseInt(req.query.view_count);
-    if (isNaN(PAGE) || PAGE > 200) {
+    const page_size = parseInt(req.query.view_count);
+    if (isNaN(page_size) || page_size > 200) {
         res.send({
             status: "error",
             msg: "Invalid view_count"
         });
         return;
     }
-    let start = Math.floor(n / PAGE) * PAGE;
-    let end = start + PAGE;
+    let start = Math.floor(n / page_size) * page_size;
+    let end = start + page_size;
     console.log(`source doc=${req.query.name} page=${start}-${end} ${typeof(excludeChinese)}`)
 
     const excludeChineseString = excludeChinese? "AND lang NOT IN ('chi')" : "";
@@ -409,7 +352,7 @@ app.get('/api/source', (req, res) => {
                 ORDER BY number_in_book ASC
                 OFFSET $2
                 limit $3
-        `, [req.query.name, start, PAGE])
+        `, [req.query.name, start, page_size])
     ]).then(([book, sentences]) => {
         console.log("Successfully retrieved source");
         if (book.rows.length === 0 || sentences.rows.length === 0) {
@@ -441,6 +384,88 @@ app.get('/api/source', (req, res) => {
             msg: err.message
         });
     });
+});
+
+app.get('/api/source_list', (req, res) => {
+    let offset = req.query.offset;
+    let limit = req.query.limit;
+    console.log(`source_list offset=${offset} limit=${limit}`);
+
+    pool.query(`
+        SELECT *, count(*) OVER() AS full_count FROM books
+        ORDER BY year_sort ASC 
+        OFFSET $1
+        LIMIT $2
+    `, [offset, limit])
+    .then((result) => {
+        console.log("Successfully retrieved source list");
+        res.send({
+            status: "success",
+            data: result.rows,
+        });
+    }).catch(err => {
+        console.log(err.message);
+        res.send({
+            status: "error",
+            msg: err.message
+        });
+    });
+});
+
+app.post('/api/parse', (req, res) => {
+    nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
+        nodecallspython.call(pymodule, "parse_into_json", req.body.text, 20).then(result => {
+            result = JSON.parse(result);
+            if (result.error !== undefined) {
+                res.send({
+                    status: "error",
+                    msg: result.error
+                });
+            } else {
+                res.send({
+                    status: "success",
+                    data: result,
+                });
+            }
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        });
+    }).catch(err => {
+        console.log(err);
+        res.send({
+            status: "error",
+            msg: err.msg
+        });
+    });
+});
+
+app.post('/api/hangulize', (req, res) => {
+    let text = req.body.text;
+    nodecallspython.import("./english_hangul.py").then(async function (pymodule) {
+        nodecallspython.call(pymodule, "hangulize", text).then(result => {
+            res.send({
+                status: "success",
+                phonemes: result[0],
+                hangul: result[1],
+            });
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        });
+    }).catch(err => {
+        console.log(err);
+        res.send({
+            status: "error",
+            msg: err.msg
+        });
+    })
 });
 
 // Handles any requests that don't match the ones above

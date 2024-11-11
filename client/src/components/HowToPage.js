@@ -5,27 +5,27 @@ import { Trans } from 'react-i18next';
 import {
     Typography, Box, Paper,
     TableContainer, Table, TableHead, TableBody,
-    TableRow, TableCell, Divider, Stack
+    TableRow, Divider, Stack, TableCell
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { tableCellClasses } from '@mui/material/TableCell';
+import {styled} from "@mui/material/styles";
+import {tableCellClasses} from "@mui/material/TableCell";
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-    fontWeight: 700,
-    paddingLeft: 3,
-    paddingRight: 3,
-    textAlign: "center",
-    typography: 'body2'
-  },
-  [`&.${tableCellClasses.body}`]: {
-    paddingLeft: 3,
-    paddingRight: 3,
-    textAlign: "center",
-    typography: 'body2'
-  },
+export const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.head}`]: {
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.primary.contrastText,
+        fontWeight: 700,
+        paddingLeft: 3,
+        paddingRight: 3,
+        textAlign: "center",
+        typography: 'body2'
+    },
+    [`&.${tableCellClasses.body}`]: {
+        paddingLeft: 3,
+        paddingRight: 3,
+        textAlign: "center",
+        typography: 'body2'
+    },
 }));
 
 function MarkdownListItem(props) {

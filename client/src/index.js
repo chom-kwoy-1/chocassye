@@ -7,6 +7,7 @@ import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 
 import App from './components/App';
 import SearchPage from './components/SearchPage';
+import SourceListPage from './components/SourceListPage';
 import SourcePage from './components/SourcePage';
 import HowToPage from './components/HowToPage';
 import AboutPage from './components/AboutPage';
@@ -16,7 +17,7 @@ import theme from './theme';
 
 
 ReactDOM.render((
-    //<React.StrictMode>
+    <React.StrictMode>
         <BrowserRouter>
             <StyledEngineProvider injectFirst>
                 <ThemeProvider theme={theme}>
@@ -25,6 +26,7 @@ ReactDOM.render((
                     <Routes>
                         <Route exact path='/' element={<Navigate to='/search' replace={true} />}></Route>
                         <Route exact path='/search' element={<SearchPage />}></Route>
+                        <Route exact path='/sourcelist' element={<SourceListPage />}></Route>
                         <Route exact path='/howtouse' element={<HowToPage />}></Route>
                         <Route exact path='/about' element={<AboutPage />}></Route>
                         <Route exact path='/source' element={<SourcePage />}></Route>
@@ -35,6 +37,6 @@ ReactDOM.render((
                 </ThemeProvider>
             </StyledEngineProvider>
         </BrowserRouter>
-    //</React.StrictMode>
+    </React.StrictMode>
   ), document.getElementById('root')
 );
