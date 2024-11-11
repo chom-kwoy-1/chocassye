@@ -141,6 +141,13 @@ function App(props) {
                                     </Link>
                                 </MenuItem>
                                 <MenuItem>
+                                    <Link to="/sourcelist">
+                                        <Typography textAlign="center">
+                                            {t('Sources')}
+                                        </Typography>
+                                    </Link>
+                                </MenuItem>
+                                <MenuItem>
                                     <Link to="/howtouse">
                                         <Typography textAlign="center">
                                             {t('How to Use')}
