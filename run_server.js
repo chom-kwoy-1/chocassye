@@ -393,7 +393,7 @@ app.get('/api/source_list', (req, res) => {
 
     pool.query(`
         SELECT *, count(*) OVER() AS full_count FROM books
-        ORDER BY year_sort ASC 
+        ORDER BY year_sort ASC, filename ASC
         OFFSET $1
         LIMIT $2
     `, [offset, limit])
