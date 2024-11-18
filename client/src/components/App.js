@@ -3,20 +3,40 @@ import { Link } from "react-router-dom";
 import {useTranslation, withTranslation} from 'react-i18next';
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import MenuIcon from '@mui/icons-material/Menu';
+import LanguageIcon from '@mui/icons-material/Language';
 import {
     Container, AppBar, Toolbar, Button,
     Typography, Box, IconButton, Menu,
-    MenuItem, Paper
+    MenuItem, Paper, Select, FormControl, InputLabel
 } from '@mui/material';
 import './i18n';
+import i18n from "i18next";
 import {SearchResultContext} from "./SearchContext";
+import {ThemeProvider} from "@mui/material/styles";
+import { createTheme } from '@mui/material/styles';
+
+const darktheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#e5e5ea',
+        },
+        secondary: {
+            main: '#D5EED7',
+        },
+        background: {
+            default: '#262c39',
+            paper: '#262c39',
+        },
+    },
+});
 
 
 function App(props) {
     const { t } = useTranslation();
 
     const [anchorElNav, setAnchorElNav] = React.useState(null);
-    const [anchorElUser, setAnchorElUser] = React.useState(null);
+    const [anchorElLang, setAnchorElLang] = React.useState(null);
 
     let [searchResult, setSearchResult] = React.useState({
         // Search query
@@ -38,14 +58,15 @@ function App(props) {
     function handleOpenNavMenu(event) {
         setAnchorElNav(event.currentTarget);
     }
-    function handleOpenUserMenu(event) {
-        setAnchorElUser(event.currentTarget);
-    }
     function handleCloseNavMenu() {
         setAnchorElNav(null);
     }
-    function handleCloseUserMenu() {
-        setAnchorElUser(null);
+
+    function handleOpenLangMenu(event) {
+        setAnchorElLang(event.currentTarget);
+    }
+    function handleCloseLangMenu() {
+        setAnchorElLang(null);
     }
 
     let appbarStyle = {};
@@ -62,6 +83,10 @@ function App(props) {
                 "rgba(0,74,119,1) 70.9%, rgba(0,22,84,1) 71%, rgba(0,22,84,1) 85.9%, " +
                 "rgba(88,0,124,1) 86%)"
         };
+    }
+
+    async function handleLangSelect(event) {
+        await i18n.changeLanguage(event.target.value);
     }
 
     return (
@@ -103,6 +128,19 @@ function App(props) {
                             <Link to="/about">
                                 <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('About')}</Button>
                             </Link>
+                        </Box>
+                        <Box sx={{ minWidth: 150, display: { xs: 'none', md: 'flex' } }}>
+                            <ThemeProvider theme={darktheme}>
+                                <FormControl size="small" fullWidth>
+                                    <InputLabel id="lang-select-label">{t('Language')}</InputLabel>
+                                    <Select variant="outlined" labelId="lang-select-label"
+                                            onChange={handleLangSelect}
+                                            value={i18n.language}>
+                                        <MenuItem value="ko">{t('Korean')}</MenuItem>
+                                        <MenuItem value="en">{t('English')}</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </ThemeProvider>
                         </Box>
 
 
@@ -179,7 +217,42 @@ function App(props) {
                         </Typography>
 
                         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-                            <CollectionsBookmarkIcon />
+                            <IconButton
+                                size="large"
+                                aria-controls="lang-change-appbar"
+                                aria-haspopup="true"
+                                onClick={(e) => handleOpenLangMenu(e)}
+                                color="inherit">
+                                <LanguageIcon />
+                            </IconButton>
+                            <Menu
+                                id="lang-change-appbar"
+                                anchorEl={anchorElLang}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'left',
+                                }}
+                                keepMounted
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'left',
+                                }}
+                                open={Boolean(anchorElLang)}
+                                onClose={(e) => handleCloseLangMenu(e)}
+                                sx={{
+                                    display: { xs: 'block', md: 'none' },
+                                }}>
+                                <MenuItem onClick={async () => await i18n.changeLanguage('ko')}>
+                                    <Typography textAlign="center">
+                                        {t('Korean')}
+                                    </Typography>
+                                </MenuItem>
+                                <MenuItem onClick={async () => await i18n.changeLanguage('en')}>
+                                    <Typography textAlign="center">
+                                        {t('English')}
+                                    </Typography>
+                                </MenuItem>
+                            </Menu>
                         </Box>
 
                     </Toolbar>

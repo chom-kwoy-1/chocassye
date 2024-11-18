@@ -105,6 +105,9 @@ const resources = {
       "Title": "제목",
       "Period": "시기",
       "No. of Sentences": "문장 수",
+      "Korean": "한국어",
+      "English": "영어",
+      "Language": "언어",
     }
   }
 };
