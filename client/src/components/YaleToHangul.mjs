@@ -289,7 +289,7 @@ const INDEP_CONS_RE = /(ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|
 const COMPAT_CONS_RE = /ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㆇ|ㆈ|ㆉ|ㆊ|ㆋ|ㆌ|ㆍ|ㆎ/g;
 
 
-function normalize_string(string) {
+export function normalize_string(string) {
     string = string.replace(COMPAT_CONS_RE, function(ch) {
         return '\u115f' + ch;
     });

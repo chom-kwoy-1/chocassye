@@ -7,10 +7,9 @@ import jsdom from 'jsdom';
 import {promisify} from 'util';
 
 import pg from 'pg';
-import { format } from 'node-pg-format';
-
-import {make_ngrams} from '../ngram.js';
 import {hangul_to_yale} from '../client/src/components/YaleToHangul.mjs';
+import {insert_into_db} from "./insert_into_db.js";
+import {parse_year_string, year_and_bookname_from_filename} from "./parse_utils.js";
 
 function uni(str) {
     return str.replace(/{{{[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]}}}/g, function(ch) {
@@ -73,86 +72,6 @@ function findBibl(doc) {
         }
     }
     return null;
-}
-
-function year_and_bookname_from_filename(file) {
-    file = file.normalize('NFKC')
-    let filename = path.parse(file).name;
-    let year_string = null;
-    if (!path.parse(file).dir.includes("unknown") && !path.parse(file).dir.includes("sktot")) {
-        let splits = filename.split('_');
-        filename = splits.splice(1).join(' ');
-        year_string = splits[0];
-    }
-    filename = filename.split('_').join(' ');
-    return {filename: filename, year_string: year_string};
-}
-
-function parse_year_string(year_string) {
-    let ys_norm = year_string.replace(/\[[^\]]*\]/g, '').replace(/\([^\)]*\)/g, '');
-
-    let year, year_start, year_end;
-    if (ys_norm.match(/^[0-9][0-9][0-9][0-9]$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9][0-9]년$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9][0-9]年$/) !== null) {
-        year = parseInt(ys_norm.slice(0, 4));
-        year_start = year_end = year;
-    }
-    else if (ys_norm.match(/^[0-9][0-9][0-9][0-9]년대/) !== null) {
-        year = parseInt(ys_norm.slice(0, 4)) + 5;
-        year_start = year - 5;
-        year_end = year + 4;
-    }
-    else if (year_string.match(/[0-9][0-9]세기 ?(전기|전반|전반기|초|초반|초기)/) !== null) {
-        let matched = year_string.match(/[0-9][0-9]세기 ?(전기|전반|전반기|초|초반|초기)/)[0];
-        year = parseInt(matched.slice(0, 2)) * 100 - 75;
-        year_start = year - 25;
-        year_end = year + 24;
-    }
-    else if (year_string.match(/[0-9][0-9]세기 ?(후기|후반|후반기|말|말기)/) !== null) {
-        let matched = year_string.match(/[0-9][0-9]세기 ?(후기|후반|후반기|말|말기)/)[0];
-        year = parseInt(matched.slice(0, 2)) * 100 - 25;
-        year_start = year - 25;
-        year_end = year + 24;
-    }
-    else if (year_string.match(/[0-9][0-9]세기/) !== null) {
-        let matched = year_string.match(/[0-9][0-9]세기/)[0];
-        year = parseInt(matched.slice(0, 2)) * 100 - 50;
-        year_start = year - 50;
-        year_end = year + 49;
-    }
-    else if (ys_norm.match(/^[0-9][0-9]--$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]--년$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]\?$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]\?\?$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]\?\?년$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]X$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]XX$/) !== null ||
-        ys_norm.match(/^[0-9][0-9]XX년$/) !== null) {
-        year = parseInt(ys_norm.slice(0, 2)) * 100 + 50;
-        year_start = year - 50;
-        year_end = year + 49;
-    }
-    else if (ys_norm.match(/^[0-9][0-9][0-9]-$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9]-년$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9]\?$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9]\?년$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9]X$/) !== null ||
-        ys_norm.match(/^[0-9][0-9][0-9]X년$/) !== null) {
-        year = parseInt(ys_norm.slice(0, 3)) * 10 + 5;
-        year_start = year - 5;
-        year_end = year + 4;
-    }
-    else {
-        year = parseInt(ys_norm.slice(0, 4));
-        year_start = year_end = year;
-    }
-
-    year = Number.isNaN(year)? null : year;
-    year_start = Number.isNaN(year_start)? null : year_start;
-    year_end = Number.isNaN(year_end)? null : year_end;
-
-    return {year: year, year_start: year_start, year_end: year_end};
 }
 
 function add_file(file, xml) {
@@ -302,26 +221,14 @@ function parse_xml(parser, data) {
     return parser.parseFromString(data, "text/xml");
 }
 
-function deadlock_retry(pool, query, args=[]) {
-    return pool.query(query, args).catch((err) => {
-        if (err.code === '40P01') {
-            console.error("Deadlock detected, retrying...");
-            return deadlock_retry(pool, query, args);
-        } else {
-            throw err;
-        }
-    });
-}
-
 function insert_documents(pool) {
     const dom = new jsdom.JSDOM("");
     const DOMParser = dom.window.DOMParser;
     const parser = new DOMParser;
 
-    return Promise.all([
-        promisify(glob)("chocassye-corpus/data/*/*.xml"),
-        promisify(glob)("chocassye-corpus/data/*/*.txt"),
-    ]).then(async ([xmlFiles, txtFiles]) => {
+    return promisify(glob)(
+        "chocassye-corpus/data/*/*.xml"
+    ).then(async xmlFiles => {
         console.log("Total", xmlFiles.length, "files");
 
         let promises = [];
@@ -332,110 +239,7 @@ function insert_documents(pool) {
                 })
                 .then(async (xml) => {
                     const [book_details, sentences] = add_file(file, xml);
-
-                    await deadlock_retry(pool, `
-                        INSERT INTO books (
-                            filename, year, year_sort, decade_sort, year_start, year_end, year_string,
-                            attributions, bibliography, num_sentences, non_chinese_sentence_count
-                        ) VALUES (
-                            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-                        );
-                    `, [
-                        book_details.filename,
-                        book_details.year,
-                        book_details.year_sort,
-                        book_details.decade_sort,
-                        book_details.year_start,
-                        book_details.year_end,
-                        book_details.year_string,
-                        JSON.stringify(book_details.attributions),
-                        book_details.bibliography,
-                        book_details.num_sentences,
-                        book_details.non_chinese_sentence_count,
-                    ]);
-
-                    for (let sentence of sentences) {
-                        await deadlock_retry(pool, `
-                            INSERT INTO sentences (
-                                filename, text, text_without_sep, text_with_tone, html, 
-                                type, lang, page, orig_tag, number_in_page, number_in_book, hasImages, 
-                                year_sort, decade_sort
-                            ) VALUES (
-                                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-                            ) RETURNING id;
-                        `, [
-                            sentence.filename,
-                            sentence.text,
-                            sentence.text_without_sep,
-                            sentence.text_with_tone,
-                            sentence.html,
-                            sentence.type,
-                            sentence.lang,
-                            sentence.page,
-                            sentence.orig_tag,
-                            sentence.number_in_page,
-                            sentence.number_in_book,
-                            sentence.hasImages,
-                            sentence.year_sort,
-                            sentence.decade_sort,
-                        ]).then((sentence_result) => {
-                            const sentence_id = sentence_result.rows[0].id;
-
-                            let data = "";
-                            let cnt = 0;
-
-                            const text = sentence.text;
-                            const text_ngrams = [
-                                ...make_ngrams(text, 1),
-                                ...make_ngrams(text, 2),
-                                ...make_ngrams(text, 3),
-                                ...make_ngrams(text, 4),
-                            ];
-                            for (let ngram of text_ngrams) {
-                                data += format('(%L, false),', ngram);
-                                cnt += 1;
-                            }
-
-                            if (sentence.text_without_sep !== undefined) {
-                                const text_without_sep = sentence.text_without_sep;
-                                const text_without_sep_ngrams = [
-                                    ...make_ngrams(text_without_sep, 1),
-                                    ...make_ngrams(text_without_sep, 2),
-                                    ...make_ngrams(text_without_sep, 3),
-                                    ...make_ngrams(text_without_sep, 4),
-                                ];
-                                for (let ngram of text_without_sep_ngrams) {
-                                    data += format('(%L, true),', ngram);
-                                    cnt += 1;
-                                }
-                            }
-
-                            if (cnt === 0) {
-                                return Promise.resolve();
-                            }
-
-                            data = data.slice(0, -1);
-
-                            const query = (`
-                                WITH 
-                                    input_rows(ngram, is_without_sep) AS (VALUES ${data}),
-                                    ins AS (
-                                        INSERT INTO ngrams(ngram, is_without_sep)
-                                        SELECT * FROM input_rows
-                                        ON CONFLICT DO NOTHING
-                                        RETURNING id
-                                    )
-                                INSERT INTO ngram_rel(ngram_id, sentence_id)
-                                    SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
-                                        UNION ALL
-                                    SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
-                                        input_rows JOIN ngrams n USING (ngram, is_without_sep)
-                                    ON CONFLICT DO NOTHING;
-                            `);
-
-                            return deadlock_retry(pool, query);
-                        });
-                    }
+                    return insert_into_db(pool, book_details, sentences);
                 })
                 .then(() => {
                     console.log(i, "DONE", file);
@@ -565,4 +369,5 @@ function populate_db() {
             console.log("Created indexes.");
         });
 }
-populate_db();
+
+await populate_db();
