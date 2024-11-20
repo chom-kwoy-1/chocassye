@@ -168,7 +168,7 @@ app.post('/api/doc_suggest', (req, res) => {
     pool.query(format(`
         SELECT * FROM books
         WHERE filename ~ %L
-        ORDER BY year_sort ASC, filename ASC
+        ORDER BY year_sort ASC, filename::bytea ASC
         LIMIT 10
     `, [escapeStringRegexp(doc)]))
     .then((docs) => {
@@ -219,7 +219,7 @@ app.post('/api/search', (req, res) => {
                     GROUP BY s.id, s.year_sort, s.filename, s.number_in_book
                     ORDER BY
                         s.year_sort ASC,
-                        s.filename ASC,
+                        s.filename::bytea ASC,
                         s.number_in_book ASC
                 OFFSET $1
                 LIMIT $2
@@ -393,7 +393,7 @@ app.get('/api/source_list', (req, res) => {
 
     pool.query(`
         SELECT *, count(*) OVER() AS full_count FROM books
-        ORDER BY year_sort ASC, filename ASC
+        ORDER BY year_sort ASC, filename::bytea ASC
         OFFSET $1
         LIMIT $2
     `, [offset, limit])

@@ -67,6 +67,7 @@ function AboutWrapper(props) {
             <Typography component='p' variant='body2' sx={{pb: 2}}>
                 한글 자료는 국립국어원의 &lsquo;역사 자료 종합 정비&rsquo;를 사용하였습니다.
                 석독구결 자료는 <a href="https://kohico.kr/" target="blank">kohico.kr</a>에 공개되어 있는 sktot 자료를 사용하였습니다.
+                일부 자료는 디지털 장서각에서 가져왔습니다.
                 이 외의 자료는 자료 페이지 내 표시된 출처를 참조하시기 바랍니다.
             </Typography>
             <Typography component='p' variant='body2' sx={{pb: 2}}>
