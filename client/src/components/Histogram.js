@@ -4,13 +4,14 @@ import './i18n';
 import {range} from './common_utils.mjs';
 
 import {
-    Box, Grid, Card, Tooltip
+    Box, Grid, Card, Tooltip, useTheme
 } from '@mui/material';
 import {useTranslation} from "react-i18next";
 
 
 export default function Histogram(props) {
     const { t } = useTranslation();
+    const theme = useTheme();
 
     const BEGIN = 1400;
     const END = 2000;
@@ -97,7 +98,7 @@ export default function Histogram(props) {
             borderBottomRightRadius: 10,
             textAlign: "center",
         }}>
-            <span style={{position: "relative", top: 10, backgroundColor: "white"}}>
+            <span style={{position: "relative", top: 10, backgroundColor: theme.palette.background.paper}}>
                 {t('number Results', { numResults: middleKoreanHits })}
             </span>
         </Grid>
@@ -110,7 +111,7 @@ export default function Histogram(props) {
             borderBottomRightRadius: 10,
             textAlign: "center",
         }}>
-            <span style={{position: "relative", top: 10, backgroundColor: "white"}}>
+            <span style={{position: "relative", top: 10, backgroundColor: theme.palette.background.paper}}>
                 {t('number Results', { numResults: modernKoreanHits })}
             </span>
         </Grid>

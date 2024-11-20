@@ -170,5 +170,5 @@ abbr[data-title]:focus::after,
 }
 
 .MuiPagination-ul {
-    justify-content: right;
+    justify-content: center;
 }

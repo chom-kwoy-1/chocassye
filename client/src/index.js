@@ -13,30 +13,40 @@ import HowToPage from './components/HowToPage';
 import AboutPage from './components/AboutPage';
 import EnglishPage from './components/EnglishPage';
 import ParsePage from './components/ParsePage';
-import theme from './theme';
+import {ThemeContext} from "./components/ThemeContext";
+import {lightTheme, darkTheme} from './themes';
 
+
+function AppWrapper(props) {
+    let [curTheme, setCurTheme] = React.useState(lightTheme);
+    return (
+        <BrowserRouter>
+            <ThemeContext.Provider value={[ curTheme, setCurTheme ]}>
+                <StyledEngineProvider injectFirst>
+                    <ThemeProvider theme={curTheme}>
+                        <CssBaseline />
+                        <App>
+                            <Routes>
+                                <Route exact path='/' element={<Navigate to='/search' replace={true} />}></Route>
+                                <Route exact path='/search' element={<SearchPage />}></Route>
+                                <Route exact path='/sourcelist' element={<SourceListPage />}></Route>
+                                <Route exact path='/howtouse' element={<HowToPage />}></Route>
+                                <Route exact path='/about' element={<AboutPage />}></Route>
+                                <Route exact path='/source' element={<SourcePage />}></Route>
+                                <Route exact path='/english' element={<EnglishPage />}> </Route>
+                                <Route exact path='/parse' element={<ParsePage />}></Route>
+                            </Routes>
+                        </App>
+                    </ThemeProvider>
+                </StyledEngineProvider>
+            </ThemeContext.Provider>
+        </BrowserRouter>
+    );
+}
 
 ReactDOM.render((
     <React.StrictMode>
-        <BrowserRouter>
-            <StyledEngineProvider injectFirst>
-                <ThemeProvider theme={theme}>
-                    <CssBaseline />
-                    <App>
-                    <Routes>
-                        <Route exact path='/' element={<Navigate to='/search' replace={true} />}></Route>
-                        <Route exact path='/search' element={<SearchPage />}></Route>
-                        <Route exact path='/sourcelist' element={<SourceListPage />}></Route>
-                        <Route exact path='/howtouse' element={<HowToPage />}></Route>
-                        <Route exact path='/about' element={<AboutPage />}></Route>
-                        <Route exact path='/source' element={<SourcePage />}></Route>
-                        <Route exact path='/english' element={<EnglishPage />}> </Route>
-                        <Route exact path='/parse' element={<ParsePage />}></Route>
-                    </Routes>
-                    </App>
-                </ThemeProvider>
-            </StyledEngineProvider>
-        </BrowserRouter>
+        <AppWrapper />
     </React.StrictMode>
   ), document.getElementById('root')
 );

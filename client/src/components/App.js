@@ -11,50 +11,19 @@ import {
 } from '@mui/material';
 import './i18n';
 import i18n from "i18next";
-import {SearchResultContext} from "./SearchContext";
+import {SearchResultProvider} from "./SearchContext";
+import {ThemeContext} from "./ThemeContext";
 import {ThemeProvider} from "@mui/material/styles";
-import { createTheme } from '@mui/material/styles';
-
-const darktheme = createTheme({
-    palette: {
-        mode: 'dark',
-        primary: {
-            main: '#e5e5ea',
-        },
-        secondary: {
-            main: '#D5EED7',
-        },
-        background: {
-            default: '#262c39',
-            paper: '#262c39',
-        },
-    },
-});
+import {darkTheme} from '../themes';
 
 
 function App(props) {
     const { t } = useTranslation();
+    const [curTheme, setCurTheme] = React.useContext(ThemeContext);
 
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElLang, setAnchorElLang] = React.useState(null);
 
-    let [searchResult, setSearchResult] = React.useState({
-        // Search query
-        loaded: true,
-        result: [],
-        result_term: "",
-        result_page: 1,
-        result_doc: "",
-        excludeModern: false,
-        ignoreSep: false,
-        // Search stats
-        statsLoaded: true,
-        page_N: 50,
-        num_results: 0,
-        histogram: [],
-        stats_term: "",
-    });
-    
     function handleOpenNavMenu(event) {
         setAnchorElNav(event.currentTarget);
     }
@@ -130,7 +99,7 @@ function App(props) {
                             </Link>
                         </Box>
                         <Box sx={{ minWidth: 150, display: { xs: 'none', md: 'flex' } }}>
-                            <ThemeProvider theme={darktheme}>
+                            <ThemeProvider theme={darkTheme}>
                                 <FormControl size="small" fullWidth>
                                     <InputLabel id="lang-select-label">{t('Language')}</InputLabel>
                                     <Select variant="outlined" labelId="lang-select-label"
@@ -261,9 +230,9 @@ function App(props) {
 
             <Container maxWidth="lg" sx={{ mb: 4, px: { xs: 0.2, sm: 2 } }}>
                 <Paper variant="outlined" sx={{ my: { xs: 2, md: 4 }, p: { xs: 1, md: 3 } }}>
-                    <SearchResultContext.Provider value={[ searchResult, setSearchResult ]}>
+                    <SearchResultProvider>
                         {props.children}
-                    </SearchResultContext.Provider>
+                    </SearchResultProvider>
                 </Paper>
             </Container>
 
