@@ -214,6 +214,10 @@ function add_text_file(file, text) {
         return parse_format_1(file, lines);
     }
     else if (lines[0].startsWith('<item ')) {
+        const SKIP_FORMAT_2 = (process.env.SKIP_FORMAT_2 || "no") === "yes";
+        if (SKIP_FORMAT_2) {
+            throw new Error("Skipping format 2: " + file);
+        }
         return parse_format_2(file, lines);
     }
     else {
