@@ -168,3 +168,7 @@ abbr[data-title]:focus::after,
   line-height: 1.2;
   z-index: 500;
 }
+
+.MuiPagination-ul {
+    justify-content: right;
+}

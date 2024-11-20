@@ -331,6 +331,7 @@ let SearchResultsWrapper = function (props) {
                         siblingCount={2}
                         boundaryCount={2}
                         page={props.page}
+                        shape="rounded"
                         onChange={(_, page) => props.setPage(page)}
                     /> : null}
             </Box>
@@ -367,6 +368,7 @@ let SearchResultsWrapper = function (props) {
                         siblingCount={2}
                         boundaryCount={2}
                         page={props.page}
+                        shape="rounded"
                         onChange={(_, page) => props.setPage(page)}
                     /> : null}
             </Box>

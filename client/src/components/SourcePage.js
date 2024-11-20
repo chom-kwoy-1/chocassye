@@ -219,6 +219,7 @@ function SourcePage(props) {
                         siblingCount={2}
                         boundaryCount={2}
                         page={page + 1}
+                        shape="rounded"
                         onChange={(_, newPage) => {
                             newPage = newPage - 1;
                             let newN = props.numberInSource;
@@ -264,6 +265,7 @@ function SourcePage(props) {
                         siblingCount={2}
                         boundaryCount={2}
                         page={page + 1}
+                        shape="rounded"
                         onChange={(_, newPage) => {
                             newPage = newPage - 1;
                             let newN = props.numberInSource;

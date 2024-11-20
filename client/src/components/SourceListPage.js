@@ -52,6 +52,7 @@ function SourceListPage(props) {
                       siblingCount={2}
                       boundaryCount={2}
                       page={cur_page}
+                      shape="rounded"
                       onChange={(_, page) => {props.setOffset((page - 1) * props.limit)}}
                   />
               </Box>
@@ -84,6 +85,25 @@ function SourceListPage(props) {
                   </Table>
               </TableContainer>
           </Grid>
+
+          {/* Pager on bottom */}
+          <Grid item xs={12}>
+              <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center">
+                  <Pagination
+                      color="primary"
+                      count={num_pages}
+                      siblingCount={2}
+                      boundaryCount={2}
+                      page={cur_page}
+                      shape="rounded"
+                      onChange={(_, page) => {props.setOffset((page - 1) * props.limit)}}
+                  />
+              </Box>
+          </Grid>
+
       </Grid>
   );
 }
