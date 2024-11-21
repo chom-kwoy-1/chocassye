@@ -54,4 +54,4 @@ export const highlightColors = [
     red, deepPurple, lightBlue,
     green, yellow, deepOrange,
     purple, blue, teal, lime,
-].map((x) => x['A100']);
+];

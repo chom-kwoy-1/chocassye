@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useTranslation, withTranslation} from 'react-i18next';
 import CollectionsBookmarkIcon from '@mui/icons-material/CollectionsBookmark';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -14,7 +14,9 @@ import i18n from "i18next";
 import {SearchResultProvider} from "./SearchContext";
 import {ThemeContext} from "./ThemeContext";
 import {ThemeProvider} from "@mui/material/styles";
-import {darkTheme} from '../themes';
+import {darkTheme, lightTheme} from '../themes';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
 
 function App(props) {
@@ -58,6 +60,8 @@ function App(props) {
         await i18n.changeLanguage(event.target.value);
     }
 
+    const navigate = useNavigate();
+
     return (
         <React.Fragment>
 
@@ -85,18 +89,22 @@ function App(props) {
                             <Link to="/search">{t('Chocassye')}</Link>
                         </Typography>
                         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                            <Link to="/search">
-                                <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('Search')}</Button>
-                            </Link>
-                            <Link to="/sourcelist">
-                                <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('Sources')}</Button>
-                            </Link>
-                            <Link to="/howtouse">
-                                <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('How to Use')}</Button>
-                            </Link>
-                            <Link to="/about">
-                                <Button sx={{ my: 2, color: 'white', display: 'block' }}>{t('About')}</Button>
-                            </Link>
+                            <Button sx={{ my: 2, color: 'white', display: 'block' }}
+                                    onClick={() => navigate("/search")}>
+                                {t('Search')}
+                            </Button>
+                            <Button sx={{ my: 2, color: 'white', display: 'block' }}
+                                    onClick={() => navigate("/sourcelist")}>
+                                {t('Sources')}
+                            </Button>
+                            <Button sx={{ my: 2, color: 'white', display: 'block' }}
+                                    onClick={() => navigate("/howtouse")}>
+                                {t('How to Use')}
+                            </Button>
+                            <Button sx={{ my: 2, color: 'white', display: 'block' }}
+                                    onClick={() => navigate("/about")}>
+                                {t('About')}
+                            </Button>
                         </Box>
                         <Box sx={{ minWidth: 150, display: { xs: 'none', md: 'flex' } }}>
                             <ThemeProvider theme={darkTheme}>
@@ -140,33 +148,25 @@ function App(props) {
                                 sx={{
                                     display: { xs: 'block', md: 'none' },
                                 }}>
-                                <MenuItem>
-                                    <Link to="/search">
-                                        <Typography textAlign="center">
-                                            {t('Search')}
-                                        </Typography>
-                                    </Link>
+                                <MenuItem onClick={() => navigate("/search")}>
+                                    <Typography textAlign="center">
+                                        {t('Search')}
+                                    </Typography>
                                 </MenuItem>
-                                <MenuItem>
-                                    <Link to="/sourcelist">
-                                        <Typography textAlign="center">
-                                            {t('Sources')}
-                                        </Typography>
-                                    </Link>
+                                <MenuItem onClick={() => navigate("/sourcelist")}>
+                                    <Typography textAlign="center">
+                                        {t('Sources')}
+                                    </Typography>
                                 </MenuItem>
-                                <MenuItem>
-                                    <Link to="/howtouse">
-                                        <Typography textAlign="center">
-                                            {t('How to Use')}
-                                        </Typography>
-                                    </Link>
+                                <MenuItem onClick={() => navigate("/howtouse")}>
+                                    <Typography textAlign="center">
+                                        {t('How to Use')}
+                                    </Typography>
                                 </MenuItem>
-                                <MenuItem>
-                                    <Link to="/about">
-                                        <Typography textAlign="center">
-                                            {t('About')}
-                                        </Typography>
-                                    </Link>
+                                <MenuItem onClick={() => navigate("/about")}>
+                                    <Typography textAlign="center">
+                                        {t('About')}
+                                    </Typography>
                                 </MenuItem>
                             </Menu>
                         </Box>
@@ -184,6 +184,17 @@ function App(props) {
                                 }}>
                             <Link to="/search">{t('Chocassye')}</Link>
                         </Typography>
+
+                        <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+                            <IconButton
+                                size="large"
+                                aria-controls="lang-change-appbar"
+                                aria-haspopup="true"
+                                onClick={() => setCurTheme(curTheme === lightTheme? darkTheme : lightTheme)}
+                                color="inherit">
+                                {curTheme === lightTheme? <LightModeIcon /> : <DarkModeIcon />}
+                            </IconButton>
+                        </Box>
 
                         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
                             <IconButton

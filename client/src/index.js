@@ -15,10 +15,12 @@ import EnglishPage from './components/EnglishPage';
 import ParsePage from './components/ParsePage';
 import {ThemeContext} from "./components/ThemeContext";
 import {lightTheme, darkTheme} from './themes';
+import {useMediaQuery} from "@mui/material";
 
 
 function AppWrapper(props) {
-    let [curTheme, setCurTheme] = React.useState(lightTheme);
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)',{ noSsr: true });
+    let [curTheme, setCurTheme] = React.useState(prefersDarkMode? darkTheme : lightTheme);
     return (
         <BrowserRouter>
             <ThemeContext.Provider value={[ curTheme, setCurTheme ]}>

@@ -38,6 +38,7 @@ function Sentence(props) {
         null,
         false,
         ignoreSep,
+        null,
     );
     
     return (

@@ -10,14 +10,14 @@ import {
     Table,
     TableBody,
     TableContainer,
-    Tooltip, Typography
+    Tooltip, Typography, useTheme
 } from "@mui/material";
 import {highlightColors, StyledTableCell, StyledTableRow} from "./utils";
 import {zip} from "./common_utils.mjs";
 import {Interweave} from "interweave";
 import {Link} from "react-router-dom";
 import {IMAGE_BASE_URL} from "./config";
-import {styled} from "@mui/material/styles";
+import {styled, ThemeProvider} from "@mui/material/styles";
 import {tooltipClasses} from "@mui/material/Tooltip";
 import {
     toText, highlight, findMatchingRanges
@@ -25,6 +25,7 @@ import {
 import {yale_to_hangul} from "./YaleToHangul.mjs";
 import Histogram from "./Histogram";
 import HowToPage from "./HowToPage";
+import {lightTheme} from "../themes";
 
 function SearchResultsList(props) {
     const { t } = useTranslation();
@@ -156,6 +157,9 @@ function SentenceAndPage(props) {
         pageLink = props.sentence.page !== '' ? props.sentence.page : null;
     }
 
+    const theme = useTheme();
+    const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
+
     return <React.Fragment>
 
         {/* Highlighted sentence */}
@@ -166,6 +170,7 @@ function SentenceAndPage(props) {
                 props.match_ids_in_sentence,
                 props.romanize,
                 props.ignoreSep,
+                hlColors,
             )}
             allowList={['mark', 'span', 'a']}
             allowAttributes={true}
@@ -270,6 +275,9 @@ let SearchResultsWrapper = function (props) {
             return [{...book, sentences: sentences}, indices];
         });
 
+    const theme = useTheme();
+    const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
+
     return <React.Fragment>
 
         <Grid item xs={12} container sx={{position: 'relative'}}>
@@ -289,18 +297,20 @@ let SearchResultsWrapper = function (props) {
         <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
             {uniqueMatches.map((part, i) => {
                 const isEnabled = !disabledMatches.has(i);
-                const color = isEnabled ? highlightColors[i % highlightColors.length] : "lightgrey";
+                const color = isEnabled ? hlColors[i % hlColors.length] : "lightgrey";
                 return <Grid key={i} item xs="auto">
-                    <Chip
-                        label={part}
-                        sx={{backgroundColor: color}}
-                        size="small"
-                        onDelete={(event) => {
-                            toggleMatch(event, i)
-                        }}
-                        variant={isEnabled?  "filled" : "outlined"}
-                        clickable>
-                    </Chip>
+                    <ThemeProvider theme={lightTheme}>
+                        <Chip
+                            label={part}
+                            sx={{backgroundColor: color}}
+                            size="small"
+                            onDelete={(event) => {
+                                toggleMatch(event, i)
+                            }}
+                            variant={isEnabled?  "filled" : "outlined"}
+                            clickable>
+                        </Chip>
+                    </ThemeProvider>
                 </Grid>;
             })}
         </Grid>

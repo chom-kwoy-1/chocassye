@@ -54,7 +54,7 @@ span[data-tone]::after {
     transform: translate(-50%, -50%);
     top: 0;
     left: 50%;
-    color: #666;
+    opacity: 0.5;
 }
 
 span[data-tone="H"]::after {

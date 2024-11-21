@@ -1,7 +1,6 @@
 import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
 import { GUGYEOL_READINGS, GUGYEOL_REGEX } from './Gugyeol'
 import escapeStringRegexp from "escape-string-regexp";
-import {highlightColors} from "./utils";
 
 function searchTerm2Regex(text, ignoreSep=false) {
     text = hangul_to_yale(text);
@@ -378,7 +377,7 @@ function addHighlights(displayHTML, match_ranges, highlightIds=null, highlightCo
             color = highlightColors[colorIdx % highlightColors.length];
         }
         let mark_text = displayHTML.slice(range[0], range[1]);
-        output += `<mark style="background-color: ${color};">${mark_text}</mark>`;
+        output += `<mark style="background-color: ${color}; color: black;">${mark_text}</mark>`;
         
         hl_idx += 1;
         last_idx = range[1];
@@ -399,7 +398,7 @@ export function findMatchingRanges(originalText, displayText, displayTextMapping
     return removeOverlappingRanges(match_ranges, displayText.length);
 }
 
-export function highlight(text, searchTerm, match_ids, romanize, ignoreSep) {
+export function highlight(text, searchTerm, match_ids, romanize, ignoreSep, highlightColors) {
     // Into HTML for display
     let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, romanize);
 

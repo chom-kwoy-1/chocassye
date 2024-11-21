@@ -92,10 +92,7 @@ function AboutWrapper(props) {
         <Box>
             <Typography variant='h5'>{t('자매 프로젝트')}</Typography>
             <Divider />
-        </Box>
-
-        <Box>
-            <Typography component='p' variant='body2' sx={{pb: 2}}>
+            <Typography component='div' variant='body2' sx={{pb: 2}}>
                 <ul>
                     <li><a href="https://됬.xyz/old-hangul-ime/" target="blank">온라인 옛한글 입력기</a></li>
                     <li><a href="https://blog.됬.xyz/" target="blank">ᄎᆞᆷ괴로운 블로그 (개발자의 블로그)</a></li>
