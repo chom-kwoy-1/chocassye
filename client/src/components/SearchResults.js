@@ -26,6 +26,7 @@ import {yale_to_hangul} from "./YaleToHangul.mjs";
 import Histogram from "./Histogram";
 import HowToPage from "./HowToPage";
 import {lightTheme} from "../themes";
+import {grey} from "@mui/material/colors";
 
 function SearchResultsList(props) {
     const { t } = useTranslation();
@@ -136,6 +137,10 @@ function PageImagePreview(props) {
 }
 
 function SentenceAndPage(props) {
+    const theme = useTheme();
+    const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
+    const sourceTextColor = theme.palette.mode === 'light'? grey['600'] : grey['400'];
+
     let pageLink;
     if (props.sentence.hasimages && props.sentence.page !== '') {
         pageLink = props.sentence.page.split('-').map((page, i) => {
@@ -145,7 +150,7 @@ function SentenceAndPage(props) {
                 placement="right" key={i}>
                 <span>
                     <a className="pageNum"
-                       style={{color: '#888', textDecoration: 'underline'}}
+                       style={{color: sourceTextColor, textDecoration: `underline solid ${sourceTextColor}`}}
                        href={imageURL}
                        target="blank"
                        key={i}>{page}</a>
@@ -156,9 +161,6 @@ function SentenceAndPage(props) {
     } else {
         pageLink = props.sentence.page !== '' ? props.sentence.page : null;
     }
-
-    const theme = useTheme();
-    const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
 
     return <React.Fragment>
 
@@ -177,11 +179,11 @@ function SentenceAndPage(props) {
         />&#8203;
 
         {/* Add source link */}
-        <span style={{color: '#888'}}>
+        <span style={{color: sourceTextColor}}>
             &lang;
             <Link className="sourceLink"
                   to={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
-                  style={{textDecoration: "underline dotted lightgrey"}}>
+                  style={{textDecoration: `underline dotted ${sourceTextColor}`}}>
                   {props.sentence.page === null? props.book.name : `${props.book.name}:`}
             </Link>
             {pageLink}

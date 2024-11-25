@@ -8,11 +8,12 @@ import {
     Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
     TableContainer, Table, TableBody,
-    TableRow, Tooltip, Select, MenuItem, FormControl, InputLabel,
+    TableRow, Tooltip, Select, MenuItem, FormControl, InputLabel, useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "./config";
 import { StyledTableCell, StyledTableRow } from './utils.js';
+import {grey} from "@mui/material/colors";
 
 
 const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
@@ -40,7 +41,10 @@ function Sentence(props) {
         ignoreSep,
         null,
     );
-    
+
+    const theme = useTheme();
+    const sourceTextColor = theme.palette.mode === 'light'? grey['600'] : grey['400'];
+
     return (
         <StyledTableRow>
             <StyledTableCell className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
@@ -51,13 +55,13 @@ function Sentence(props) {
                 </Typography>
             </StyledTableCell>
             <StyledTableCell align="right">
-                <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>
+                <span className="pageNum" style={{color: sourceTextColor, userSelect: 'none'}}>
                     ({sentence.hasimages && sentence.page !== '' ?
                         sentence.page.split('-').map((page, i) =>
                             <Tooltip key={i} title={t("Image for page", { page: page })}>
                                 <span>
                                     <a className="pageNum"
-                                       style={{color: '#888', textDecoration: 'underline'}}
+                                       style={{color: sourceTextColor, textDecoration: 'underline dotted'}}
                                        href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
                                        target="blank"
                                        key={i}>{page}</a>
