@@ -28,6 +28,7 @@ const lightThemeBase = createTheme({
     },
     typography: {
         fontFamily: fonts.join(','),
+        fontSize: 13,
     },
 });
 
@@ -47,6 +48,7 @@ const darkThemeBase = createTheme({
     },
     typography: {
         fontFamily: fonts.join(','),
+        fontSize: 13,
     },
 });
 
