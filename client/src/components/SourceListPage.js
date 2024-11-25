@@ -22,7 +22,7 @@ function SourceListPage(props) {
         return (
             <Grid container alignItems="center" spacing={2} sx={{px: 2}}>
                 <Grid item xs={12}>
-                    <Typography variant='h5'>{t('List of Sources')}</Typography>
+                    <Typography variant='h4'>{t('List of Sources')}</Typography>
                 </Grid>
                 <Grid item xs={12}>
                     <Typography variant='h6'>{t('Loading...')}</Typography>
@@ -37,7 +37,7 @@ function SourceListPage(props) {
     return (
       <Grid container alignItems="center" spacing={2} sx={{px: 2}}>
             <Grid item xs={12}>
-                <Typography variant='h5'>{t('List of Sources')}</Typography>
+                <Typography variant='h4'>{t('List of Sources')}</Typography>
             </Grid>
 
           {/* Pager on top */}
