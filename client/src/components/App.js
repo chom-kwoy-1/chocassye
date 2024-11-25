@@ -86,7 +86,9 @@ function App(props) {
                                 color: 'inherit',
                                 textDecoration: 'none',
                             }}>
-                            <Link to="/search">{t('Chocassye')}</Link>
+                            <Box onClick={() => navigate("/search")} sx={{cursor: 'pointer'}}>
+                                {t('Chocassye')}
+                            </Box>
                         </Typography>
                         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
@@ -105,6 +107,16 @@ function App(props) {
                                     onClick={() => navigate("/about")}>
                                 {t('About')}
                             </Button>
+                        </Box>
+                        <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                            <IconButton
+                                size="large"
+                                aria-controls="lang-change-appbar"
+                                aria-haspopup="true"
+                                onClick={() => setCurTheme(curTheme === lightTheme? darkTheme : lightTheme)}
+                                color="inherit">
+                                {curTheme === lightTheme? <LightModeIcon /> : <DarkModeIcon />}
+                            </IconButton>
                         </Box>
                         <Box sx={{ minWidth: 150, display: { xs: 'none', md: 'flex' } }}>
                             <ThemeProvider theme={darkTheme}>
@@ -181,8 +193,10 @@ function App(props) {
                                 letterSpacing: '.1rem',
                                 color: 'inherit',
                                 textDecoration: 'none',
-                                }}>
-                            <Link to="/search">{t('Chocassye')}</Link>
+                            }}>
+                            <Box onClick={() => navigate("/search")} sx={{cursor: 'pointer'}}>
+                                {t('Chocassye')}
+                            </Box>
                         </Typography>
 
                         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>

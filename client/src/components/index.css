@@ -18,125 +18,6 @@
     main.bottom { display: none !important; }
 }
 
-body {
-    font: 14px 'Gugyeol','Source Han Sans KR','Source Han Sans K',
-               'Noto Sans CJK KR',
-               'NanumBarunGothic YetHangul','나눔바른고딕 옛한글',
-               '함초롬돋움 LVT','HCR Dotum LVT','함초롬돋움','HCR Dotum',
-               '본고딕','본고딕 KR',
-                sans-serif;
-}
-
-a {
-    color: inherit;
-    text-decoration: inherit;
-}
-
-a.sourceLink:visited {
-    color: darkorange;
-}
-
-span[orig-tag="anno"] {
-    font-size: smaller;
-}
-
-span[data-tone] {
-    position: relative;
-    margin-top: 10%;
-}
-
-span[data-tone]::after {
-    position: absolute;
-    width: 200%;
-    text-align: center;
-    font-size: 0.6em;
-    line-height: 1.0;
-    transform: translate(-50%, -50%);
-    top: 0;
-    left: 50%;
-    opacity: 0.5;
-}
-
-span[data-tone="H"]::after {
-    content: "•";
-}
-
-span[data-tone="R"]::after {
-    content: "••";
-}
-
-span[orig-tag="uncertain-tone"] > span[data-tone="L"]::after {
-    content: "[ ]";
-    color: #840B0B;
-}
-span[orig-tag="uncertain-tone"] > span[data-tone="H"]::after {
-    content: "[•]";
-    color: #840B0B;
-}
-span[orig-tag="uncertain-tone"] > span[data-tone="R"]::after {
-    content: "[••]";
-    color: #840B0B;
-}
-
-
-span[is-tone]::before {
-    content: "\00200c";
-}
-
-span[is-tone] {
-    width: 0.001px;
-    display: inline-block;
-    position: relative;
-    z-index: -100;
-    opacity: 0;
-}
-
-.sourceSentence.sentence_type_title {
-    line-height: 30pt;
-}
-
-.sourceSentence.sentence_lang_chi .text {
-    color: #000099;
-}
-
-.sourceSentence.sentence_lang_mod .text {
-    color: #955;
-}
-
-.sourceSentence.sentence_type_chi .text {
-    color: #000099;
-}
-
-.sourceSentence.sentence_type_mod .text {
-    color: #955;
-}
-
-.sourceSentence.sentence_type_title .text {
-    font-size: 20pt;
-}
-
-.sourceSentence[class*="sentence_type_anno"] .text,
-.sourceSentence[class*="sentence_type_note"] .text {
-    font-size: 13pt;
-    padding-left: 20pt;
-}
-
-.text span[orig-tag="g"] {
-    font-size: 20pt;
-    margin-right: 4pt;
-    color: #000099;
-}
-.text span[orig-tag="m"] {
-    margin-right: 4pt;
-}
-.text span[orig-tag="s"] {
-    margin-right: 4pt;
-}
-.text span[orig-tag="expl"] {
-    color: #000099;
-    font-weight: lighter;
-}
-
 abbr {
     border-bottom: 1px dotted grey;
     text-decoration: none;
@@ -148,25 +29,25 @@ abbr[data-title]:hover::after,
 abbr[data-title]:focus::after,
 .tooltip[data-title]:hover::after,
 .tooltip[data-title]:focus::after {
-  content: attr(data-title);
+    content: attr(data-title);
 
-  /* position tooltip like the native one */
-  position: absolute;
-  left: 50%;
-  transform: translate(-50%, 0);
-  bottom: -30px;
-  width: auto;
-  white-space: nowrap;
+    /* position tooltip like the native one */
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    bottom: -30px;
+    width: auto;
+    white-space: nowrap;
 
-  /* style tooltip */
-  background-color: #1e1e1ecc;
-  color: #fff;
-  border-radius: 3px;
-  box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.4);
-  font-size: 14px;
-  padding: 4px 5px;
-  line-height: 1.2;
-  z-index: 500;
+    /* style tooltip */
+    background-color: #1e1e1ecc;
+    color: #fff;
+    border-radius: 3px;
+    box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.4);
+    font-size: 14px;
+    padding: 4px 5px;
+    line-height: 1.2;
+    z-index: 500;
 }
 
 .MuiPagination-ul {

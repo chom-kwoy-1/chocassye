@@ -54,13 +54,15 @@ function Sentence(props) {
                 <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>
                     ({sentence.hasimages && sentence.page !== '' ?
                         sentence.page.split('-').map((page, i) =>
-                            <Tooltip title={t("Image for page", { page: page })}>
-                                <a className="pageNum"
-                                   style={{color: '#888', textDecoration: 'underline'}}
-                                   href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
-                                   target="blank"
-                                   key={i}>{page}</a>
-                                {i < sentence.page.split('-').length - 1? "-" : null}
+                            <Tooltip key={i} title={t("Image for page", { page: page })}>
+                                <span>
+                                    <a className="pageNum"
+                                       style={{color: '#888', textDecoration: 'underline'}}
+                                       href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
+                                       target="blank"
+                                       key={i}>{page}</a>
+                                    {i < sentence.page.split('-').length - 1? "-" : null}
+                                </span>
                             </Tooltip>) : sentence.page
                     })
                 </span>
