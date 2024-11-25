@@ -52,7 +52,7 @@ function Sentence(props) {
             </StyledTableCell>
             <StyledTableCell align="right">
                 <span className="pageNum" style={{color: '#888', userSelect: 'none'}}>
-                    ({sentence.hasImages && sentence.page !== '' ?
+                    ({sentence.hasimages && sentence.page !== '' ?
                         sentence.page.split('-').map((page, i) =>
                             <Tooltip title={t("Image for page", { page: page })}>
                                 <a className="pageNum"
