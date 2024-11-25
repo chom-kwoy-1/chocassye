@@ -8,7 +8,6 @@ const resources = {
     translation: {
       "Search": "Search",
       "How to Use": "How to Use",
-      "About": "About",
       "Search Engine": "Search Engine",
       "Chocassye": "Chocassye",
       "Romanization": "Romanization",
@@ -57,7 +56,7 @@ const resources = {
     translation: {
       "Search": "찾기",
       "How to Use": "도움말",
-      "About": "소개",
+      "About Chocassye": "ᄎᆞ자쎠 소개",
       "Search Engine": "검색엔진",
       "Chocassye": "ᄎᆞ자쎠",
       "Romanization": "로마자로 보기",

@@ -18,6 +18,10 @@
     main.bottom { display: none !important; }
 }
 
+body {
+    font-size: 14px;
+}
+
 abbr {
     border-bottom: 1px dotted grey;
     text-decoration: none;

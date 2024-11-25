@@ -8,7 +8,7 @@ function AboutWrapper(props) {
     const { t } = useTranslation();
 
     return <Stack spacing={2} sx={{px: 2}}>
-        <h1>{t('About')}</h1>
+        <Typography variant='h4'>{t('About Chocassye')}</Typography>
 
         <Box>
             <Typography variant='h5'>{t('序')}</Typography>
