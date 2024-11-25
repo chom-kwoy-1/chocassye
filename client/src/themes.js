@@ -1,11 +1,5 @@
-import {createTheme} from '@mui/material/styles';
-import {
-    amber, blue, cyan, deepOrange,
-    deepPurple, green, indigo,
-    lightBlue, lightGreen, lime,
-    orange, pink, purple, red, teal, yellow,
-    brown
-} from '@mui/material/colors';
+import { createTheme } from '@mui/material/styles';
+import { blue, deepOrange, red, brown } from '@mui/material/colors';
 
 const fonts = [
     'Gugyeol', 'Source Han Sans KR', 'Source Han Sans K', 'Noto Sans CJK KR', 'NanumBarunGothic YetHangul',
