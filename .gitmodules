@@ -1,6 +1,6 @@
 [submodule "chocassye-corpus"]
 	path = chocassye-corpus
-	url = git@github.com:chom-kwoy/chocassye-corpus.git
+	url = git@github.com:chom-kwoy-1/chocassye-corpus.git
 [submodule "KoreanVerbParser"]
 	path = KoreanVerbParser
-	url = git@github.com:chom-kwoy/KoreanParser.git
+	url = git@github.com:chom-kwoy-1/korean-verb-parser.git
