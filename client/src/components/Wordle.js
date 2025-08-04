@@ -296,7 +296,7 @@ export default function Wordle(props) {
       return [yellow[800], grey[50]];
     }
     if (wrongLetters.has(key)) {
-      return [grey[900], grey[50]];
+      return [grey[500], grey[50]];
     }
     return [grey[800], grey[50]];
   }
@@ -347,7 +347,7 @@ export default function Wordle(props) {
           </Grid>
         </Grid>
         <Grid container spacing={0} alignItems="center" justifyContent="center">
-          <Grid item xs={12} lg={7} container spacing={1} alignItems="center" justifyContent="center">
+          <Grid item xs={12} lg={6} container spacing={1} alignItems="center" justifyContent="center">
             {keyboardLayout.map((row, rowIndex) => (
               <Grid item xs={12} key={rowIndex} container spacing={1} justifyContent="center">
                 {row.map((key, colIndex) => (
