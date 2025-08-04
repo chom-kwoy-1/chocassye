@@ -23,7 +23,6 @@ function fetchWord(resultFunc) {
     .then(response => response.json())
     .then((result) => {
       if (result.status === 'success') {
-        console.log(result);
         resultFunc(result);
       }
       else {
@@ -75,12 +74,9 @@ export default function Wordle(props) {
     const storedCurRow = localStorage.getItem('wordle_curRow');
     const storedHasWon = localStorage.getItem('wordle_hasWon');
     const storedTodayNum = localStorage.getItem('wordle_todayNum');
-    console.log("Checking localStorage for saved game state " + storedTodayNum + " " + todayNum);
 
     if (storedTodayNum !== null) {
-      console.log(todayNum, JSON.parse(storedTodayNum), todayNum === JSON.parse(storedTodayNum));
       if (todayNum === JSON.parse(storedTodayNum)) {
-        console.log("Using saved game state from localStorage");
         setTiles(JSON.parse(storedTiles));
         setCorrectLetters(new Set(JSON.parse(storedCorrectLetters)));
         setMisplacedLetters(new Set(JSON.parse(storedMisplacedLetters)));
@@ -96,7 +92,6 @@ export default function Wordle(props) {
     if (todayNum === null) {
       return; // No answer word or today number yet
     }
-    console.log("Saving game state to localStorage");
     localStorage.setItem('wordle_tiles', JSON.stringify(tiles));
     localStorage.setItem('wordle_correctLetters', JSON.stringify(Array.from(correctLetters)));
     localStorage.setItem('wordle_misplacedLetters', JSON.stringify(Array.from(misplacedLetters)));
