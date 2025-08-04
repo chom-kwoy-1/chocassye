@@ -13,7 +13,7 @@ import {
   Typography,
   useTheme
 } from "@mui/material";
-import {green, grey, orange, yellow} from "@mui/material/colors";
+import {green, grey, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
 import {postData} from "./utils";
 
@@ -188,14 +188,24 @@ export default function Wordle(props) {
 
       let isWrong = false;
       const newTiles = structuredClone(tiles);
+      const answerLetters = answerWord.split('');
       for (let i = 0; i < NUM_COLS; i++) {
         const tile = newTiles[curRow][i];
         if (tile.letter === answerWord[i]) {
           tile.status = 'correct';
           correctLetters.add(tile.letter);
-        } else if (answerWord.includes(tile.letter)) {
+          answerLetters.splice(answerLetters.indexOf(tile.letter), 1);
+        }
+      }
+      for (let i = 0; i < NUM_COLS; i++) {
+        const tile = newTiles[curRow][i];
+        if (tile.status === 'correct') {
+          continue; // Already marked as correct
+        }
+        if (answerLetters.includes(tile.letter)) {
           tile.status = 'misplaced';
           misplacedLetters.add(tile.letter);
+          answerLetters.splice(answerLetters.indexOf(tile.letter), 1);
           isWrong = true;
         } else {
           tile.status = 'wrong';
@@ -232,13 +242,13 @@ export default function Wordle(props) {
     }
   }
 
-  const handleGlobalKeyDown = React.useCallback((event) => {
+  const handleGlobalKeyDown = React.useCallback(async (event) => {
     const code = (event.shiftKey? "Shift+" : "") + event.code;
     if (keyMap.hasOwnProperty(code)) {
       // prevent default action for the key
       event.preventDefault();
       const letter = keyMap[code];
-      inputLetter(letter);
+      await inputLetter(letter);
     }
   }, [inputLetter]);
 
@@ -354,7 +364,7 @@ export default function Wordle(props) {
                         padding: 0,
                         backgroundColor: keyboardColor(key)[0],
                         color: keyboardColor(key)[1],
-                      }} onClick={(e) => {inputLetter(key)}}>
+                      }} onClick={async (e) => {await inputLetter(key)}}>
                         <Typography variant='h6' sx={{
                           fontWeight: "bold",
                         }}>
