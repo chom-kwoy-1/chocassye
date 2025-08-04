@@ -177,7 +177,7 @@ export default function Wordle(props) {
         });
 
       if (!check) {
-        alert(t('입력한 단어가 목록에 없습니다. 다시 시도해주세요.'));
+        alert(t('입력한 단어가 목록에 없습니다. 다시 시도해주세요.\n(주의: ㅂ 불규칙 용언은 "쉬ᇦ다"와 같이 ㅸ 받침을 사용)'));
         return;
       }
 
