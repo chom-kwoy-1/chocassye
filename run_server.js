@@ -511,6 +511,27 @@ app.get('/api/wordle', (req, res) => {
     })
 });
 
+app.post('/api/wordle_check', (req, res) => {
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle check request`);
+
+    const word = req.body.word;
+    if (word === undefined) {
+        res.send({
+            status: "error",
+            msg: "Invalid word"
+        });
+        return;
+    }
+
+    // Check if the word is in the wordlist
+    res.send({
+        status: "success",
+        included: wordlist.includes(word)
+    });
+});
+
 // Handles any requests that don't match the ones above
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '/client/build/index.html'));

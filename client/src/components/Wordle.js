@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import {green, grey, orange, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
+import {postData} from "./utils";
 
 
 function fetchWord(resultFunc) {
@@ -65,6 +66,45 @@ export default function Wordle(props) {
 
   const [answerWord, setAnswerWord] = React.useState(null);
   const [todayNum, setTodayNum] = React.useState(null);
+
+  React.useEffect(() => {
+    const storedTiles = localStorage.getItem('wordle_tiles');
+    const storedCorrectLetters = localStorage.getItem('wordle_correctLetters');
+    const storedMisplacedLetters = localStorage.getItem('wordle_misplacedLetters');
+    const storedWrongLetters = localStorage.getItem('wordle_wrongLetters');
+    const storedCurRow = localStorage.getItem('wordle_curRow');
+    const storedHasWon = localStorage.getItem('wordle_hasWon');
+    const storedTodayNum = localStorage.getItem('wordle_todayNum');
+    console.log("Checking localStorage for saved game state " + storedTodayNum + " " + todayNum);
+
+    if (storedTodayNum !== null) {
+      console.log(todayNum, JSON.parse(storedTodayNum), todayNum === JSON.parse(storedTodayNum));
+      if (todayNum === JSON.parse(storedTodayNum)) {
+        console.log("Using saved game state from localStorage");
+        setTiles(JSON.parse(storedTiles));
+        setCorrectLetters(new Set(JSON.parse(storedCorrectLetters)));
+        setMisplacedLetters(new Set(JSON.parse(storedMisplacedLetters)));
+        setWrongLetters(new Set(JSON.parse(storedWrongLetters)));
+        setCurRow(JSON.parse(storedCurRow));
+        setHasWon(JSON.parse(storedHasWon));
+      }
+    }
+
+  }, [todayNum]);
+
+  React.useEffect(() => {
+    if (todayNum === null) {
+      return; // No answer word or today number yet
+    }
+    console.log("Saving game state to localStorage");
+    localStorage.setItem('wordle_tiles', JSON.stringify(tiles));
+    localStorage.setItem('wordle_correctLetters', JSON.stringify(Array.from(correctLetters)));
+    localStorage.setItem('wordle_misplacedLetters', JSON.stringify(Array.from(misplacedLetters)));
+    localStorage.setItem('wordle_wrongLetters', JSON.stringify(Array.from(wrongLetters)));
+    localStorage.setItem('wordle_curRow', JSON.stringify(curRow));
+    localStorage.setItem('wordle_hasWon', JSON.stringify(hasWon));
+    localStorage.setItem('wordle_todayNum', JSON.stringify(todayNum));
+  }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon]);
 
   const refresh = React.useCallback(
     () => {
@@ -118,11 +158,32 @@ export default function Wordle(props) {
     }
   }
 
-  function inputLetter(letter) {
+  async function inputLetter(letter) {
     if (letter === '入') {
       // Check the answer
       if (curCol < NUM_COLS || curRow >= NUM_ROWS) {
         return; // Not enough letters filled
+      }
+
+      const newWord = tiles[curRow].map(tile => tile.letter).join('');
+      // Check if the new word is in list
+      const check = await postData("/api/wordle_check", { word: newWord })
+        .then((result) => {
+          if (result.status === 'success') {
+            return result.included;
+          }
+          else {
+            throw new Error(result.msg);
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          return false;
+        });
+
+      if (!check) {
+        alert(t('입력한 단어가 목록에 없습니다. 다시 시도해주세요.'));
+        return;
       }
 
       let isWrong = false;
