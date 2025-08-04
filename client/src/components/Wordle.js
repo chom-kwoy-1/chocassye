@@ -303,12 +303,12 @@ export default function Wordle(props) {
 
   return (
     <React.Fragment>
-      <Stack spacing={3}>
+      <Stack spacing={3} alignItems="center">
         <Typography variant='h4' sx={{textAlign: "center", fontWeight: "bold"}}>
           {t('오늘의 마초아쎠 #')}{todayNum}
         </Typography>
-        <Grid container spacing={1} alignItems="center" justifyContent="center">
-          <Grid item xs={5} container spacing={1}>
+        <Grid container spacing={0} alignItems="center" justifyContent="center">
+          <Grid item xs={12} sm={6} lg={5} container spacing={1} alignItems="center" justifyContent="center">
             {tiles.map((row, rowIndex) => (
               <React.Fragment key={rowIndex}>
                 {row.map((tile, colIndex) => (
@@ -336,12 +336,12 @@ export default function Wordle(props) {
             ))}
           </Grid>
         </Grid>
-        <Grid container spacing={1} alignItems="center" justifyContent="center">
-          <Grid item xs={7} container spacing={1}>
+        <Grid container spacing={0} alignItems="center" justifyContent="center">
+          <Grid item xs={12} lg={7} container spacing={1} alignItems="center" justifyContent="center">
             {keyboardLayout.map((row, rowIndex) => (
               <Grid item xs={12} key={rowIndex} container spacing={1} justifyContent="center">
                 {row.map((key, colIndex) => (
-                  <Grid item xs={1} key={colIndex}>
+                  <Grid item xs={12/10} key={colIndex}>
                     <div style={{
                       display: "flex",
                       aspectRatio: "2 / 3",

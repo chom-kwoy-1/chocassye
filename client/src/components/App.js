@@ -179,6 +179,11 @@ function App(props) {
                                         {t('How to Use')}
                                     </Typography>
                                 </MenuItem>
+                                <MenuItem onClick={() => navigate("/word")}>
+                                    <Typography textAlign="center">
+                                        {t('Machwoassye')}
+                                    </Typography>
+                                </MenuItem>
                                 <MenuItem onClick={() => navigate("/about")}>
                                     <Typography textAlign="center">
                                         {t('About')}
