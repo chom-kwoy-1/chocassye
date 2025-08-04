@@ -16,6 +16,7 @@ import ParsePage from './components/ParsePage';
 import {ThemeContext} from "./components/ThemeContext";
 import {lightTheme, darkTheme} from './themes';
 import {useMediaQuery} from "@mui/material";
+import Wordle from "./components/Wordle";
 
 
 function AppWrapper(props) {
@@ -37,6 +38,7 @@ function AppWrapper(props) {
                                 <Route exact path='/source' element={<SourcePage />}></Route>
                                 <Route exact path='/english' element={<EnglishPage />}> </Route>
                                 <Route exact path='/parse' element={<ParsePage />}></Route>
+                                <Route exact path='/word' element={<Wordle />}></Route>
                             </Routes>
                         </App>
                     </ThemeProvider>
