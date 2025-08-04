@@ -280,15 +280,15 @@ export default function Wordle(props) {
       return [grey[100], grey[900]];
     }
     if (correctLetters.has(key)) {
-      return [green[700], theme.palette.text.primary];
+      return [green[700], grey[50]];
     }
     if (misplacedLetters.has(key)) {
-      return [yellow[800], theme.palette.text.primary];
+      return [yellow[800], grey[50]];
     }
     if (wrongLetters.has(key)) {
-      return [grey[900], theme.palette.text.primary];
+      return [grey[900], grey[50]];
     }
-    return [grey[800], theme.palette.text.primary];
+    return [grey[800], grey[50]];
   }
 
   if (todayNum === null) {
@@ -323,7 +323,10 @@ export default function Wordle(props) {
                       justifyContent: "center",
                       alignItems: "center",
                     }}>
-                      <Typography variant='h4' sx={{fontWeight: "bold"}}>
+                      <Typography variant='h4' sx={{
+                        fontWeight: "bold",
+                        color: tile.status === 'empty' ? theme.palette.text.primary : grey[50],
+                      }}>
                         {tile.letter}
                       </Typography>
                     </Paper>
