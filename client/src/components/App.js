@@ -104,6 +104,10 @@ function App(props) {
                                 {t('How to Use')}
                             </Button>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
+                                    onClick={() => navigate("/word")}>
+                                {t('Machwoassye')}
+                            </Button>
+                            <Button sx={{ my: 2, color: 'white', display: 'block' }}
                                     onClick={() => navigate("/about")}>
                                 {t('About')}
                             </Button>

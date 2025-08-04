@@ -108,6 +108,7 @@ const resources = {
       "Korean": "한국어",
       "English": "영어",
       "Language": "언어",
+      "Machwoassye": "마초아쎠",
     }
   }
 };
