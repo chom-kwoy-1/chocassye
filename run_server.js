@@ -491,7 +491,7 @@ app.get('/api/wordle', (req, res) => {
 
     // Get today's number (offset from 2025-08-04)
     const today = new Date();
-    const startDate = new Date('2025-08-04');
+    const startDate = new Date('2025-08-04 GMT+0900');
     const diffTime = today - startDate;
     const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
