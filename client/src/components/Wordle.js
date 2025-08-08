@@ -423,7 +423,7 @@ function WordleImpl(props) {
           </Grid>
         </Grid>
       </Stack>
-      <Dialog open={dialogOpen} onClose={() => {setDialogOpen(false);}}>
+      <Dialog open={isFinished && dialogOpen} onClose={() => {setDialogOpen(false);}}>
         <DialogTitle>
           {longGameName}
         </DialogTitle>
@@ -433,7 +433,7 @@ function WordleImpl(props) {
               {hasWon? t('축하합니다! 단어를 맞추셨습니다.') : t('아쉽게도 단어를 맞추지 못하셨습니다.')}
             </Typography>
             <Typography variant="body1">
-              {t('정답: ')} {answerWord}
+              {t('정답: ')} {isFinished? answerWord: null}
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" marginTop={2}>
               <Button color="primary" onClick={() => {
