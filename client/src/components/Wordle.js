@@ -18,8 +18,8 @@ import {Share} from "@mui/icons-material";
 import {postData} from "./utils";
 
 
-function fetchWord(resultFunc) {
-  fetch("/api/wordle")
+function fetchWord(practice, resultFunc) {
+  fetch("/api/wordle?" + new URLSearchParams({practice: practice}))
     .then(response => response.json())
     .then((result) => {
       if (result.status === 'success') {
@@ -37,8 +37,51 @@ function fetchWord(resultFunc) {
 }
 
 export default function Wordle(props) {
+  const [answerWord, setAnswerWord] = React.useState(null);
+  const [todayNum, setTodayNum] = React.useState(null);
+
+  const refresh = React.useCallback(
+    (practice=false) => {
+      let active = true;
+
+      fetchWord(
+        practice,
+        (result) => {
+          if (active) {
+            setAnswerWord(result.word);
+            setTodayNum(practice? -1 : result.todayNum);
+          }
+        }
+      );
+
+      return () => {
+        active = false;
+      }
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    return refresh();
+  }, [refresh]);
+
+  function practiceWord() {
+    refresh(true);
+  }
+
+  return <WordleImpl
+    answerWord={answerWord}
+    todayNum={todayNum}
+    onPracticeWord={practiceWord}
+  />
+}
+
+function WordleImpl(props) {
   const { t } = useTranslation();
   const theme = useTheme();
+
+  const answerWord = props.answerWord;
+  const todayNum = props.todayNum;
 
   const NUM_ROWS = 6;
   const NUM_COLS = 6;
@@ -62,11 +105,20 @@ export default function Wordle(props) {
   const [wrongLetters, setWrongLetters] = React.useState(new Set());
   const [hasWon, setHasWon] = React.useState(false);
   const [copyNotifOpen, setCopyNotifOpen] = React.useState(false);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const [answerWord, setAnswerWord] = React.useState(null);
-  const [todayNum, setTodayNum] = React.useState(null);
+  const isFinished = hasWon || curRow === NUM_ROWS;
+  const gameName = todayNum !== -1? t('마초아쎠 #') + todayNum : t('연습 문제');
+  const longGameName = todayNum !== -1? t('오늘의 마초아쎠 #') + todayNum : t('마초아쎠 연습 문제');
 
   React.useEffect(() => {
+    setDialogOpen(isFinished);
+  }, [hasWon, curRow])
+
+  React.useEffect(() => {
+    if (todayNum === -1) {
+      return;
+    }
     const storedTiles = localStorage.getItem('wordle_tiles');
     const storedCorrectLetters = localStorage.getItem('wordle_correctLetters');
     const storedMisplacedLetters = localStorage.getItem('wordle_misplacedLetters');
@@ -89,7 +141,17 @@ export default function Wordle(props) {
   }, [todayNum]);
 
   React.useEffect(() => {
-    if (todayNum === null) {
+    setHasWon(false);
+    setTiles(initialTiles);
+    setCurRow(0);
+    setCurCol(0);
+    setCorrectLetters(new Set());
+    setMisplacedLetters(new Set());
+    setWrongLetters(new Set());
+  }, [answerWord]);
+
+  React.useEffect(() => {
+    if (todayNum === null || todayNum === -1) {
       return; // No answer word or today number yet
     }
     localStorage.setItem('wordle_tiles', JSON.stringify(tiles));
@@ -100,30 +162,6 @@ export default function Wordle(props) {
     localStorage.setItem('wordle_hasWon', JSON.stringify(hasWon));
     localStorage.setItem('wordle_todayNum', JSON.stringify(todayNum));
   }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon]);
-
-  const refresh = React.useCallback(
-    () => {
-      let active = true;
-
-      fetchWord(
-        (result) => {
-          if (active) {
-            setAnswerWord(result.word);
-            setTodayNum(result.todayNum);
-          }
-        }
-      );
-
-      return () => {
-        active = false;
-      }
-    },
-    []
-  );
-
-  React.useEffect(() => {
-    return refresh();
-  }, [refresh]);
 
   const keyboardLayout = [
     ['ㅂ', 'ㅸ', 'ㅈ', 'ㄷ', 'ㄱ', 'ㅅ', 'ㅿ', 'ㅛ', 'ㅕ', 'ㅑ'],
@@ -154,6 +192,10 @@ export default function Wordle(props) {
   }
 
   async function inputLetter(letter) {
+    if (isFinished) {
+      return;
+    }
+
     if (letter === '入') {
       // Check the answer
       if (curCol < NUM_COLS || curRow >= NUM_ROWS) {
@@ -257,7 +299,7 @@ export default function Wordle(props) {
   }, [handleGlobalKeyDown]); // Empty dependency array ensures the effect runs only once
 
   async function shareResult() {
-    let resultText = `마초아쎠 #${todayNum}: ${curRow}/${NUM_ROWS}\n`;
+    let resultText = hasWon? `${gameName}: ${curRow}/${NUM_ROWS}🎉\n` : `${gameName}: X/${NUM_ROWS}😅\n`;
     for (let i = 0; i < curRow; i++) {
       for (let j = 0; j < NUM_COLS; j++) {
         const tile = tiles[i][j];
@@ -300,7 +342,7 @@ export default function Wordle(props) {
     return (
       <Stack spacing={3} sx={{textAlign: "center"}}>
         <Typography variant='h4' sx={{fontWeight: "bold"}}>
-          {t('오늘의 마초아쎠를 불러오는 중...')}
+          {t('마초아쎠를 불러오는 중...')}
         </Typography>
       </Stack>
     );
@@ -310,8 +352,15 @@ export default function Wordle(props) {
     <React.Fragment>
       <Stack spacing={3} alignItems="center">
         <Typography variant='h4' sx={{textAlign: "center", fontWeight: "bold"}}>
-          {t('오늘의 마초아쎠 #')}{todayNum}
+          {longGameName}
         </Typography>
+        {isFinished?
+          <Button variant="contained" color="primary" onClick={() => {
+            setDialogOpen(true);
+          }}>
+            {t('🎉 결과 보기')}
+          </Button>
+          : null}
         <Grid container spacing={0} alignItems="center" justifyContent="center">
           <Grid item xs={12} sm={6} lg={5} container spacing={1} alignItems="center" justifyContent="center">
             {tiles.map((row, rowIndex) => (
@@ -374,9 +423,9 @@ export default function Wordle(props) {
           </Grid>
         </Grid>
       </Stack>
-      <Dialog open={hasWon || curRow === NUM_ROWS}>
+      <Dialog open={dialogOpen} onClose={() => {setDialogOpen(false);}}>
         <DialogTitle>
-          {t('마초아쎠 #')}{todayNum}
+          {longGameName}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ textAlign: 'center', padding: 2 }}>
@@ -388,15 +437,9 @@ export default function Wordle(props) {
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="center" marginTop={2}>
               <Button color="primary" onClick={() => {
-                setHasWon(false);
-                setTiles(initialTiles);
-                setCurRow(0);
-                setCurCol(0);
-                setCorrectLetters(new Set());
-                setMisplacedLetters(new Set());
-                setWrongLetters(new Set());
+                props.onPracticeWord();
               }}>
-                {t('다시 플레이하기')}
+                {t('새로운 연습 문제')}
               </Button>
               <Button variant="contained" color="primary" onClick={() => {
                 shareResult();

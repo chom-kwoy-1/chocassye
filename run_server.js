@@ -489,26 +489,40 @@ app.get('/api/wordle', (req, res) => {
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle request`);
 
-    // Get today's number (offset from 2025-08-04)
-    const today = new Date();
-    const startDate = new Date('2025-08-04 GMT+0900');
-    const diffTime = today - startDate;
-    const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const isPractice = req.query.practice === "true";
 
-    console.log(`Today's number: ${todayNum}`);
+    if (isPractice) {
+        const index = Math.floor(Math.random() * (wordlist.length - 1));
+        const word = wordlist[index];
+        console.log(`Practice word: ${word}`);
+        res.send({
+            status: "success",
+            todayNum: -1, // -1 indicates practice mode
+            word: word,
+        });
+    }
+    else {
+        // Get today's number (offset from 2025-08-04)
+        const today = new Date();
+        const startDate = new Date('2025-08-04 GMT+0900');
+        const diffTime = today - startDate;
+        const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    // randomly select a word from the wordlist using the today's number as seed
-    const rand = new Rand(todayNum.toString());
-    const index = Math.floor(rand.next() * (wordlist.length - 1));
-    const word = wordlist[index];
+        console.log(`Today's number: ${todayNum}`);
 
-    console.log(`Today's word: ${word}`);
+        // randomly select a word from the wordlist using the today's number as seed
+        const rand = new Rand(todayNum.toString());
+        const index = Math.floor(rand.next() * (wordlist.length - 1));
+        const word = wordlist[index];
 
-    res.send({
-        status: "success",
-        todayNum: todayNum,
-        word: word,
-    })
+        console.log(`Today's word: ${word}`);
+
+        res.send({
+            status: "success",
+            todayNum: todayNum,
+            word: word,
+        });
+    }
 });
 
 app.post('/api/wordle_check', (req, res) => {
