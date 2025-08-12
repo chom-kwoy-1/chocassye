@@ -23,7 +23,6 @@ function fetchWord(numCols, practice, resultFunc) {
     .then(response => response.json())
     .then((result) => {
       if (result.status === 'success') {
-        console.log(result);
         resultFunc(result);
       }
       else {
