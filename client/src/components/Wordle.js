@@ -9,7 +9,7 @@ import {
   Grid,
   Paper,
   Snackbar,
-  Stack,
+  Stack, Tab, Tabs,
   Typography,
   useTheme
 } from "@mui/material";
@@ -18,11 +18,12 @@ import {Share} from "@mui/icons-material";
 import {postData} from "./utils";
 
 
-function fetchWord(practice, resultFunc) {
-  fetch("/api/wordle?" + new URLSearchParams({practice: practice}))
+function fetchWord(numCols, practice, resultFunc) {
+  fetch("/api/wordle?" + new URLSearchParams({numCols: numCols, practice: practice}))
     .then(response => response.json())
     .then((result) => {
       if (result.status === 'success') {
+        console.log(result);
         resultFunc(result);
       }
       else {
@@ -37,15 +38,32 @@ function fetchWord(practice, resultFunc) {
 }
 
 export default function Wordle(props) {
+  const [tabPage, setTabPage] = React.useState(0);
+
+  return (
+    <Stack spacing={2}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabPage} onChange={(e, newValue) => { setTabPage(newValue); }}>
+          <Tab label="6글자" />
+          <Tab label="5글자" />
+        </Tabs>
+      </Box>
+      {tabPage === 0? <WordlePage numCols={6} numRows={6} /> : null}
+      {tabPage === 1? <WordlePage numCols={5} numRows={5} /> : null}
+    </Stack>
+  );
+}
+
+function WordlePage(props) {
   const [answerWord, setAnswerWord] = React.useState(null);
   const [todayNum, setTodayNum] = React.useState(null);
 
   const refresh = React.useCallback(
-    (practice=false) => {
+    (numCols, practice=false) => {
       let active = true;
 
       fetchWord(
-        practice,
+        numCols, practice,
         (result) => {
           if (active) {
             setAnswerWord(result.word);
@@ -62,17 +80,19 @@ export default function Wordle(props) {
   );
 
   React.useEffect(() => {
-    return refresh();
+    return refresh(props.numCols);
   }, [refresh]);
 
   function practiceWord() {
-    refresh(true);
+    refresh(props.numCols, true);
   }
 
   return <WordleImpl
     answerWord={answerWord}
     todayNum={todayNum}
     onPracticeWord={practiceWord}
+    numRows={props.numRows}
+    numCols={props.numCols}
   />
 }
 
@@ -83,8 +103,8 @@ function WordleImpl(props) {
   const answerWord = props.answerWord;
   const todayNum = props.todayNum;
 
-  const NUM_ROWS = 6;
-  const NUM_COLS = 6;
+  const NUM_ROWS = props.numRows;
+  const NUM_COLS = props.numCols;
 
   const initialTiles = [];
   for (let i = 0; i < NUM_ROWS; i++) {
@@ -113,19 +133,20 @@ function WordleImpl(props) {
 
   React.useEffect(() => {
     setDialogOpen(isFinished);
-  }, [hasWon, curRow])
+  }, [hasWon, curRow]);
 
+  const prefix = `wordle_${NUM_COLS}x${NUM_ROWS}_`;
   React.useEffect(() => {
     if (todayNum === -1) {
       return;
     }
-    const storedTiles = localStorage.getItem('wordle_tiles');
-    const storedCorrectLetters = localStorage.getItem('wordle_correctLetters');
-    const storedMisplacedLetters = localStorage.getItem('wordle_misplacedLetters');
-    const storedWrongLetters = localStorage.getItem('wordle_wrongLetters');
-    const storedCurRow = localStorage.getItem('wordle_curRow');
-    const storedHasWon = localStorage.getItem('wordle_hasWon');
-    const storedTodayNum = localStorage.getItem('wordle_todayNum');
+    const storedTiles = localStorage.getItem(prefix + 'tiles');
+    const storedCorrectLetters = localStorage.getItem(prefix + 'correctLetters');
+    const storedMisplacedLetters = localStorage.getItem(prefix + 'misplacedLetters');
+    const storedWrongLetters = localStorage.getItem(prefix + 'wrongLetters');
+    const storedCurRow = localStorage.getItem(prefix + 'curRow');
+    const storedHasWon = localStorage.getItem(prefix + 'hasWon');
+    const storedTodayNum = localStorage.getItem(prefix + 'todayNum');
 
     if (storedTodayNum !== null) {
       if (todayNum === JSON.parse(storedTodayNum)) {
@@ -154,13 +175,13 @@ function WordleImpl(props) {
     if (todayNum === null || todayNum === -1) {
       return; // No answer word or today number yet
     }
-    localStorage.setItem('wordle_tiles', JSON.stringify(tiles));
-    localStorage.setItem('wordle_correctLetters', JSON.stringify(Array.from(correctLetters)));
-    localStorage.setItem('wordle_misplacedLetters', JSON.stringify(Array.from(misplacedLetters)));
-    localStorage.setItem('wordle_wrongLetters', JSON.stringify(Array.from(wrongLetters)));
-    localStorage.setItem('wordle_curRow', JSON.stringify(curRow));
-    localStorage.setItem('wordle_hasWon', JSON.stringify(hasWon));
-    localStorage.setItem('wordle_todayNum', JSON.stringify(todayNum));
+    localStorage.setItem(prefix + 'tiles', JSON.stringify(tiles));
+    localStorage.setItem(prefix + 'correctLetters', JSON.stringify(Array.from(correctLetters)));
+    localStorage.setItem(prefix + 'misplacedLetters', JSON.stringify(Array.from(misplacedLetters)));
+    localStorage.setItem(prefix + 'wrongLetters', JSON.stringify(Array.from(wrongLetters)));
+    localStorage.setItem(prefix + 'curRow', JSON.stringify(curRow));
+    localStorage.setItem(prefix + 'hasWon', JSON.stringify(hasWon));
+    localStorage.setItem(prefix + 'todayNum', JSON.stringify(todayNum));
   }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon]);
 
   const keyboardLayout = [
@@ -204,7 +225,7 @@ function WordleImpl(props) {
 
       const newWord = tiles[curRow].map(tile => tile.letter).join('');
       // Check if the new word is in list
-      const check = await postData("/api/wordle_check", { word: newWord })
+      const check = await postData("/api/wordle_check", { numCols: NUM_COLS, word: newWord })
         .then((result) => {
           if (result.status === 'success') {
             return result.included;
@@ -304,11 +325,12 @@ function WordleImpl(props) {
       for (let j = 0; j < NUM_COLS; j++) {
         const tile = tiles[i][j];
         if (tile.status === 'correct') {
-          resultText += '🟩';
+          // circle for 5 cols
+          resultText += NUM_COLS === 6 ? '🟩' : '🟢';
         } else if (tile.status === 'misplaced') {
-          resultText += '🟨';
+          resultText += NUM_COLS === 6 ? '🟨' : '🟡';
         } else if (tile.status === 'wrong') {
-          resultText += '⬛';
+          resultText += NUM_COLS === 6 ? '⬛' : '⚫';
         }
       }
       resultText += "\n";

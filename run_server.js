@@ -52,19 +52,32 @@ if (process.env.SSL === "ON") {
     http_server = http.createServer(app).listen(port, () => console.log(`Listening on port ${port}`));
 }
 
-const wordlist = [];
-// read from `chocassye-corpus/wordle.txt`
-fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle.txt'), 'utf8', (err, data) => {
+const wordlist5 = [];
+fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle5.txt'), 'utf8', (err, data) => {
     if (err) {
-        console.error('Error reading wordle.txt:', err);
+        console.error('Error reading wordle5.txt:', err);
         return;
     }
     // split by new line and remove empty lines
     const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     for (const line of lines) {
-        wordlist.push(line);
+        wordlist5.push(line);
     }
-    console.log(`Loaded ${wordlist.length} words from wordle.txt`);
+    console.log(`Loaded ${wordlist5.length} words from wordle5.txt`);
+});
+
+const wordlist6 = [];
+fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle6.txt'), 'utf8', (err, data) => {
+    if (err) {
+        console.error('Error reading wordle6.txt:', err);
+        return;
+    }
+    // split by new line and remove empty lines
+    const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    for (const line of lines) {
+        wordlist6.push(line);
+    }
+    console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
 });
 
 app.use(express.json())
@@ -491,10 +504,14 @@ app.get('/api/wordle', (req, res) => {
 
     const isPractice = req.query.practice === "true";
 
+    const numCols = parseInt(req.query.numCols?? '6');
+    const wordlist = numCols === 5 ? wordlist5 : wordlist6;
+    const seedAdd = numCols === 5 ? "..." : "";
+
     if (isPractice) {
         const index = Math.floor(Math.random() * (wordlist.length - 1));
         const word = wordlist[index];
-        console.log(`Practice word: ${word}`);
+        console.log(`Practice word (${numCols}): ${word}`);
         res.send({
             status: "success",
             todayNum: -1, // -1 indicates practice mode
@@ -508,14 +525,14 @@ app.get('/api/wordle', (req, res) => {
         const diffTime = today - startDate;
         const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-        console.log(`Today's number: ${todayNum}`);
+        console.log(`Today's number (${numCols}): ${todayNum}`);
 
         // randomly select a word from the wordlist using the today's number as seed
-        const rand = new Rand(todayNum.toString());
+        const rand = new Rand(todayNum.toString() + seedAdd);
         const index = Math.floor(rand.next() * (wordlist.length - 1));
         const word = wordlist[index];
 
-        console.log(`Today's word: ${word}`);
+        console.log(`Today's word (${numCols}): ${word}`);
 
         res.send({
             status: "success",
@@ -529,6 +546,9 @@ app.post('/api/wordle_check', (req, res) => {
     // Get current timestamp
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle check request`);
+
+    const numCols = parseInt(req.body.numCols?? '6');
+    const wordlist = numCols === 5 ? wordlist5 : wordlist6;
 
     const word = req.body.word;
     if (word === undefined) {
