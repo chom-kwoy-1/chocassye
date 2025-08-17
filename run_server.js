@@ -5,13 +5,13 @@ import path from "path";
 import http from "http";
 import https from "https";
 import fs from "fs";
-import Rand, { PRNG } from 'rand-seed';
+import Rand from 'rand-seed';
 
 import pg from 'pg';
 import { format } from 'node-pg-format';
 
 import escapeStringRegexp from 'escape-string-regexp';
-import nodecallspython from 'node-calls-python';
+//import nodecallspython from 'node-calls-python';
 import {make_ngrams} from './ngram.js';
 
 const __dirname = path.resolve();
@@ -529,8 +529,12 @@ app.get('/api/wordle', (req, res) => {
 
         // randomly select a word from the wordlist using the today's number as seed
         const rand = new Rand(todayNum.toString() + seedAdd);
-        const index = Math.floor(rand.next() * (wordlist.length - 1));
-        const word = wordlist[index];
+        let index = Math.floor(rand.next() * (wordlist.length - 1));
+        let word;
+        do {
+            word = wordlist[index];
+            index = (index + 1) % wordlist.length;
+        } while (word.startsWith('#'));
 
         console.log(`Today's word (${numCols}): ${word}`);
 
