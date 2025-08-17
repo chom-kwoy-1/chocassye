@@ -11,7 +11,7 @@ import pg from 'pg';
 import { format } from 'node-pg-format';
 
 import escapeStringRegexp from 'escape-string-regexp';
-//import nodecallspython from 'node-calls-python';
+import nodecallspython from 'node-calls-python';
 import {make_ngrams} from './ngram.js';
 
 const __dirname = path.resolve();
