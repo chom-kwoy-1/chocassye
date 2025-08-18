@@ -1,4 +1,4 @@
-import {make_ngrams} from "../ngram.js";
+import {make_ngrams} from "../utils/ngram.js";
 import {format} from "node-pg-format";
 
 function deadlock_retry(pool, query, args=[]) {
@@ -68,7 +68,6 @@ export async function insert_into_db(pool, book_details, sentences) {
                 ...make_ngrams(text, 1),
                 ...make_ngrams(text, 2),
                 ...make_ngrams(text, 3),
-                ...make_ngrams(text, 4),
             ];
             for (let ngram of text_ngrams) {
                 data += format('(%L, false),', ngram);
@@ -81,7 +80,6 @@ export async function insert_into_db(pool, book_details, sentences) {
                     ...make_ngrams(text_without_sep, 1),
                     ...make_ngrams(text_without_sep, 2),
                     ...make_ngrams(text_without_sep, 3),
-                    ...make_ngrams(text_without_sep, 4),
                 ];
                 for (let ngram of text_without_sep_ngrams) {
                     data += format('(%L, true),', ngram);

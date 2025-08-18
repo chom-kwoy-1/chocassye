@@ -12,7 +12,7 @@ import { format } from 'node-pg-format';
 
 import escapeStringRegexp from 'escape-string-regexp';
 import nodecallspython from 'node-calls-python';
-import {make_ngrams} from './ngram.js';
+import {make_ngrams} from './utils/ngram.js';
 
 const __dirname = path.resolve();
 

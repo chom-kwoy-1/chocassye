@@ -1,41 +1,19 @@
 // @ts-ignore
-import {insert_documents} from "./parse.js";
-// @ts-ignore
-import {make_ngrams} from "../ngram.js";
+import {make_ngrams} from "./ngram.js";
 import {
     parseRegExpLiteral
 } from "regexpp";
-import type {Alternative, Character, CharacterClass, NodeBase, Pattern, RegExpLiteral} from "regexpp/ast";
+import type {
+    Alternative,
+    Character,
+    CharacterClass,
+    CharacterSet,
+    NodeBase,
+    Pattern,
+    Quantifier,
+    RegExpLiteral
+} from "regexpp/ast";
 import { CompactPrefixTree } from "compact-prefix-tree/index.js";
-
-
-async function make_db(num_data: number): Promise<[string[], Map<string, number[]>]> {
-    const BATCH_SIZE = 16;
-
-    const all_sentences: string[] = [];
-    const ngram_map: Map<string, number[]> = new Map();
-
-    function insert_into_db(book_details: any, sentences: any[]) {
-        for (const sentence of sentences) {
-            const sentence_id = all_sentences.length;
-            all_sentences.push(sentence.text);
-
-            const ngram_3 = make_ngrams(sentence.text, 3);
-            for (const ch of ngram_3) {
-                if (!ngram_map.has(ch)) {
-                    ngram_map.set(ch, []);
-                }
-                ngram_map.get(ch)!.push(sentence_id);
-            }
-        }
-    }
-
-    return insert_documents(insert_into_db, BATCH_SIZE, num_data)
-      .then(() => {
-          console.log("All sentences collected:", all_sentences.length);
-          return [all_sentences, ngram_map];
-      });
-}
 
 
 interface Match {
@@ -270,6 +248,15 @@ function transform(result: ParsedRegExp): ParsedRegExp {
         result.exact = null;
     }
 
+    if (result.match.type === 'any') {
+        // Information-saving transformation
+        result.match = match_and(result.match, ngrams(result.prefix));
+        result.match = match_and(result.match, ngrams(result.suffix));
+        if (result.exact !== null) {
+            result.match = match_and(result.match, ngrams(result.exact));
+        }
+    }
+
     return result;
 }
 
@@ -332,7 +319,7 @@ function visit(ast: NodeBase): ParsedRegExp {
             break;
         }
         case 'Quantifier': {
-            const {element, min, max} = ast as any;
+            const {element, min, max} = ast as Quantifier;
             const cur = visit(element);
             if (min === 0 && max === 1) {  // Zero or one
                 result = <ParsedRegExp> {
@@ -365,6 +352,20 @@ function visit(ast: NodeBase): ParsedRegExp {
                 throw new Error(`Unsupported quantifier: {${min}, ${max}}`);
             }
             result = transform(result);
+            break;
+        }
+        case 'CharacterSet': {
+            const {kind} = ast as CharacterSet;
+            if (kind !== 'any') {
+                throw new Error(`Unsupported character set kind: ${kind}`);
+            }
+            result = <ParsedRegExp> {
+                emptyable: false,
+                exact: null,
+                prefix: new Set(['']),
+                suffix: new Set(['']),
+                match: <Any> { type: 'any' },
+            };
             break;
         }
         default: {
@@ -444,7 +445,7 @@ function find_ids(match: Match, match_sids: Map<string, Set<number>>): Set<numbe
     throw new Error(`Unknown match type: ${match.type}`);
 }
 
-function find_candidate_ids(
+export function find_candidate_ids(
   regex: RegExp,
   ngram_map: Map<string, number[]>,
   verbose: boolean = false,
@@ -474,20 +475,3 @@ function find_candidate_ids(
 
     return find_ids(result.match, match_sids);
 }
-
-
-async function test() {
-    const [sentences, ngram_map] = await make_db(50);
-
-    const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y/g;
-
-    // find all sentences that match the regex
-    const matching_sentences = sentences.filter(sentence => regex.test(sentence));
-    console.log("Matching sentences:", matching_sentences.length);
-
-    const final_ids = find_candidate_ids(regex, ngram_map, true);
-    console.log("Final matching sentence ids:", final_ids);
-    console.log("Overestimated by ", final_ids.size / matching_sentences.length, "times");
-}
-
-await test();
