@@ -217,7 +217,7 @@ function parse_xml(parser, data) {
     return parser.parseFromString(data, "text/xml");
 }
 
-export function insert_documents(insert_fn, batch_size) {
+export function insert_documents(insert_fn, batch_size, slice=null) {
     const dom = new jsdom.JSDOM("");
     const parser = new dom.window.DOMParser;
 
@@ -228,6 +228,10 @@ export function insert_documents(insert_fn, batch_size) {
 
         let promises = [];
         for (let [i, file] of xmlFiles.entries()) {
+            if (slice && i >= slice) {
+                break;
+            }
+
             if (i % batch_size === 0) {
                 await Promise.all(promises);
                 promises = [];
@@ -250,6 +254,7 @@ export function insert_documents(insert_fn, batch_size) {
 
             promises.push(pushTask);
         }
+
         await Promise.all(promises);
     });
 }
