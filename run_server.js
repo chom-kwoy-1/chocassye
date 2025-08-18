@@ -82,10 +82,10 @@ fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle6.txt'), 'utf8', (err, 
     console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
 });
 
-const [ngramIndex, ngramIndexWithoutSep] = await loadNgramIndex('./index');
-console.log("Loaded ngram index with", ngramIndex.length, "ngrams");
+const ngramIndex = await loadNgramIndex('./index');
+console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
 
-app.use(express.json())
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "client/build")));
 
 

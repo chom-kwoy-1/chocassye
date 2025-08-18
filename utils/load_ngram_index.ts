@@ -1,34 +1,51 @@
 import {promisify} from "util";
 import fs from "fs";
+import { Packr } from 'msgpackr';
 import glob from "glob";
 
-export async function loadNgramIndex(dirName: string):
-  Promise<[Map<string, number[]>, Map<string, number[]>]> {
-  return await promisify(glob)(`${dirName}/idx*.txt`)
+type NgramMaps = {
+  common: Map<string, number[]>,
+  sep: Map<string, number[]>,
+  nosep: Map<string, number[]>,
+};
+
+function loadFiles(dirName: string, prefix: string): Promise<Map<string, number[]>> {
+  return promisify(glob)(`${dirName}/${prefix}_*.bin`)
     .then(async (files: string[]) => {
       if (files.length === 0) {
-        throw new Error(`No index files found in directory: ${dirName}`);
+        throw new Error(`No index files found in directory: ${dirName}/${prefix}_*.bin`);
       }
-      const ngrams = new Map<string, number[]>();
-      const ngramsNoSep = new Map<string, number[]>();
-      let idx = 0;
+      const result: Map<string, number[]> = new Map();
+      const packr = new Packr();
+      let fileCount = 0;
       for (const file of files) {
-        idx += 1;
-        if (idx % 100 === 0 || idx === files.length) {
-          console.log(`Loading file ${idx}/${files.length}`);
+        fileCount++;
+        if (fileCount % 100 === 0) {
+          console.log(`Processing ${prefix} file ${fileCount}/${files.length}`);
         }
-        const json = await promisify(fs.readFile)(file, "utf8");
-        const data: Map<string, [number, string][]> = JSON.parse(json);
-        for (const [ngram, ids] of Object.entries(data)) {
-          for (const [id, kind] of ids) {
-            const table = kind === 't' ? ngrams : ngramsNoSep;
-            if (!table.has(ngram)) {
-              table.set(ngram, []);
-            }
-            table.get(ngram)!.push(id);
+        const data = await promisify(fs.readFile)(file);
+        const unpacked: Map<string, number[]> = packr.unpack(data);
+        for (const [key, value] of unpacked.entries()) {
+          if (result.has(key)) {
+            result.get(key)?.push(...value);
+          }
+          else {
+            result.set(key, value);
           }
         }
       }
-      return [ngrams, ngramsNoSep];
+      return result;
     });
+}
+
+export async function loadNgramIndex(dirName: string): Promise<NgramMaps> {
+  let ngram_map_common = await loadFiles(dirName, "common");
+  let ngram_map_sep = await loadFiles(dirName, "sep");
+  let ngram_map_nosep = await loadFiles(dirName, "nosep");
+
+  return {
+    common: ngram_map_common,
+    sep: ngram_map_sep,
+    nosep: ngram_map_nosep,
+  }
 }

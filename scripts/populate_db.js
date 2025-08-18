@@ -3,6 +3,7 @@
 import pg from 'pg';
 import {insert_into_db} from "./insert_into_db.js";
 import {insert_documents} from "./parse.js";
+import fs from "fs";
 
 async function populate_db(database_name, doc_cnt) {
   const {Pool} = pg;
@@ -29,6 +30,9 @@ async function populate_db(database_name, doc_cnt) {
       console.log("Connected successfully to server");
       return pool;
     });
+
+  // make new directory called `index`
+  fs.mkdirSync('index', { recursive: true });
 
   return pool.query('DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;')
     .then(() => {
