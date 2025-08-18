@@ -23,5 +23,8 @@
     "rand-seed": "^3.0.0",
     "regexpp": "^3.2.0",
     "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
   }
 }

@@ -59,58 +59,65 @@ export async function insert_into_db(pool, book_details, sentences) {
             sentence.decade_sort,
         ]).then((sentence_result) => {
             const sentence_id = sentence_result.rows[0].id;
-
-            let data = "";
-            let cnt = 0;
+            // return pg_insert_ngrams(sentence, sentence_id, pool);
 
             const text = sentence.text;
-            const text_ngrams = [
-                ...make_ngrams(text, 1),
-                ...make_ngrams(text, 2),
-                ...make_ngrams(text, 3),
-            ];
-            for (let ngram of text_ngrams) {
-                data += format('(%L, false),', ngram);
-                cnt += 1;
-            }
 
-            if (sentence.text_without_sep !== undefined) {
-                const text_without_sep = sentence.text_without_sep;
-                const text_without_sep_ngrams = [
-                    ...make_ngrams(text_without_sep, 1),
-                    ...make_ngrams(text_without_sep, 2),
-                    ...make_ngrams(text_without_sep, 3),
-                ];
-                for (let ngram of text_without_sep_ngrams) {
-                    data += format('(%L, true),', ngram);
-                    cnt += 1;
-                }
-            }
-
-            if (cnt === 0) {
-                return Promise.resolve();
-            }
-
-            data = data.slice(0, -1);
-
-            const query = (`
-                WITH 
-                    input_rows(ngram, is_without_sep) AS (VALUES ${data}),
-                    ins AS (
-                        INSERT INTO ngrams(ngram, is_without_sep)
-                        SELECT * FROM input_rows
-                        ON CONFLICT DO NOTHING
-                        RETURNING id
-                    )
-                INSERT INTO ngram_rel(ngram_id, sentence_id)
-                    SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
-                        UNION ALL
-                    SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
-                        input_rows JOIN ngrams n USING (ngram, is_without_sep)
-                    ON CONFLICT DO NOTHING;
-            `);
-
-            return deadlock_retry(pool, query);
+            const text_without_sep = sentence.text_without_sep;
         });
     }
+}
+
+function pg_insert_ngrams(sentence, sentence_id, pool) {
+    let data = "";
+    let cnt = 0;
+
+    const text = sentence.text;
+    const text_ngrams = [
+        ...make_ngrams(text, 1),
+        ...make_ngrams(text, 2),
+        ...make_ngrams(text, 3),
+    ];
+    for (let ngram of text_ngrams) {
+        data += format('(%L, false),', ngram);
+        cnt += 1;
+    }
+
+    if (sentence.text_without_sep !== undefined) {
+        const text_without_sep = sentence.text_without_sep;
+        const text_without_sep_ngrams = [
+            ...make_ngrams(text_without_sep, 1),
+            ...make_ngrams(text_without_sep, 2),
+            ...make_ngrams(text_without_sep, 3),
+        ];
+        for (let ngram of text_without_sep_ngrams) {
+            data += format('(%L, true),', ngram);
+            cnt += 1;
+        }
+    }
+
+    if (cnt === 0) {
+        return Promise.resolve();
+    }
+
+    data = data.slice(0, -1);
+
+    const query = (`
+        WITH 
+            input_rows(ngram, is_without_sep) AS (VALUES ${data}),
+            ins AS (
+                INSERT INTO ngrams(ngram, is_without_sep)
+                SELECT * FROM input_rows
+                ON CONFLICT DO NOTHING
+                RETURNING id
+            )
+        INSERT INTO ngram_rel(ngram_id, sentence_id)
+            SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
+                UNION ALL
+            SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
+                input_rows JOIN ngrams n USING (ngram, is_without_sep)
+            ON CONFLICT DO NOTHING;
+    `);
+
+    return deadlock_retry(pool, query);
 }
