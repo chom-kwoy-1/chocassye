@@ -1,5 +1,7 @@
 import {make_ngrams} from "../utils/ngram.js";
 import {format} from "node-pg-format";
+import fs from "fs";
+import {promisify} from "util";
 
 function deadlock_retry(pool, query, args=[]) {
     return pool.query(query, args).catch((err) => {
@@ -12,8 +14,7 @@ function deadlock_retry(pool, query, args=[]) {
     });
 }
 
-export async function insert_into_db(pool, book_details, sentences) {
-
+export async function insert_into_db(pool, index, book_details, sentences) {
     await deadlock_retry(pool, `
         INSERT INTO books (
             filename, year, year_sort, decade_sort, year_start, year_end, year_string,
@@ -34,6 +35,7 @@ export async function insert_into_db(pool, book_details, sentences) {
         book_details.non_chinese_sentence_count,
     ]);
 
+    const ngram_map = new Map();
     for (let sentence of sentences) {
         await deadlock_retry(pool, `
             INSERT INTO sentences (
@@ -57,15 +59,51 @@ export async function insert_into_db(pool, book_details, sentences) {
             sentence.hasImages,
             sentence.year_sort,
             sentence.decade_sort,
-        ]).then((sentence_result) => {
+        ]).then(async (sentence_result) => {
             const sentence_id = sentence_result.rows[0].id;
             // return pg_insert_ngrams(sentence, sentence_id, pool);
 
             const text = sentence.text;
+            const text_ngrams = [
+                ...make_ngrams(text, 1),
+                ...make_ngrams(text, 2),
+                ...make_ngrams(text, 3),
+            ];
+            for (const ngram of text_ngrams) {
+                if (!ngram_map.has(ngram)) {
+                    ngram_map.set(ngram, [[sentence_id, 't']]);
+                }
+                else {
+                    ngram_map.get(ngram).push([sentence_id, 't']);
+                }
+            }
 
             const text_without_sep = sentence.text_without_sep;
+            if (text_without_sep !== undefined) {
+                const text_without_sep_ngrams = [
+                    ...make_ngrams(text_without_sep, 1),
+                    ...make_ngrams(text_without_sep, 2),
+                    ...make_ngrams(text_without_sep, 3),
+                ];
+                for (const ngram of text_without_sep_ngrams) {
+                    if (!ngram_map.has(ngram)) {
+                        ngram_map.set(ngram, [[sentence_id, 'w']]);
+                    } else {
+                        ngram_map.get(ngram).push([sentence_id, 'w']);
+                    }
+                }
+            }
         });
     }
+
+    const writeContent = JSON.stringify(Object.fromEntries(ngram_map));
+    await promisify(fs.open)(`./index/idx${index}.txt`, 'w')
+      .then((fd) => {
+          return promisify(fs.write)(fd, writeContent)
+            .then(() => {
+                return promisify(fs.close)(fd);
+            })
+      });
 }
 
 function pg_insert_ngrams(sentence, sentence_id, pool) {

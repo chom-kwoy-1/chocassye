@@ -13,6 +13,7 @@ import { format } from 'node-pg-format';
 import escapeStringRegexp from 'escape-string-regexp';
 import nodecallspython from 'node-calls-python';
 import {make_ngrams} from './utils/ngram.js';
+import {loadNgramIndex} from "./dist/utils/load_ngram_index.js";
 
 const __dirname = path.resolve();
 
@@ -21,12 +22,13 @@ const app = express();
 const port = process.env.PORT || 5000;
 const sslport = process.env.SSLPORT || 5001;
 const PAGE_N = process.env.PAGE_N || 50;
+const DB_NAME = process.env.DB_NAME || 'chocassye';
 
 const { Pool } = pg;
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
-    database: 'chocassye',
+    database: DB_NAME,
     password: 'password',
 });
 console.log("Connected successfully to DB server");
@@ -79,6 +81,9 @@ fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle6.txt'), 'utf8', (err, 
     }
     console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
 });
+
+const [ngramIndex, ngramIndexWithoutSep] = await loadNgramIndex('./index');
+console.log("Loaded ngram index with", ngramIndex.length, "ngrams");
 
 app.use(express.json())
 app.use(express.static(path.join(__dirname, "client/build")));

@@ -93,10 +93,11 @@ async function populate_db(database_name, doc_cnt) {
       return pool.query(create_ngram_rel);
     })
     .then(() => {
-      const BATCH_SIZE = process.env.BATCH || 16;
+      const BATCH_SIZE = process.env.BATCH ? parseInt(process.env.BATCH) : 16;
+      console.log("Batch size:", BATCH_SIZE);
 
-      function insert(book_details, sentences) {
-        return insert_into_db(pool, book_details, sentences);
+      function insert(index, book_details, sentences) {
+        return insert_into_db(pool, index, book_details, sentences);
       }
 
       return insert_documents(insert, BATCH_SIZE, doc_cnt);
@@ -132,6 +133,7 @@ async function populate_db(database_name, doc_cnt) {
     })
     .then(() => {
       console.log("Created indexes.");
+      console.log("Cleaning up...");
     });
 }
 
@@ -141,3 +143,5 @@ if (!process.env.DB_NAME) {
 }
 const doc_cnt = process.env.DOC_CNT ? parseInt(process.env.DOC_CNT) : null;
 await populate_db(process.env.DB_NAME, doc_cnt);
+
+console.log("Database populated successfully.");

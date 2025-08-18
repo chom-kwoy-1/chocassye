@@ -243,7 +243,7 @@ export function insert_documents(insert_fn, batch_size, slice=null) {
                 })
                 .then(async (xml) => {
                     const [book_details, sentences] = add_file(file, xml);
-                    return insert_fn(book_details, sentences);
+                    return insert_fn(i, book_details, sentences);
                 })
                 .then(() => {
                     console.log(i, "DONE", file);

@@ -9,3 +9,5 @@ dump/*
 pages.txt
 AmazonKeypair.pem
 __pycache__/*
+index/*
+dist/*
