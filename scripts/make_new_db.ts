@@ -6,6 +6,36 @@ import {
     parseRegExpLiteral
 } from "regexpp";
 import type {Alternative, Character, CharacterClass, NodeBase, Pattern, RegExpLiteral} from "regexpp/ast";
+import { CompactPrefixTree } from "compact-prefix-tree/index.js";
+
+
+async function make_db(num_data: number): Promise<[string[], Map<string, number[]>]> {
+    const BATCH_SIZE = 16;
+
+    const all_sentences: string[] = [];
+    const ngram_map: Map<string, number[]> = new Map();
+
+    function insert_into_db(book_details: any, sentences: any[]) {
+        for (const sentence of sentences) {
+            const sentence_id = all_sentences.length;
+            all_sentences.push(sentence.text);
+
+            const ngram_3 = make_ngrams(sentence.text, 3);
+            for (const ch of ngram_3) {
+                if (!ngram_map.has(ch)) {
+                    ngram_map.set(ch, []);
+                }
+                ngram_map.get(ch)!.push(sentence_id);
+            }
+        }
+    }
+
+    return insert_documents(insert_into_db, BATCH_SIZE, num_data)
+      .then(() => {
+          console.log("All sentences collected:", all_sentences.length);
+          return [all_sentences, ngram_map];
+      });
+}
 
 
 interface Match {
@@ -143,7 +173,7 @@ function concat(a: ParsedRegExp, b: ParsedRegExp): ParsedRegExp {
                 concat_sets(a.exact, b.prefix) :
                 a.emptyable ?
                     new Set([...a.prefix, ...b.prefix]) :
-                    b.prefix
+                    a.prefix
         ),
         suffix: (
             b.exact !== null ?
@@ -156,43 +186,6 @@ function concat(a: ParsedRegExp, b: ParsedRegExp): ParsedRegExp {
     };
 }
 
-
-async function main(): Promise<[string[], Map<string, number[]>]> {
-    const BATCH_SIZE = 16;
-
-    const all_sentences: string[] = [];
-    const ngram_map: Map<string, number[]> = new Map();
-
-    function insert_into_db(book_details: any, sentences: any[]) {
-        for (const sentence of sentences) {
-            const sentence_id = all_sentences.length;
-            all_sentences.push(sentence.text);
-
-            const ngram_3 = make_ngrams(sentence.text, 3);
-            for (const ch of ngram_3) {
-                if (!ngram_map.has(ch)) {
-                    ngram_map.set(ch, []);
-                }
-                ngram_map.get(ch)!.push(sentence_id);
-            }
-        }
-    }
-
-    return insert_documents(insert_into_db, BATCH_SIZE, 10)
-        .then(() => {
-            console.log("All sentences collected:", all_sentences.length);
-            return [all_sentences, ngram_map];
-        });
-}
-
-const [sentences, ngram_map] = await main();
-
-const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y/g;
-
-// find all sentences that match the regex
-const matching_sentences = sentences.filter(sentence => regex.test(sentence));
-console.log("Matching sentences:", matching_sentences);
-
 function concat_sets(setA: Set<string>, setB: Set<string>): Set<string> {
     const result = new Set<string>();
     for (const a of setA) {
@@ -200,6 +193,83 @@ function concat_sets(setA: Set<string>, setB: Set<string>): Set<string> {
             result.add(a + b);
         }
     }
+    return result;
+}
+
+function normalize_prefix(prefixes: Set<string>): Set<string> {
+    // If prefix(e) contains both s and t where s is a prefix of t, discard t.
+    const arr = Array.from(prefixes);
+    prefixes = new Set(arr.filter((prefix, index) => {
+        const trie = new CompactPrefixTree([
+            ...arr.slice(0, index),
+            ...arr.slice(index + 1),
+        ]);
+        return !trie.prefix(prefix).isProper; // filter out if shorter prefix exists
+    }));
+    return prefixes;
+}
+
+function normalize_suffix(suffixes: Set<string>): Set<string> {
+    // If suffix(e) contains both s and t where s is a suffix of t, discard t.
+    const arr = Array.from(suffixes).map(suffix => suffix.split('').reverse().join(''));
+    suffixes = new Set(arr.filter((suffix, index) => {
+        const trie = new CompactPrefixTree([
+            ...arr.slice(0, index),
+            ...arr.slice(index + 1),
+        ]);
+        return !trie.prefix(suffix).isProper; // filter out if shorter suffix exists
+    }).map(suffix => suffix.split('').reverse().join('')));
+    return suffixes;
+}
+
+function transform(result: ParsedRegExp): ParsedRegExp {
+    const MAX_SET_SIZE = 32;
+
+    result.prefix = normalize_prefix(result.prefix);
+    result.suffix = normalize_suffix(result.suffix);
+
+    while (result.prefix.size > MAX_SET_SIZE) {
+        // Information-saving transformation
+        result.match = match_and(result.match, ngrams(result.prefix));
+
+        // Information-discarding transformation
+        // If prefix(e) is too large, chop the last character off the longest strings in prefix(e).
+        const max_prefix_size = Math.max(...Array.from(result.prefix).map((prefix) => prefix.length)) - 1;
+        result.prefix = new Set(Array.from(result.prefix).map((prefix) => {
+            if (prefix.length > max_prefix_size) {
+                return prefix.slice(0, max_prefix_size);
+            }
+            return prefix;
+        }));
+
+        result.prefix = normalize_prefix(result.prefix);
+    }
+
+    while (result.suffix.size > MAX_SET_SIZE) {
+        // Information-saving transformation
+        result.match = match_and(result.match, ngrams(result.suffix));
+
+        // Information-discarding transformation
+        // If suffix(e) is too large, chop the first character off the longest strings in suffix(e).
+        const max_suffix_size = Math.max(...Array.from(result.suffix).map((suffix) => suffix.length)) - 1;
+        result.suffix = new Set(Array.from(result.suffix).map((suffix) => {
+            if (suffix.length > max_suffix_size) {
+                return suffix.slice(1);
+            }
+            return suffix;
+        }));
+
+        result.suffix = normalize_suffix(result.suffix);
+    }
+
+    if (result.exact !== null && result.exact.size > MAX_SET_SIZE) {
+        // Information-saving transformation
+        result.match = match_and(result.match, ngrams(result.exact));
+
+        // If exact(e) is too large, set exact(e) = unknown.
+        result.exact = null;
+    }
+
     return result;
 }
 
@@ -217,7 +287,7 @@ function visit(ast: NodeBase): ParsedRegExp {
                 if (idx === 0) {
                     result = cur;
                 } else {
-                    result = alternative(result!, cur);
+                    result = transform(alternative(result!, cur));
                 }
             }
             break;
@@ -232,7 +302,7 @@ function visit(ast: NodeBase): ParsedRegExp {
                 if (idx === 0) {
                     result = cur;
                 } else {
-                    result = alternative(result!, cur);
+                    result = transform(alternative(result!, cur));
                 }
             }
             break;
@@ -244,18 +314,19 @@ function visit(ast: NodeBase): ParsedRegExp {
                 if (idx === 0) {
                     result = cur;
                 } else {
-                    result = concat(result!, cur);
+                    result = transform(concat(result!, cur));
                 }
             }
             break;
         }
         case 'Character': {
-            const {raw} = ast as Character;
+            const {value} = ast as Character;
+            const ch = String.fromCodePoint(value);
             result = <ParsedRegExp> {
                 emptyable: false,
-                exact: new Set([raw]),
-                prefix: new Set([raw]),
-                suffix: new Set([raw]),
+                exact: new Set([ch]),
+                prefix: new Set([ch]),
+                suffix: new Set([ch]),
                 match: <Any> { type: 'any' },
             };
             break;
@@ -293,6 +364,7 @@ function visit(ast: NodeBase): ParsedRegExp {
             else {
                 throw new Error(`Unsupported quantifier: {${min}, ${max}}`);
             }
+            result = transform(result);
             break;
         }
         default: {
@@ -300,18 +372,122 @@ function visit(ast: NodeBase): ParsedRegExp {
         }
     }
 
-    // Information-saving transformations
-    result!.match = match_and(result!.match, ngrams(result!.prefix));
-    result!.match = match_and(result!.match, ngrams(result!.suffix));
-    if (result!.exact !== null) {
-        result!.match = match_and(result!.match, ngrams(result!.exact));
-    }
-
-    // Information-discarding transformations
-
     return result!;
 }
 
-const ast = parseRegExpLiteral(regex);
-const result = visit(ast);
-console.dir(result, { depth: 10, colors: true });
+function get_all_ngrams(match: Match): Set<string> {
+    if (match.type === 'any') {
+        return new Set();
+    }
+    if (match.type === 'ngram') {
+        return new Set([(match as Ngram).ngram]);
+    }
+    if (match.type === 'and') {
+        const ngrams = new Set<string>();
+        for (const m of (match as And).matches) {
+            const ngram_set = get_all_ngrams(m);
+            for (const ngram of ngram_set) {
+                ngrams.add(ngram);
+            }
+        }
+        return ngrams;
+    }
+    if (match.type === 'or') {
+        const ngrams = new Set<string>();
+        for (const m of (match as Or).matches) {
+            const ngram_set = get_all_ngrams(m);
+            for (const ngram of ngram_set) {
+                ngrams.add(ngram);
+            }
+        }
+        return ngrams;
+    }
+    throw new Error(`Unknown match type: ${match.type}`);
+}
+
+function setIntersection(setA: Set<number>, setB: Set<number>): Set<number> {
+    const intersection = new Set<number>();
+    for (const item of setA) {
+        if (setB.has(item)) {
+            intersection.add(item);
+        }
+    }
+    return intersection;
+}
+
+function find_ids(match: Match, match_sids: Map<string, Set<number>>): Set<number> {
+    if (match.type === 'any') {
+        throw new Error("Cannot find IDs for 'any' match type");
+    }
+    if (match.type === 'ngram') {
+        const ngram = (match as Ngram).ngram;
+        if (!match_sids.has(ngram)) {
+            throw new Error(`Ngram not found in match_sids: ${ngram}`);
+        }
+        return match_sids.get(ngram)!;
+    }
+    if (match.type === 'and') {
+        return (match as And).matches.reduce((acc: Set<number> | null, m: Match): Set<number> => {
+            const ids = find_ids(m, match_sids);
+            if (acc === null) {
+                return ids;
+            }
+            return setIntersection(acc, ids);
+        }, null)!;
+    }
+    if (match.type === 'or') {
+        return (match as Or).matches.reduce((acc, m) => {
+            const ids = find_ids(m, match_sids);
+            return new Set([...acc, ...ids]);
+        }, new Set<number>());
+    }
+    throw new Error(`Unknown match type: ${match.type}`);
+}
+
+function find_candidate_ids(
+  regex: RegExp,
+  ngram_map: Map<string, number[]>,
+  verbose: boolean = false,
+) {
+    const ast = parseRegExpLiteral(regex);
+    const result = visit(ast);
+    if (verbose) {
+        console.log("Parsed regex:", regex);
+        console.dir(result, { depth: 10, colors: true });
+    }
+
+    const match_ngrams = get_all_ngrams(result.match);
+    if (verbose) {
+        console.log("Extracted", match_ngrams.size, "ngrams:");
+        console.log(match_ngrams);
+    }
+
+    const match_sids = new Map<string, Set<number>>();
+    for (const ngram of match_ngrams) {
+        if (ngram_map.has(ngram)) {
+            match_sids.set(ngram, new Set(ngram_map.get(ngram)!));
+        }
+        else {
+            match_sids.set(ngram, new Set<number>());
+        }
+    }
+
+    return find_ids(result.match, match_sids);
+}
+
+
+async function test() {
+    const [sentences, ngram_map] = await make_db(50);
+
+    const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y/g;
+
+    // find all sentences that match the regex
+    const matching_sentences = sentences.filter(sentence => regex.test(sentence));
+    console.log("Matching sentences:", matching_sentences.length);
+
+    const final_ids = find_candidate_ids(regex, ngram_map, true);
+    console.log("Final matching sentence ids:", final_ids);
+    console.log("Overestimated by ", final_ids.size / matching_sentences.length, "times");
+}
+
+await test();
