@@ -25,11 +25,29 @@ export function makeCorpusQuery(
     ngramIndex.common,
     ignoreSep ? ngramIndex.nosep : ngramIndex.sep,
   ];
-  const cand_ids = find_candidate_ids(regex, index, true);
 
-  console.log(cand_ids);
+  const textFieldName = ignoreSep ? "s.text_without_sep" : "s.text";
 
-  return null;
+  let queryString = null;
+  try {
+    const cand_ids = find_candidate_ids(regex, index, false);
+    console.log(`Got ${cand_ids.size} candidate IDs for term "${term}"`);
+
+    if (cand_ids.size === 0) {
+      return null;
+    }
+
+    queryString = format(`
+      sentences s WHERE s.id IN (%L) AND ${textFieldName} ~ %L
+    `, Array.from(cand_ids), [regex.source]);
+  } catch (error) {
+    console.error(`Error: Query too broad for term "${term}"`);
+    queryString = format(`
+      sentences s WHERE ${textFieldName} ~ %L
+    `, [regex.source]);
+  }
+
+  return queryString;
 }
 
 function makeCorpusQueryLegacy(
@@ -73,7 +91,6 @@ function makeCorpusQueryLegacy(
     }
   } else {
     const regex = makeSearchRegex(term, ignoreSep);
-    console.log(regex);
     queryString = format(`
       ngram_rel r JOIN sentences s ON s.id = r.sentence_id
         WHERE ${textFieldName} ~ %L

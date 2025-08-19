@@ -11,7 +11,7 @@ async function make_db(num_data: number): Promise<[string[], Map<string, number[
   const all_sentences: string[] = [];
   const ngram_map: Map<string, number[]> = new Map();
 
-  function insert_into_db(book_details: any, sentences: any[]) {
+  function insert_into_db(idx: number, book_details: any, sentences: any[]) {
     for (const sentence of sentences) {
       const sentence_id = all_sentences.length;
       all_sentences.push(sentence.text);
@@ -37,6 +37,7 @@ async function test() {
   const [sentences, ngram_map] = await make_db(50);
 
   const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y|tol\..h/g;
+  // const regex = /ho\.te\.la/g;
 
   // find all sentences that match the regex
   const matching_sids = sentences
@@ -45,7 +46,7 @@ async function test() {
     .map(({sentence, sid}) => sid);
   console.log("Matching sentences:", matching_sids.length);
 
-  const final_ids = find_candidate_ids(regex, [ngram_map], false);
+  const final_ids = find_candidate_ids(regex, [ngram_map], true);
   console.log("Final matching sentence ids:", final_ids.size);
   console.log("Overestimated by ", final_ids.size / matching_sids.length, "times");
 

@@ -37,6 +37,18 @@ interface Ngram extends Match {
     ngram: string;
 }
 
+function unique_matches(matches: Match[]): Match[] {
+    const seen = new Set<string>();
+    return matches.filter(match => {
+        const key = JSON.stringify(match);
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+}
+
 function match_or(a: Match, b: Match): Match {
     if (a.type === 'any' || b.type === 'any') {
         return <Any> { type: 'any' };
@@ -45,23 +57,23 @@ function match_or(a: Match, b: Match): Match {
         if (b.type === 'or') {
             return <Or> {
                 type: 'or',
-                matches: [...(a as Or).matches, ...(b as Or).matches],
+                matches: unique_matches([...(a as Or).matches, ...(b as Or).matches]),
             };
         }
         return <Or> {
             type: 'or',
-            matches: [...(a as Or).matches, b],
+            matches: unique_matches([...(a as Or).matches, b]),
         };
     }
     if (b.type === 'or') {
         return <Or> {
             type: 'or',
-            matches: [a, ...(b as Or).matches],
+            matches: unique_matches([a, ...(b as Or).matches]),
         };
     }
     return <Or> {
         type: 'or',
-        matches: [a, b],
+        matches: unique_matches([a, b]),
     };
 }
 
@@ -76,23 +88,23 @@ function match_and(a: Match, b: Match): Match {
         if (b.type === 'and') {
             return <And> {
                 type: 'and',
-                matches: [...(a as And).matches, ...(b as And).matches],
+                matches: unique_matches([...(a as And).matches, ...(b as And).matches]),
             };
         }
         return <And> {
             type: 'and',
-            matches: [...(a as And).matches, b],
+            matches: unique_matches([...(a as And).matches, b]),
         };
     }
     if (b.type === 'and') {
         return <And> {
             type: 'and',
-            matches: [a, ...(b as And).matches],
+            matches: unique_matches([a, ...(b as And).matches]),
         };
     }
     return <And> {
         type: 'and',
-        matches: [a, b],
+        matches: unique_matches([a, b]),
     };
 }
 
@@ -250,9 +262,9 @@ function transform(result: ParsedRegExp): ParsedRegExp {
         // Information-saving transformation
         result.match = match_and(result.match, ngrams(result.prefix));
         result.match = match_and(result.match, ngrams(result.suffix));
-        if (result.exact !== null) {
-            result.match = match_and(result.match, ngrams(result.exact));
-        }
+    }
+    if (result.exact !== null) {
+        result.match = match_and(result.match, ngrams(result.exact));
     }
 
     return result;

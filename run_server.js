@@ -32,6 +32,7 @@ const pool = new Pool({
     host: 'localhost',
     database: DB_NAME,
     password: 'password',
+    statement_timeout: 10000, // 10 seconds
 });
 console.log("Connected successfully to DB server");
 
@@ -145,8 +146,6 @@ app.post('/api/search', (req, res) => {
                 st.number_in_book ASC
     `;
 
-    console.log(queryString);
-
     const page = req.body.page ?? 1;
     const offset = (page - 1) * PAGE_N;
 
@@ -197,6 +196,7 @@ app.post('/api/search_stats', (req, res) => {
       req.body.doc,
       req.body.excludeModern,
       req.body.ignoreSep,
+      ngramIndex,
     );
 
     if (queryString === null) {
