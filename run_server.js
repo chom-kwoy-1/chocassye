@@ -34,7 +34,7 @@ const pool = new Pool({
     password: 'password',
     statement_timeout: 10000, // 10 seconds
 });
-console.log("Connected successfully to DB server");
+console.log(`Connected successfully to DB ${DB_NAME}`);
 
 let http_server;
 let https_server = null;
