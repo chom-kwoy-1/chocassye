@@ -426,7 +426,7 @@ function setIntersection(setA: Set<number>, setB: Set<number>): Set<number> {
     return intersection;
 }
 
-function find_ids(match: Match, match_sids: Map<string, Set<number>>): Set<number> {
+function find_ids(match: Match, match_sids: Map<string, number[][]>): Set<number> {
     if (match.type === 'any') {
         throw new Error("Cannot find IDs for 'any' match type");
     }
@@ -435,7 +435,14 @@ function find_ids(match: Match, match_sids: Map<string, Set<number>>): Set<numbe
         if (!match_sids.has(ngram)) {
             throw new Error(`Ngram not found in match_sids: ${ngram}`);
         }
-        return match_sids.get(ngram)!;
+        const arrays = match_sids.get(ngram)!;
+        const ids = new Set<number>();
+        for (const array of arrays) {
+            for (const id of array) {
+                ids.add(id);
+            }
+        }
+        return ids;
     }
     if (match.type === 'and') {
         return (match as And).matches.reduce((acc: Set<number> | null, m: Match): Set<number> => {
@@ -473,20 +480,20 @@ export function find_candidate_ids(
         console.log(match_ngrams);
     }
 
-    const match_sids = new Map<string, Set<number>>();
+    const match_sids = new Map<string, number[][]>();
     for (const ngram of match_ngrams) {
-        const ids = [];
+        const ids: number[][] = [];
+        let count = 0;
         for (const ngram_map of ngram_maps) {
             const new_ids = ngram_map.get(ngram);
             if (new_ids) {
-                for (const id of new_ids) {
-                    ids.push(id);
-                }
+                count += new_ids.length;
+                ids.push(new_ids);
             }
         }
-        match_sids.set(ngram, new Set(ids));
+        match_sids.set(ngram, ids);
         if (verbose) {
-            console.log(match_sids.get(ngram)?.size, "IDs found for ngram:", ngram);
+            console.log(count, "IDs found for ngram:", ngram);
         }
     }
 
