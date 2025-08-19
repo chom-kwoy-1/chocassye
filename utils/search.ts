@@ -15,6 +15,11 @@ export function makeCorpusQuery(
   ignoreSep: boolean,
   ngramIndex: NgramMaps
 ): string | null {
+  term = hangul_to_yale(term);
+  if (term === '') {
+    return null;
+  }
+
   const use_legacy_search = process.env.USE_LEGACY_SEARCH === '1';
   if (use_legacy_search) {
     return makeCorpusQueryLegacy(term, doc, excludeModern, ignoreSep);
@@ -53,11 +58,6 @@ export function makeCorpusQuery(
 function makeCorpusQueryLegacy(
   term: string, doc: string, excludeModern: boolean, ignoreSep: boolean
 ): string | null {
-  term = hangul_to_yale(term);
-  if (term === '') {
-    return null;
-  }
-
   const textFieldName = ignoreSep ? "s.text_without_sep" : "s.text";
 
   let queryString;
