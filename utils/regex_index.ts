@@ -475,12 +475,18 @@ export function find_candidate_ids(
 
     const match_sids = new Map<string, Set<number>>();
     for (const ngram of match_ngrams) {
+        const ids = [];
         for (const ngram_map of ngram_maps) {
-            if (ngram_map.has(ngram)) {
-                match_sids.set(ngram, new Set(ngram_map.get(ngram)!));
-            } else {
-                match_sids.set(ngram, new Set<number>());
+            const new_ids = ngram_map.get(ngram);
+            if (new_ids) {
+                for (const id of new_ids) {
+                    ids.push(id);
+                }
             }
+        }
+        match_sids.set(ngram, new Set(ids));
+        if (verbose) {
+            console.log(match_sids.get(ngram)?.size, "IDs found for ngram:", ngram);
         }
     }
 

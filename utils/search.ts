@@ -35,7 +35,7 @@ export function makeCorpusQuery(
 
   let queryString = null;
   try {
-    const cand_ids = find_candidate_ids(regex, index, false);
+    const cand_ids = find_candidate_ids(regex, index, process.env.SEARCH_VERBOSE === '1');
     console.log(`Got ${cand_ids.size} candidate IDs for term "${term}"`);
 
     if (cand_ids.size === 0) {
@@ -46,7 +46,7 @@ export function makeCorpusQuery(
       sentences s WHERE s.id IN (%L) AND ${textFieldName} ~ %L
     `, Array.from(cand_ids), [regex.source]);
   } catch (error) {
-    console.error(`Error: Query too broad for term "${term}"`);
+    console.error(`Error while searching "${term}", falling back to psql`, error);
     queryString = format(`
       sentences s WHERE ${textFieldName} ~ %L
     `, [regex.source]);
