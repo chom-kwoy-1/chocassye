@@ -217,44 +217,41 @@ function parse_xml(parser, data) {
     return parser.parseFromString(data, "text/xml");
 }
 
-export function insert_documents(insert_fn, batch_size, slice=null) {
+export async function insert_documents(insert_fn, batch_size, slice) {
     const dom = new jsdom.JSDOM("");
     const parser = new dom.window.DOMParser;
 
-    return promisify(glob)(
-        "chocassye-corpus/data/*/*.xml"
-    ).then(async xmlFiles => {
-        console.log("Total", xmlFiles.length, "files");
-
-        let promises = [];
-        for (let [i, file] of xmlFiles.entries()) {
-            if (slice && i >= slice) {
-                break;
-            }
-
-            if (i % batch_size === 0) {
-                await Promise.all(promises);
-                promises = [];
-            }
-
-            const pushTask = promisify(fs.readFile)(file, "utf8")
-                .then((data) => {
-                    return parse_xml(parser, data);
-                })
-                .then(async (xml) => {
-                    const [book_details, sentences] = add_file(file, xml);
-                    return insert_fn(i, book_details, sentences);
-                })
-                .then(() => {
-                    console.log(i, "DONE", file);
-                })
-                .catch((err) => {
-                    console.error(i, "ERROR", file, err.code, err.stack);
-                });
-
-            promises.push(pushTask);
+    const xmlFiles = await promisify(glob)(
+      "chocassye-corpus/data/*/*.xml"
+    );
+    console.log("Total", xmlFiles.length, "files");
+    let promises = [];
+    for (let [i, file] of xmlFiles.entries()) {
+        if (slice && i >= slice) {
+            break;
         }
 
-        await Promise.all(promises);
-    });
+        if (i % batch_size === 0) {
+            await Promise.all(promises);
+            promises = [];
+        }
+
+        const pushTask = promisify(fs.readFile)(file, "utf8")
+          .then((data) => {
+              return parse_xml(parser, data);
+          })
+          .then(async (xml) => {
+              const [book_details, sentences] = add_file(file, xml);
+              return insert_fn(i, book_details, sentences);
+          })
+          .then(() => {
+              console.log(i, "DONE", file);
+          })
+          .catch((err) => {
+              console.error(i, "ERROR", file, err.code, err.stack);
+          });
+
+        promises.push(pushTask);
+    }
+    await Promise.all(promises);
 }

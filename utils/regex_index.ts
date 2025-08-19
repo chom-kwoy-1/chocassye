@@ -1,8 +1,4 @@
-// @ts-ignore
-import {make_ngrams} from "./ngram.js";
-import {
-    parseRegExpLiteral
-} from "regexpp";
+import { parseRegExpLiteral } from "regexpp";
 import type {
     Alternative,
     Character,
@@ -13,8 +9,10 @@ import type {
     Quantifier,
     RegExpLiteral
 } from "regexpp/ast";
-import { CompactPrefixTree } from "compact-prefix-tree/index.js";
-
+// @ts-ignore
+import {make_ngrams} from "./ngram.js";
+// @ts-ignore
+import CompactPrefixTree from "./prefix_tree.js";
 
 interface Match {
     type: 'and' | 'or' | 'any' | 'ngram';
@@ -447,7 +445,7 @@ function find_ids(match: Match, match_sids: Map<string, Set<number>>): Set<numbe
 
 export function find_candidate_ids(
   regex: RegExp,
-  ngram_map: Map<string, number[]>,
+  ngram_maps: Map<string, number[]>[],
   verbose: boolean = false,
 ) {
     const ast = parseRegExpLiteral(regex);
@@ -465,11 +463,12 @@ export function find_candidate_ids(
 
     const match_sids = new Map<string, Set<number>>();
     for (const ngram of match_ngrams) {
-        if (ngram_map.has(ngram)) {
-            match_sids.set(ngram, new Set(ngram_map.get(ngram)!));
-        }
-        else {
-            match_sids.set(ngram, new Set<number>());
+        for (const ngram_map of ngram_maps) {
+            if (ngram_map.has(ngram)) {
+                match_sids.set(ngram, new Set(ngram_map.get(ngram)!));
+            } else {
+                match_sids.set(ngram, new Set<number>());
+            }
         }
     }
 

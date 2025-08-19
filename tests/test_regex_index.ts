@@ -1,7 +1,7 @@
 // @ts-ignore
 import {make_ngrams} from "../utils/ngram.js";
 // @ts-ignore
-import {insert_documents} from "../scripts/parse.js";
+import {insert_documents} from "../utils/parse_xml.js";
 import {find_candidate_ids} from "../utils/regex_index.js";
 
 
@@ -45,7 +45,7 @@ async function test() {
     .map(({sentence, sid}) => sid);
   console.log("Matching sentences:", matching_sids.length);
 
-  const final_ids = find_candidate_ids(regex, ngram_map, false);
+  const final_ids = find_candidate_ids(regex, [ngram_map], false);
   console.log("Final matching sentence ids:", final_ids.size);
   console.log("Overestimated by ", final_ids.size / matching_sids.length, "times");
 

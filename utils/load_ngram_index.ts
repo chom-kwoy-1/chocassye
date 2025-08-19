@@ -3,39 +3,36 @@ import fs from "fs";
 import { Packr } from 'msgpackr';
 import glob from "glob";
 
-type NgramMaps = {
+export type NgramMaps = {
   common: Map<string, number[]>,
   sep: Map<string, number[]>,
   nosep: Map<string, number[]>,
 };
 
-function loadFiles(dirName: string, prefix: string): Promise<Map<string, number[]>> {
-  return promisify(glob)(`${dirName}/${prefix}_*.bin`)
-    .then(async (files: string[]) => {
-      if (files.length === 0) {
-        throw new Error(`No index files found in directory: ${dirName}/${prefix}_*.bin`);
+async function loadFiles(dirName: string, prefix: string): Promise<Map<string, number[]>> {
+  const files = await promisify(glob)(`${dirName}/${prefix}_*.bin`);
+  if (files.length === 0) {
+    throw new Error(`No index files found in directory: ${dirName}/${prefix}_*.bin`);
+  }
+  const result: Map<string, number[]> = new Map();
+  const packr = new Packr();
+  let fileCount = 0;
+  for (const file of files) {
+    fileCount++;
+    if (fileCount % 100 === 0) {
+      console.log(`Processing ${prefix} file ${fileCount}/${files.length}`);
+    }
+    const data = await promisify(fs.readFile)(file);
+    const unpacked: Map<string, number[]> = packr.unpack(data);
+    for (const [key, value] of unpacked.entries()) {
+      if (result.has(key)) {
+        result.get(key)?.push(...value);
+      } else {
+        result.set(key, value);
       }
-      const result: Map<string, number[]> = new Map();
-      const packr = new Packr();
-      let fileCount = 0;
-      for (const file of files) {
-        fileCount++;
-        if (fileCount % 100 === 0) {
-          console.log(`Processing ${prefix} file ${fileCount}/${files.length}`);
-        }
-        const data = await promisify(fs.readFile)(file);
-        const unpacked: Map<string, number[]> = packr.unpack(data);
-        for (const [key, value] of unpacked.entries()) {
-          if (result.has(key)) {
-            result.get(key)?.push(...value);
-          }
-          else {
-            result.set(key, value);
-          }
-        }
-      }
-      return result;
-    });
+    }
+  }
+  return result;
 }
 
 export async function loadNgramIndex(dirName: string): Promise<NgramMaps> {

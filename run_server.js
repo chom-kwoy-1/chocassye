@@ -8,12 +8,12 @@ import fs from "fs";
 import Rand from 'rand-seed';
 
 import pg from 'pg';
-import { format } from 'node-pg-format';
+import {format} from 'node-pg-format';
 
 import escapeStringRegexp from 'escape-string-regexp';
 import nodecallspython from 'node-calls-python';
-import {make_ngrams} from './utils/ngram.js';
-import {loadNgramIndex} from "./dist/utils/load_ngram_index.js";
+import {loadNgramIndex} from "./utils/load_ngram_index.js";
+import {makeCorpusQuery} from "./utils/search.js";
 
 const __dirname = path.resolve();
 
@@ -21,8 +21,10 @@ const __dirname = path.resolve();
 const app = express();
 const port = process.env.PORT || 5000;
 const sslport = process.env.SSLPORT || 5001;
-const PAGE_N = process.env.PAGE_N || 50;
 const DB_NAME = process.env.DB_NAME || 'chocassye';
+const SSL_DIR = process.env.SSL_DIR || '/etc/letsencrypt/live/find.xn--gt1b.xyz';
+const DOMAIN = process.env.DOMAIN || "find.xn--gt1b.xyz";
+const PAGE_N = process.env.PAGE_N || 50;
 
 const { Pool } = pg;
 const pool = new Pool({
@@ -38,21 +40,25 @@ let https_server = null;
 if (process.env.SSL === "ON") {
     // start listening
     const http_redirect_app = express();
-    const domain = process.env.DOMAIN || "find.xn--gt1b.xyz";
     http_redirect_app.use(function(req, res) {
-        res.redirect('https://' + domain + req.originalUrl);
+        res.redirect('https://' + DOMAIN + req.originalUrl);
     });
     http_server = http.createServer(http_redirect_app).listen(port, () => console.log(`Listening on port ${port}`));
 
-    const privateKey = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/privkey.pem");
-    const certificate = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/cert.pem");
-    const ca = fs.readFileSync("/etc/letsencrypt/live/find.xn--gt1b.xyz/chain.pem");
+    const privateKey = fs.readFileSync(SSL_DIR + "/privkey.pem");
+    const certificate = fs.readFileSync(SSL_DIR + "/cert.pem");
+    const ca = fs.readFileSync(SSL_DIR + "/chain.pem");
     const credentials = { key: privateKey, cert: certificate, ca: ca };
     https_server = https.createServer(credentials, app).listen(sslport, () => console.log(`Listening on port ${sslport} with SSL`));
 }  else {
     // start listening
     http_server = http.createServer(app).listen(port, () => console.log(`Listening on port ${port}`));
 }
+
+console.log("Loading files...");
+
+const ngramIndex = await loadNgramIndex(path.join(__dirname, './index'));
+console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
 
 const wordlist5 = [];
 fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle5.txt'), 'utf8', (err, data) => {
@@ -82,147 +88,8 @@ fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle6.txt'), 'utf8', (err, 
     console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
 });
 
-const ngramIndex = await loadNgramIndex('./index');
-console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "client/build")));
-
-
-function makeSearchRegex(text, ignoreSep=false) {
-    let strippedText = text;
-    if (text.startsWith('%')) {
-        strippedText = strippedText.substring(1);
-    }
-    if (text.endsWith('%')) {
-        strippedText = strippedText.substring(0, strippedText.length - 1);
-    }
-    let regex = "";
-    let isEscaping = false;
-    for (let i = 0; i < strippedText.length; i++) {
-        if (strippedText[i] === '%' && !isEscaping) {
-            regex += ".*?";
-            continue;
-        }
-        if (strippedText[i] === '_' && !isEscaping) {
-            regex += ".";
-            continue;
-        }
-        if (isEscaping) {
-            isEscaping = false;
-            let s = strippedText[i];
-            if (ignoreSep) {
-                s = s.replace(/[ .^]/g, "");
-            }
-            regex += escapeStringRegexp(s);
-            continue;
-        }
-        if (strippedText[i] === '\\') {
-            isEscaping = true;
-            continue;
-        }
-        let s = strippedText[i];
-        if (ignoreSep) {
-            s = s.replace(/[ .^]/g, "");
-        }
-        regex += escapeStringRegexp(s);
-    }
-    if (!text.startsWith('%')) {
-        regex = `^${regex}`;
-    }
-    if (!text.endsWith('%')) {
-        regex = `${regex}$`;
-    }
-    return new RegExp(regex);
-}
-
-
-function makeCorpusQuery(query) {
-    let text = query.term;
-    let doc = query.doc;
-    let excludeModern = query.excludeModern;
-    let ignoreSep = query.ignoreSep;
-
-    if (text === '%%') {
-        return null;
-    }
-
-    const textFieldName = ignoreSep? "s.text_without_sep" : "s.text";
-
-    let queryString;
-    if (text.startsWith('%') && text.endsWith('%')
-        && !text.slice(1, text.length - 1).includes('%')
-        && !text.slice(1, text.length - 1).includes('_')) {
-        let queryText = text.slice(1, text.length - 1);
-        if (ignoreSep) {
-            queryText = queryText.replace(/[ .^]/g, "");
-        }
-
-        if (queryText.length === 0) {
-            return null;
-        }
-
-        const ngrams = make_ngrams(queryText, Math.min(queryText.length, 4));
-        const ngramsString = ngrams.map(ngram => format('%L', ngram)).join(", ");
-        const regex = makeSearchRegex(text, ignoreSep);
-
-        const ignoreSepString = ignoreSep? "is_without_sep" : "NOT is_without_sep";
-
-        queryString = `
-            r.ngram_id = ANY((SELECT array(
-                SELECT id FROM ngrams
-                WHERE ngram IN (${ngramsString})
-                AND ${ignoreSepString}
-            ))::integer[])
-        `;
-
-        if (queryText.length > 4) {
-            queryString += format(` AND ${textFieldName} ~ %L`, [regex.source]);
-        }
-    } else {
-        const regex = makeSearchRegex(text, ignoreSep);
-        queryString = format(`${textFieldName} ~ %L`, [regex.source]);
-    }
-
-    if (doc !== '') {
-        queryString += format(" AND s.filename LIKE %L", ['%' + doc + '%']);
-    }
-
-    if (excludeModern) {
-        queryString += " AND (s.lang IS NULL OR (s.lang NOT IN ('mod', 'modern translation', 'pho') AND s.lang NOT LIKE '%역'))";
-    }
-
-    return queryString;
-}
-
-app.post('/api/doc_suggest', (req, res) => {
-    let doc = req.body.doc;
-    console.log(`suggest doc=${doc} ip=${req.socket.remoteAddress}`);
-
-    pool.query(format(`
-        SELECT * FROM books
-        WHERE filename ~ %L
-        ORDER BY year_sort ASC, filename::bytea ASC
-        LIMIT 10
-    `, [escapeStringRegexp(doc)]))
-    .then((docs) => {
-        // rename keys in docs
-        docs = docs.rows.map(doc => {
-            return {
-                name: doc.filename,
-                year: doc.year,
-                year_start: doc.year_start,
-                year_end: doc.year_end,
-                year_string: doc.year_string
-            };
-        });
-        res.send({
-            status: "success",
-            total_rows: docs.length,
-            results: docs
-        });
-    });
-});
 
 app.post('/api/search', (req, res) => {
     // Get current time
@@ -232,7 +99,13 @@ app.post('/api/search', (req, res) => {
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} ip=${req.socket.remoteAddress} | Search text=${req.body.term} doc=${req.body.doc}`);
 
-    let queryString = makeCorpusQuery(req.body, PAGE_N);
+    let queryString = makeCorpusQuery(
+        req.body.term,
+        req.body.doc,
+        req.body.excludeModern,
+        req.body.ignoreSep,
+        ngramIndex,
+    );
 
     if (queryString === null) {
         res.send({
@@ -247,9 +120,7 @@ app.post('/api/search', (req, res) => {
         WITH 
             ids AS (
                 SELECT s.id AS id
-                    FROM
-                    ngram_rel r JOIN sentences s ON s.id = r.sentence_id
-                    WHERE ${queryString}
+                    FROM ${queryString}
                     GROUP BY s.id, s.year_sort, s.filename, s.number_in_book
                     ORDER BY
                         s.year_sort ASC,
@@ -273,6 +144,8 @@ app.post('/api/search', (req, res) => {
                 st.filename ASC,
                 st.number_in_book ASC
     `;
+
+    console.log(queryString);
 
     const page = req.body.page ?? 1;
     const offset = (page - 1) * PAGE_N;
@@ -319,7 +192,12 @@ app.post('/api/search_stats', (req, res) => {
     const timestamp = new Date().toISOString();
     console.log(`${timestamp} ip=${req.socket.remoteAddress} | SearchStats text=${req.body.term} doc=${req.body.doc}`);
 
-    let queryString = makeCorpusQuery(req.body, PAGE_N);
+    let queryString = makeCorpusQuery(
+      req.body.term,
+      req.body.doc,
+      req.body.excludeModern,
+      req.body.ignoreSep,
+    );
 
     if (queryString === null) {
         res.send({
@@ -332,9 +210,7 @@ app.post('/api/search_stats', (req, res) => {
 
     queryString = `
         SELECT s.decade_sort AS period, CAST(COUNT(DISTINCT s.id) AS INTEGER) AS num_hits
-            FROM
-            ngram_rel r JOIN sentences s ON s.id = r.sentence_id
-            WHERE ${queryString}
+            FROM ${queryString}
             GROUP BY s.decade_sort
     `;
 
@@ -357,6 +233,35 @@ app.post('/api/search_stats', (req, res) => {
             msg: err.message
         });
     });
+});
+
+app.post('/api/doc_suggest', (req, res) => {
+    let doc = req.body.doc;
+    console.log(`suggest doc=${doc} ip=${req.socket.remoteAddress}`);
+
+    pool.query(format(`
+        SELECT * FROM books
+        WHERE filename ~ %L
+        ORDER BY year_sort ASC, filename::bytea ASC
+        LIMIT 10
+    `, [escapeStringRegexp(doc)]))
+      .then((docs) => {
+          // rename keys in docs
+          docs = docs.rows.map(doc => {
+              return {
+                  name: doc.filename,
+                  year: doc.year,
+                  year_start: doc.year_start,
+                  year_end: doc.year_end,
+                  year_string: doc.year_string
+              };
+          });
+          res.send({
+              status: "success",
+              total_rows: docs.length,
+              results: docs
+          });
+      });
 });
 
 app.get('/api/source', (req, res) => {
@@ -447,7 +352,7 @@ app.get('/api/source_list', (req, res) => {
 });
 
 app.post('/api/parse', (req, res) => {
-    nodecallspython.import("./KoreanVerbParser/main.py").then(async function (pymodule) {
+    nodecallspython.import(path.join(__dirname, "KoreanVerbParser/main.py")).then(async function (pymodule) {
         nodecallspython.call(pymodule, "parse_into_json", req.body.text, 20).then(result => {
             result = JSON.parse(result);
             if (result.error !== undefined) {
@@ -479,7 +384,7 @@ app.post('/api/parse', (req, res) => {
 
 app.post('/api/hangulize', (req, res) => {
     let text = req.body.text;
-    nodecallspython.import("./english_hangul.py").then(async function (pymodule) {
+    nodecallspython.import(path.join(__dirname, "./utils/english_hangul.py")).then(async function (pymodule) {
         nodecallspython.call(pymodule, "hangulize", text).then(result => {
             res.send({
                 status: "success",

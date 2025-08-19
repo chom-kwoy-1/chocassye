@@ -1,4 +1,4 @@
-import {make_ngrams} from "../utils/ngram.js";
+import {make_ngrams} from "./ngram.js";
 import {format} from "node-pg-format";
 import fs from "fs";
 import {promisify} from "util";
