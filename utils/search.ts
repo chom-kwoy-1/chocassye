@@ -52,6 +52,13 @@ export function makeCorpusQuery(
     `, [regex.source]);
   }
 
+  if (doc !== '') {
+    queryString += format(" AND s.filename LIKE %L", ['%' + doc + '%']);
+  }
+
+  if (excludeModern) {
+    queryString += " AND (s.lang IS NULL OR (s.lang NOT IN ('mod', 'modern translation', 'pho') AND s.lang NOT LIKE '%역'))";
+  }
   return queryString;
 }
 
