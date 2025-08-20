@@ -417,6 +417,9 @@ function get_all_ngrams(match: Match): Set<string> {
 }
 
 function setIntersection(setA: Set<number>, setB: Set<number>): Set<number> {
+    if (setA.size > setB.size) {
+        [setA, setB] = [setB, setA];  // Ensure setA is the smaller set
+    }
     const intersection = new Set<number>();
     for (const item of setA) {
         if (setB.has(item)) {
