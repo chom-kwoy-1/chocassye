@@ -342,15 +342,21 @@ function addHighlights(displayHTML, match_ranges, highlightIds=null, highlightCo
 }
 
 export function findMatchingRanges(originalText, displayText, displayTextMapping, searchTerm, ignoreSep) {
-    // Find matches
-    let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
-    let match_ranges = [
-        ...getMatchingRanges(hlRegex, ...toText(originalText, ignoreSep), displayTextMapping),
-        ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
-    ];
+    try {
+        // Find matches
+        let hlRegex = searchTerm2Regex(searchTerm, ignoreSep);
+        let match_ranges = [
+            ...getMatchingRanges(hlRegex, ...toText(originalText, ignoreSep), displayTextMapping),
+            ...getMatchingRanges(hlRegex, ...toTextIgnoreTone(originalText, ignoreSep), displayTextMapping),
+        ];
 
-    // Remove overlapping ranges
-    return removeOverlappingRanges(match_ranges, displayText.length);
+        // Remove overlapping ranges
+        return removeOverlappingRanges(match_ranges, displayText.length);
+    }
+    catch (error) {
+        console.error("Error finding matching ranges:", error);
+        return [];
+    }
 }
 
 export function highlight(text, searchTerm, match_ids, romanize, ignoreSep, highlightColors) {

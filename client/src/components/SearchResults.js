@@ -203,8 +203,8 @@ function getResultMatches(results, searchTerm, ignoreSep) {
 
             let [rawText, rawTextMapping] = toText(text, false);
 
-            let match_ranges = findMatchingRanges(
-                text, rawText, rawTextMapping, searchTerm, ignoreSep
+            const match_ranges = findMatchingRanges(
+              text, rawText, rawTextMapping, searchTerm, ignoreSep
             );
 
             let parts = [];

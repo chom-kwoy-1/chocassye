@@ -25,6 +25,10 @@ export function makeCorpusQuery(
   }
 
   const regex = searchTerm2Regex(term, ignoreSep);
+  console.log(regex.source);
+  if (regex.source === '' || regex.source === "(?:)") {
+    return null; // No valid regex to search for
+  }
   const index = [
     ngramIndex.common,
     ignoreSep ? ngramIndex.nosep : ngramIndex.sep,
