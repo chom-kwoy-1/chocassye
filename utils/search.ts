@@ -6,7 +6,7 @@ import {find_candidate_ids} from "./regex_index.js";
 // @ts-ignore
 import {make_ngrams} from "./ngram.js";
 // @ts-ignore
-import {hangul_to_yale} from "../client/src/components/YaleToHangul.mjs";
+import {searchTerm2Regex} from "../client/src/components/Regex.mjs"
 
 export function makeCorpusQuery(
   term: string,
@@ -15,7 +15,6 @@ export function makeCorpusQuery(
   ignoreSep: boolean,
   ngramIndex: NgramMaps
 ): string | null {
-  term = hangul_to_yale(term);
   if (term === '') {
     return null;
   }
@@ -25,7 +24,7 @@ export function makeCorpusQuery(
     return makeCorpusQueryLegacy(term, doc, excludeModern, ignoreSep);
   }
 
-  const regex = makeSearchRegex(term, ignoreSep);
+  const regex = searchTerm2Regex(term, ignoreSep);
   const index = [
     ngramIndex.common,
     ignoreSep ? ngramIndex.nosep : ngramIndex.sep,
@@ -80,7 +79,7 @@ function makeCorpusQueryLegacy(
 
     const ngrams: string[] = make_ngrams(queryText, Math.min(queryText.length, 4));
     const ngramsString = ngrams.map(ngram => format('%L', ngram)).join(", ");
-    const regex = makeSearchRegex(term, ignoreSep);
+    const regex = searchTerm2Regex(term, ignoreSep);
 
     const ignoreSepString = ignoreSep ? "is_without_sep" : "NOT is_without_sep";
 
@@ -97,7 +96,7 @@ function makeCorpusQueryLegacy(
       queryString += format(` AND ${textFieldName} ~ %L`, [regex.source]);
     }
   } else {
-    const regex = makeSearchRegex(term, ignoreSep);
+    const regex = searchTerm2Regex(term, ignoreSep);
     queryString = format(`
       ngram_rel r JOIN sentences s ON s.id = r.sentence_id
         WHERE ${textFieldName} ~ %L
@@ -113,53 +112,4 @@ function makeCorpusQueryLegacy(
   }
 
   return queryString;
-}
-
-function makeSearchRegex(text: string, ignoreSep: boolean = false) {
-  let strippedText = text;
-  if (text.startsWith('^')) {
-    strippedText = strippedText.substring(1);
-  }
-  if (text.endsWith('$')) {
-    strippedText = strippedText.substring(0, strippedText.length - 1);
-  }
-
-  let regex = "";
-  let isEscaping = false;
-  for (let i = 0; i < strippedText.length; i++) {
-    if (strippedText[i] === '%' && !isEscaping) {
-      regex += ".*?";
-      continue;
-    }
-    if (strippedText[i] === '_' && !isEscaping) {
-      regex += ".";
-      continue;
-    }
-    if (isEscaping) {
-      isEscaping = false;
-      let s = strippedText[i]!;
-      if (ignoreSep) {
-        s = s.replace(/[ .^]/g, "");
-      }
-      regex += escapeStringRegexp(s);
-      continue;
-    }
-    if (strippedText[i] === '\\') {
-      isEscaping = true;
-      continue;
-    }
-    let s = strippedText[i]!;
-    if (ignoreSep) {
-      s = s.replace(/[ .^]/g, "");
-    }
-    regex += escapeStringRegexp(s);
-  }
-
-  if (text.startsWith('^')) {
-    regex = "^" + regex;
-  }
-  if (text.endsWith('$')) {
-    regex = regex + "$";
-  }
-  return new RegExp(regex);
 }

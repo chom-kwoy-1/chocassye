@@ -1,51 +1,6 @@
-import { yale_to_hangul, hangul_to_yale } from './YaleToHangul';
+import { yale_to_hangul } from './YaleToHangul';
 import { GUGYEOL_READINGS, GUGYEOL_REGEX } from './Gugyeol'
-import escapeStringRegexp from "escape-string-regexp";
-
-function searchTerm2Regex(text, ignoreSep=false) {
-    text = hangul_to_yale(text);
-    if (ignoreSep) {
-        text = text.replace(/[ .^]/g, '');
-    }
-
-    let strippedText = text;
-    if (text.startsWith('^')) {
-        strippedText = strippedText.substring(1);
-    }
-    if (text.endsWith('$')) {
-        strippedText = strippedText.substring(0, strippedText.length - 1);
-    }
-    let regex = "";
-    let isEscaping = false;
-    for (let i = 0; i < strippedText.length; i++) {
-        if (strippedText[i] === '%' && !isEscaping) {
-            regex += ".*?";
-            continue;
-        }
-        if (strippedText[i] === '_' && !isEscaping) {
-            regex += ".";
-            continue;
-        }
-        if (isEscaping) {
-            isEscaping = false;
-            regex += escapeStringRegexp(strippedText[i]);
-            continue;
-        }
-        if (strippedText[i] === '\\') {
-            isEscaping = true;
-            continue;
-        }
-        regex += escapeStringRegexp(strippedText[i]);
-    }
-    if (text.startsWith('^')) {
-        regex = `^${regex}`;
-    }
-    if (text.endsWith('$')) {
-        regex = `${regex}$`;
-    }
-
-    return new RegExp(regex, 'g');
-}
+import { searchTerm2Regex } from './Regex.mjs';
 
 // TODO: Generate these from YaleToHangul.js
 const HANGUL_REGEX = /((?:ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᅟ)(?:ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)(?:ᆨ|ᆪ|ᆫ|ᆮ|ᆯ|ᆰ|ᆱ|ᆲ|ᆳ|ᆷ|ᆸ|ᆹ|ᆺ|ᆼ|ᇆ|ᇇ|ᇈ|ᇌ|ᇗ|ᇙ|ᇜ|ᇝ|ᇟ|ᇢ|ᇦ|ᇫ|ᇰ|ᇹ|ᇱ|))(〮|〯|)/g;
