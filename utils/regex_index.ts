@@ -3,7 +3,7 @@ import type {
     Alternative,
     Character,
     CharacterClass,
-    CharacterSet,
+    CharacterSet, Group,
     NodeBase,
     Pattern,
     Quantifier,
@@ -279,6 +279,18 @@ function visit(ast: NodeBase): ParsedRegExp {
         }
         case 'Pattern': {  // Alternation
             const {alternatives} = ast as Pattern;
+            for (const [idx, element] of alternatives.entries()) {
+                const cur = visit(element);
+                if (idx === 0) {
+                    result = cur;
+                } else {
+                    result = transform(alternative(result!, cur));
+                }
+            }
+            break;
+        }
+        case 'Group': case 'CapturingGroup': {  // Alternation
+            const {alternatives} = ast as Group;
             for (const [idx, element] of alternatives.entries()) {
                 const cur = visit(element);
                 if (idx === 0) {

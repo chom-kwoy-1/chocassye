@@ -36,7 +36,8 @@ async function make_db(num_data: number): Promise<[string[], Map<string, number[
 async function test() {
   const [sentences, ngram_map] = await make_db(50);
 
-  const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y|tol\..h/g;
+  // const regex = /[ou]?[nl]q?\.tt?[ae]y|w[ou]\.t[ou]y|tol\..h/g;
+  const regex = /h[ou](lq)?\.t/g;
   // const regex = /ho\.te\.la/g;
 
   // find all sentences that match the regex

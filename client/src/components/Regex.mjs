@@ -2,7 +2,7 @@ import {hangul_to_yale} from './YaleToHangul.mjs';
 import escapeStringRegexp from "escape-string-regexp";
 
 export function searchTerm2Regex(text, ignoreSep=false) {
-  if (text.startsWith('/') && text.endsWith('/')) {
+  if (text.length >= 2 && text.startsWith('/') && text.endsWith('/')) {
     let regexText = text.substring(1, text.length - 1);
     return new RegExp(regexText, 'g');
   }
