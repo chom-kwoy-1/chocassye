@@ -482,6 +482,7 @@ app.post('/api/wordle_check', (req, res) => {
 
 // Handles any requests that don't match the ones above
 app.get('*', (req, res) => {
+    console.log(req.url);
     res.sendFile(path.join(__dirname, '/client/build/index.html'));
 });
 

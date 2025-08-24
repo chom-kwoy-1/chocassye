@@ -6,7 +6,7 @@ import {find_candidate_ids} from "./regex_index.js";
 // @ts-ignore
 import {make_ngrams} from "./ngram.js";
 // @ts-ignore
-import {searchTerm2Regex} from "../client/src/components/Regex.mjs"
+import {searchTerm2Regex} from "../modules/Regex.mjs"
 
 export function makeCorpusQuery(
   term: string,

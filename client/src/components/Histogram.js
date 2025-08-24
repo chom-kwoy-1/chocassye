@@ -5,11 +5,13 @@ import {range} from './common_utils.mjs';
 import {
     Box, Grid, Card, Tooltip, useTheme
 } from '@mui/material';
-import {useTranslation} from "react-i18next";
+import {TranslationContext} from "./TranslationProvider";
+import {useTranslation} from "../app/i18n/client";
 
 
 export default function Histogram(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
     const theme = useTheme();
 
     const BEGIN = 1400;

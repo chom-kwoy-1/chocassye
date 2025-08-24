@@ -1,5 +1,4 @@
 import React from 'react';
-import {useTranslation} from "react-i18next";
 import {
   Box,
   Button,
@@ -16,6 +15,8 @@ import {
 import {green, grey, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
 import {postData} from "./utils";
+import {TranslationContext} from "./TranslationProvider";
+import {useTranslation} from "../app/i18n/client";
 
 
 function fetchWord(numCols, practice, resultFunc) {
@@ -96,7 +97,8 @@ function WordlePage(props) {
 }
 
 function WordleImpl(props) {
-  const { t } = useTranslation();
+  const lng = React.useContext(TranslationContext);
+  const { t } = useTranslation(lng);
   const theme = useTheme();
 
   const answerWord = props.answerWord;

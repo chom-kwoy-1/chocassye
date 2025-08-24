@@ -11,8 +11,9 @@ import {
     Stack, Tab, Tabs,
     TextField
 } from "@mui/material";
-import {useTranslation} from "react-i18next";
 import {yale_to_hangul} from './YaleToHangul';
+import {TranslationContext} from "./TranslationProvider";
+import {useTranslation} from "../app/i18n/client";
 
 
 function makeParseTreeDOM(parseTree) {
@@ -60,7 +61,8 @@ function makeName(parseTree) {
 }
 
 function ParsePage(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
 
     const [currentQuery, setCurrentQuery] = React.useState("안녕하시겠어요");
     const [parseResults, setParseResults] = React.useState([]);

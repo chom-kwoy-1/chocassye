@@ -1,6 +1,6 @@
 'use strict';
 
-import {hangul_to_yale} from '../client/src/components/YaleToHangul.mjs';
+import {hangul_to_yale} from '../modules/YaleToHangul.mjs';
 import {parse_year_string, year_and_bookname_from_filename} from "./parse_utils.js";
 import jsdom from "jsdom";
 import {promisify} from "util";

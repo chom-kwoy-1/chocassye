@@ -14,18 +14,20 @@ import {
 } from "@mui/material";
 import { StyledTableCell } from "../../../components/utils";
 import {useTranslation} from "../../i18n/client";
+import Link from 'next/link';
+import {TranslationContext} from "../../../components/TranslationProvider";
 
 function SourceListPage(props) {
-    const lng = props.lng;
+    const lng = React.useContext(TranslationContext);
     const { t } = useTranslation(lng);
 
     if (!props.loaded) {
         return (
             <Grid container alignItems="center" spacing={2} sx={{px: 2}}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <Typography variant='h4'>{t('List of Sources')}</Typography>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <Typography variant='h6'>{t('Loading...')}</Typography>
                 </Grid>
             </Grid>
@@ -37,12 +39,12 @@ function SourceListPage(props) {
 
     return (
       <Grid container alignItems="center" spacing={2} sx={{px: 2}}>
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Typography variant='h4'>{t('List of Sources')}</Typography>
             </Grid>
 
           {/* Pager on top */}
-          <Grid item xs={12}>
+          <Grid size={12}>
               <Box
                   display="flex"
                   justifyContent="center"
@@ -59,7 +61,7 @@ function SourceListPage(props) {
               </Box>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={12}>
               <TableContainer component={Paper} elevation={3}>
                   <Table size="small">
                       <TableHead>
@@ -74,7 +76,7 @@ function SourceListPage(props) {
                             <TableRow key={row.id}>
                                 <StyledTableCell>
                                     <Link
-                                        to={`/source?name=${row.filename}`}
+                                        href={`/source?name=${row.filename}`}
                                         style={{textDecoration: "underline dotted lightgrey"}}
                                     >{row.filename}</Link>
                                 </StyledTableCell>
@@ -88,7 +90,7 @@ function SourceListPage(props) {
           </Grid>
 
           {/* Pager on bottom */}
-          <Grid item xs={12}>
+          <Grid size={12}>
               <Box
                   display="flex"
                   justifyContent="center"

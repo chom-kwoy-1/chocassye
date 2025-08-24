@@ -17,10 +17,12 @@ import DocSelector from "../../../components/DocSelector";
 import SearchResults from "../../../components/SearchResults";
 import TextFieldWithGugyeol from "../../../components/TextFieldWithGugyeol";
 import {useTranslation} from "../../i18n/client";
+import {useRouter, useSearchParams} from 'next/navigation';
+import {TranslationContext} from "../../../components/TranslationProvider";
 
 
 function SearchPage(props) {
-    const { lng } = React.use(props.params);
+    const lng = React.useContext(TranslationContext);
     const { t } = useTranslation(lng);
 
     const [romanize, setRomanize] = React.useState(false);
@@ -126,10 +128,14 @@ function SearchPage(props) {
 
             <Grid size={12}>
                 <Typography sx={{fontSize: "1em", fontWeight: 600}}>
-                    {t('number Results', { numResults: props.numResults })}&ensp;
+                    {t('number Results', { numResults: props.numResults })}
+                    &ensp;
                     {
                         props.result.length > 0?
-                        t('current page', { startYear: props.result[0].year, endYear: props.result[props.result.length - 1].year })
+                        t('current page', {
+                            startYear: props.result[0].year,
+                            endYear: props.result[props.result.length - 1].year
+                        })
                         : <span></span>
                     }
                 </Typography>
@@ -227,7 +233,20 @@ function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchPar
 }
 
 function SearchPageWrapper(props) {
-    const [searchParams, setSearchParams] = React.useState(new Map());//useSearchParams();
+    const lng = React.useContext(TranslationContext);
+    const router = useRouter();
+
+    const searchParams = useSearchParams();
+    const setSearchParams = React.useCallback((newParams) => {
+        let params = new URLSearchParams(searchParams);
+        if (typeof newParams === 'function') {
+            newParams = newParams(params);
+        }
+        // Update search params in the URL
+        const newSearchParams = new URLSearchParams(newParams);
+        router.push(`/${lng}/search?${newSearchParams.toString()}`);
+    }, [searchParams]);
+
     const refSearchParams = React.useRef(searchParams);
 
     // Currently displayed search query
@@ -268,90 +287,90 @@ function SearchPageWrapper(props) {
     const prevQuery = React.useRef(curQuery);
 
     // Refresh search results when curQuery changes
-    // React.useEffect(() => {
-    //
-    //     function refreshSearchResults(query) {
-    //         let active = true;
-    //
-    //         search(
-    //           query,
-    //           async (result, page_N) => {
-    //               if (active) {
-    //                   setResult({
-    //                       ...prevResult.current,
-    //                       loaded: true,
-    //                       result: result,
-    //                       page_N: page_N,
-    //                       result_term: query.term,
-    //                       result_page: query.page,
-    //                       result_doc: query.doc,
-    //                       excludeModern: query.excludeModern,
-    //                       ignoreSep: query.ignoreSep,
-    //                   });
-    //
-    //                   // Scroll to top of the page when result changes
-    //                   window.scroll({
-    //                       top: 0,
-    //                       behavior: 'smooth'
-    //                   });
-    //               }
-    //           },
-    //           async (error) => {
-    //               // TODO: handle error
-    //               console.error(error);
-    //           }
-    //         );
-    //
-    //         let invalidateStats = (
-    //           prevQuery.current.term !== query.term ||
-    //           prevQuery.current.doc !== query.doc ||
-    //           prevQuery.current.excludeModern !== query.excludeModern ||
-    //           prevQuery.current.ignoreSep !== query.ignoreSep
-    //         );
-    //
-    //         // Do not update stats when only page changes
-    //         if (invalidateStats) {
-    //             getStats(
-    //               query,
-    //               async (numResults, histogram) => {
-    //                   if (active) {
-    //                       setResult({
-    //                           ...prevResult.current,
-    //                           statsLoaded: true,
-    //                           num_results: numResults,
-    //                           histogram: histogram,
-    //                           stats_term: query.term,
-    //                       });
-    //                   }
-    //               },
-    //               async (error) => {
-    //                   console.error(error);
-    //                   // TODO: handle error
-    //               }
-    //             );
-    //         }
-    //
-    //         setResult({
-    //             ...prevResult.current,
-    //             statsLoaded: invalidateStats ? false : prevResult.current.statsLoaded,
-    //             loaded: false,
-    //         });
-    //
-    //         return () => {
-    //             active = false;
-    //         }
-    //     }
-    //
-    //     if (prevQuery.current.term !== curQuery.term ||
-    //       prevQuery.current.doc !== curQuery.doc ||
-    //       prevQuery.current.page !== curQuery.page ||
-    //       prevQuery.current.excludeModern !== curQuery.excludeModern ||
-    //       prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
-    //         const result = refreshSearchResults(curQuery);
-    //         prevQuery.current = curQuery;
-    //         return result;
-    //     }
-    // }, [curQuery, setResult]);
+    React.useEffect(() => {
+
+        function refreshSearchResults(query) {
+            let active = true;
+
+            search(
+              query,
+              async (result, page_N) => {
+                  if (active) {
+                      setResult({
+                          ...prevResult.current,
+                          loaded: true,
+                          result: result,
+                          page_N: page_N,
+                          result_term: query.term,
+                          result_page: query.page,
+                          result_doc: query.doc,
+                          excludeModern: query.excludeModern,
+                          ignoreSep: query.ignoreSep,
+                      });
+
+                      // Scroll to top of the page when result changes
+                      window.scroll({
+                          top: 0,
+                          behavior: 'smooth'
+                      });
+                  }
+              },
+              async (error) => {
+                  // TODO: handle error
+                  console.error(error);
+              }
+            );
+
+            let invalidateStats = (
+              prevQuery.current.term !== query.term ||
+              prevQuery.current.doc !== query.doc ||
+              prevQuery.current.excludeModern !== query.excludeModern ||
+              prevQuery.current.ignoreSep !== query.ignoreSep
+            );
+
+            // Do not update stats when only page changes
+            if (invalidateStats) {
+                getStats(
+                  query,
+                  async (numResults, histogram) => {
+                      if (active) {
+                          setResult({
+                              ...prevResult.current,
+                              statsLoaded: true,
+                              num_results: numResults,
+                              histogram: histogram,
+                              stats_term: query.term,
+                          });
+                      }
+                  },
+                  async (error) => {
+                      console.error(error);
+                      // TODO: handle error
+                  }
+                );
+            }
+
+            setResult({
+                ...prevResult.current,
+                statsLoaded: invalidateStats ? false : prevResult.current.statsLoaded,
+                loaded: false,
+            });
+
+            return () => {
+                active = false;
+            }
+        }
+
+        if (prevQuery.current.term !== curQuery.term ||
+          prevQuery.current.doc !== curQuery.doc ||
+          prevQuery.current.page !== curQuery.page ||
+          prevQuery.current.excludeModern !== curQuery.excludeModern ||
+          prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
+            const result = refreshSearchResults(curQuery);
+            prevQuery.current = curQuery;
+            return result;
+        }
+    }, [curQuery, setResult]);
 
     // Convenience function to set page
     const setPage = React.useCallback((page) => {

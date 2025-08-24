@@ -10,7 +10,6 @@ import {
     MenuItem, Paper, Select, FormControl, InputLabel
 } from '@mui/material';
 import i18n from "i18next";
-import {SearchResultProvider} from "./SearchContext";
 import {ThemeContext} from "./ThemeContext";
 import {ThemeProvider} from "@mui/material/styles";
 import {darkTheme, lightTheme} from '@/themes';
@@ -18,10 +17,11 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import {useTranslation} from "@/app/i18n/client";
 import {useRouter} from "next/navigation";
+import {TranslationContext} from "@/components/TranslationProvider";
 
 
 function App(props) {
-    const lng = props.lng;
+    const lng = React.useContext(TranslationContext);
     const { t } = useTranslation(lng);
     const router = useRouter();
 
@@ -266,9 +266,7 @@ function App(props) {
 
             <Container maxWidth="lg" sx={{ mb: 4, px: { xs: 0.2, sm: 2 } }}>
                 <Paper variant="outlined" sx={{ my: { xs: 2, md: 4 }, p: { xs: 1, md: 3 } }}>
-                    {/*<SearchResultProvider>*/}
-                        {props.children}
-                    {/*</SearchResultProvider>*/}
+                    {props.children}
                 </Paper>
             </Container>
 

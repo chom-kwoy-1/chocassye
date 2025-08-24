@@ -1,4 +1,4 @@
-import {Trans, useTranslation} from "react-i18next";
+import {Trans} from "react-i18next";
 import React from "react";
 import {
     Backdrop,
@@ -26,9 +26,13 @@ import Histogram from "./Histogram";
 import HowToPage from "./HowToPage";
 import {lightTheme} from "../themes";
 import {grey} from "@mui/material/colors";
+import Link from 'next/link';
+import {TranslationContext} from "./TranslationProvider";
+import {useTranslation} from "../app/i18n/client";
 
 function SearchResultsList(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
 
     let footnotes = [];  // TODO: fix footnotes
 
@@ -119,7 +123,8 @@ const ImageTooltip = styled(({ className, ...props }) => (
 
 
 function PageImagePreview(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
 
     return <Grid container>
         <Grid size={12}>
@@ -136,6 +141,7 @@ function PageImagePreview(props) {
 }
 
 function SentenceAndPage(props) {
+    const lng = React.useContext(TranslationContext);
     const theme = useTheme();
     const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
     const sourceTextColor = theme.palette.mode === 'light'? grey['600'] : grey['400'];
@@ -181,7 +187,7 @@ function SentenceAndPage(props) {
         <span style={{color: sourceTextColor}}>
             &lang;
             <Link className="sourceLink"
-                  to={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
+                  href={`/${lng}/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
                   style={{textDecoration: `underline dotted ${sourceTextColor}`}}>
                   {props.sentence.page === null? props.book.name : `${props.book.name}:`}
             </Link>
@@ -221,7 +227,8 @@ function getResultMatches(results, searchTerm, ignoreSep) {
 }
 
 let SearchResultsWrapper = function (props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
 
     const [disabledMatches, setDisabledMatches] = React.useState(new Set());
 
@@ -303,7 +310,7 @@ let SearchResultsWrapper = function (props) {
             {uniqueMatches.map((part, i) => {
                 const isEnabled = !disabledMatches.has(i);
                 const color = isEnabled ? hlColors[i % hlColors.length] : "lightgrey";
-                return <Grid key={i} item size="auto">
+                return <Grid key={i} size="auto">
                     <ThemeProvider theme={lightTheme}>
                         <Chip
                             label={part}

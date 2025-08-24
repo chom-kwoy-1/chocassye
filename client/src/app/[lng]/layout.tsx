@@ -5,6 +5,7 @@ import MyThemeProvider from "@/components/theme-provider";
 import App from "@/components/App";
 import { dir } from 'i18next';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import { TranslationProvider } from "@/components/TranslationProvider";
 
 const languages = ['en', 'ko'];
 
@@ -29,9 +30,11 @@ export default async function RootLayout(
       <AppRouterCacheProvider>
         <div id="root">
           <MyThemeProvider>
-            <App lng={lng}>
-              {children}
-            </App>
+            <TranslationProvider lng={lng}>
+              <App>
+                {children}
+              </App>
+            </TranslationProvider>
           </MyThemeProvider>
         </div>
       </AppRouterCacheProvider>

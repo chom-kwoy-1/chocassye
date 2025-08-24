@@ -1,7 +1,7 @@
+'use client';
 import React from 'react';
 import { highlight } from '../../../components/Highlight';
 import { Interweave } from 'interweave';
-import { useTranslation } from 'react-i18next';
 import {
     Grid, Typography, FormControlLabel,
     Checkbox, Box, Pagination, Paper,
@@ -12,6 +12,9 @@ import { styled } from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "../../../components/config";
 import { StyledTableCell, StyledTableRow } from '../../../components/utils.js';
 import {grey} from "@mui/material/colors";
+import {TranslationContext} from "../../../components/TranslationProvider";
+import {useTranslation} from "../../i18n/client";
+import {useRouter, useSearchParams} from "next/navigation";
 
 
 const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
@@ -25,7 +28,8 @@ const allowList = ['mark', 'abbr', 'span'];
 
 
 function Sentence(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
     const bookname = props.bookname;
     const sentence = props.sentence;
     const highlight_term = props.highlight_term;
@@ -75,7 +79,8 @@ function Sentence(props) {
 
 
 function SourcePage(props) {
-    const { t } = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
     
     function handleExcludeChineseChange(event) {
         let excludeChinese = event.target.checked;
@@ -95,7 +100,7 @@ function SourcePage(props) {
 
     if (props.result.data === null) {
         return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Box>
                     <Typography
                         variant='h5'
@@ -118,7 +123,7 @@ function SourcePage(props) {
 
     return (
         <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Box>
                     <Typography
                         variant='h5'
@@ -132,7 +137,7 @@ function SourcePage(props) {
             </Grid>
 
             {/* Bibliography and attributions */}
-            <Grid item xs={10} sm={8} lg={6} mx="auto">
+            <Grid size={{xs: 10, sm: 8, lg: 6}} mx="auto">
                 <TableContainer component={Paper} elevation={1}>
                     <Table size="small">
                         <TableBody>
@@ -180,8 +185,8 @@ function SourcePage(props) {
                 </TableContainer>
             </Grid>
 
-            <Grid item container xs={12} alignItems="center">
-                <Grid item xs={8} md={10}>
+            <Grid container size={12} alignItems="center">
+                <Grid size={{xs: 8, md: 10}}>
                     <FormControlLabel
                         control={<Checkbox size="small" sx={{py: 0}} />}
                         label={
@@ -193,7 +198,7 @@ function SourcePage(props) {
                         onChange={(event) => handleExcludeChineseChange(event)}
                     />
                 </Grid>
-                <Grid item xs={4} md={2}>
+                <Grid size={{xs: 4, md: 2}}>
                     <FormControl variant="standard" fullWidth>
                         <InputLabel id="view-count-select-label">{t("Results per page")}</InputLabel>
                         <Select
@@ -213,7 +218,7 @@ function SourcePage(props) {
             </Grid>
 
             {/* Pager */}
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <Box
                     display="flex"
                     justifyContent="center"
@@ -240,7 +245,7 @@ function SourcePage(props) {
                 </Box>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12}>
                 <TableContainer component={Paper}>
                     <Table size="small">
                         <TableBody>
@@ -259,7 +264,7 @@ function SourcePage(props) {
             </Grid>
 
             {/* Pager */}
-            <Grid item xs={12} my={1}>
+            <Grid size={12} my={1}>
                 <Box
                     display="flex"
                     justifyContent="center"
@@ -315,7 +320,19 @@ function load_source(bookName, numberInSource, excludeChinese, viewCount, result
 
 
 function SoucePageWrapper(props) {
-    let [searchParams, setSearchParams] = useSearchParams();
+    const lng = React.useContext(TranslationContext);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const setSearchParams = React.useCallback((newParams) => {
+      let params = new URLSearchParams(searchParams);
+      if (typeof newParams === 'function') {
+        newParams = newParams(params);
+      }
+      // Update search params in the URL
+      const newSearchParams = new URLSearchParams(newParams);
+      router.push(`/${lng}/source?${newSearchParams.toString()}`);
+    }, [searchParams]);
+
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
     let highlightWord = searchParams.get("hl");
@@ -362,7 +379,6 @@ function SoucePageWrapper(props) {
 
     return <SourcePage
         {...props}
-        navigate={useNavigate()}
         bookName={bookName}
         numberInSource={numberInSource}
         result={result}

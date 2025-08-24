@@ -1,4 +1,3 @@
-import {useTranslation} from "react-i18next";
 import React from "react";
 import {suggestGugyeol} from "./Gugyeol";
 import {
@@ -17,9 +16,12 @@ import {
     Typography
 } from "@mui/material";
 import {StyledTableCell} from "./utils";
+import {TranslationContext} from "./TranslationProvider";
+import {useTranslation} from "../app/i18n/client";
 
 export default function TextFieldWithGugyeol(props) {
-    const {t} = useTranslation();
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
     const uniqueId = "#textfield-with-gugyeol"; // + Math.random().toString(36).substring(7);
 
     const [anchorEl, setAnchorEl] = React.useState(null);
