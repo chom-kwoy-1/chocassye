@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import {
   Box,
@@ -14,9 +15,9 @@ import {
 } from "@mui/material";
 import {green, grey, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
-import {postData} from "./utils";
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../app/i18n/client";
+import {postData} from "../../../components/utils";
+import {TranslationContext} from "../../../components/TranslationProvider";
+import {useTranslation} from "../../i18n/client";
 
 
 function fetchWord(numCols, practice, resultFunc) {
@@ -373,7 +374,7 @@ function WordleImpl(props) {
 
   return (
     <React.Fragment>
-      <Stack spacing={3} alignItems="center">
+      <Stack spacing={3} alignItems="stretch">
         <Typography variant='h4' sx={{textAlign: "center", fontWeight: "bold"}}>
           {longGameName}
         </Typography>
@@ -385,11 +386,11 @@ function WordleImpl(props) {
           </Button>
           : null}
         <Grid container spacing={0} alignItems="center" justifyContent="center">
-          <Grid item xs={12} sm={6} lg={5} container spacing={1} alignItems="center" justifyContent="center">
+          <Grid size={{xs: 12, sm: 8, md: 6, lg: 5}} container spacing={1} alignItems="center" justifyContent="center">
             {tiles.map((row, rowIndex) => (
               <React.Fragment key={rowIndex}>
                 {row.map((tile, colIndex) => (
-                  <Grid item xs={12 / NUM_COLS} key={colIndex}>
+                  <Grid size={12 / NUM_COLS} key={colIndex}>
                     <Paper style={{
                       display: "flex",
                       aspectRatio: "1 / 1",
@@ -414,11 +415,11 @@ function WordleImpl(props) {
           </Grid>
         </Grid>
         <Grid container spacing={0} alignItems="center" justifyContent="center">
-          <Grid item xs={12} lg={6} container spacing={1} alignItems="center" justifyContent="center">
+          <Grid size={{xs: 12, sm: 10, md: 8, lg: 6}} container spacing={1} alignItems="center" justifyContent="center">
             {keyboardLayout.map((row, rowIndex) => (
-              <Grid item xs={12} key={rowIndex} container spacing={1} justifyContent="center">
+              <Grid size={12} key={rowIndex} container spacing={1} justifyContent="center">
                 {row.map((key, colIndex) => (
-                  <Grid item xs={12/10} key={colIndex}>
+                  <Grid size={12/10} key={colIndex}>
                     <div style={{
                       display: "flex",
                       aspectRatio: "2 / 3",
