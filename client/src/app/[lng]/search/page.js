@@ -11,7 +11,6 @@ import {
     Typography
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import {SearchResultContext} from "../../../components/SearchContext";
 import {getStats, search} from "../../../components/api";
 import DocSelector from "../../../components/DocSelector";
 import SearchResults from "../../../components/SearchResults";
@@ -274,7 +273,6 @@ function SearchPageWrapper(props) {
         stats_term: "",
     });
     const prevResult = React.useRef(result);  // for preventing infinite loops
-    React.useEffect(() => { prevResult.current = result; }, [result]);
 
     // Previously sent search query (may be on the run)
     const [curQuery, setCurQuery] = React.useState({
@@ -296,7 +294,7 @@ function SearchPageWrapper(props) {
               query,
               async (result, page_N) => {
                   if (active) {
-                      setResult({
+                      prevResult.current = {
                           ...prevResult.current,
                           loaded: true,
                           result: result,
@@ -306,7 +304,8 @@ function SearchPageWrapper(props) {
                           result_doc: query.doc,
                           excludeModern: query.excludeModern,
                           ignoreSep: query.ignoreSep,
-                      });
+                      };
+                      setResult({...prevResult.current});
 
                       // Scroll to top of the page when result changes
                       window.scroll({
@@ -334,13 +333,14 @@ function SearchPageWrapper(props) {
                   query,
                   async (numResults, histogram) => {
                       if (active) {
-                          setResult({
+                          prevResult.current = {
                               ...prevResult.current,
                               statsLoaded: true,
                               num_results: numResults,
                               histogram: histogram,
                               stats_term: query.term,
-                          });
+                          }
+                          setResult({...prevResult.current});
                       }
                   },
                   async (error) => {
@@ -418,7 +418,7 @@ function SearchPageWrapper(props) {
         doc={query.doc}
         setDoc={(value) => setQuery({...query, doc: value})}
         page={query.page}
-        setPage={(value) => setQuery({...query, page: value})}
+        setPage={setPage}
         excludeModern={query.excludeModern}
         setExcludeModern={(value) => setQuery({...query, excludeModern: value})}
         ignoreSep={query.ignoreSep}
