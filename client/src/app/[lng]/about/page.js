@@ -1,11 +1,10 @@
 import React from 'react';
-import './i18n';
-import { useTranslation } from 'react-i18next';
 import {Box, Divider, Stack, Typography} from "@mui/material";
+import {useTranslation} from "../../i18n";
 
-
-function AboutWrapper(props) {
-    const { t } = useTranslation();
+async function AboutWrapper(props) {
+    const { lng } = await props.params;
+    const { t } = await useTranslation(lng);
 
     return <Stack spacing={2} sx={{px: 2}}>
         <Typography variant='h4'>{t('About Chocassye')}</Typography>

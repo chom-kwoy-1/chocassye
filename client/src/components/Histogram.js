@@ -1,5 +1,4 @@
 import React from 'react';
-import './index.css';
 import './i18n';
 import {range} from './common_utils.mjs';
 
@@ -32,24 +31,23 @@ export default function Histogram(props) {
         .reduce((a, b) => a + b, 0);
 
     return <Grid container>
-        <Grid item xs={12}>
+        <Grid size={12}>
             <Card elevation={3}>
                 <Box position="relative">
                     <Grid container spacing={0}>
                         {range(BEGIN, END - 50, 50).map((year, i) => {
                             return (
-                                <Grid item key={i}
-                                    xs={12 / (END - BEGIN) * 100}
-                                    sm={12 / (END - BEGIN) * 50}
-                                    sx={{
-                                        display: {xs: year % 100 === 0? 'flex' : 'none', sm: 'flex'},
-                                        borderLeft: year === BEGIN? 0 : 1.5,
-                                        borderColor: 'text.secondary',
-                                        zIndex: 100,
-                                        pointerEvents: "none",
-                                        fontSize: "0.9em",
-                                    }}
-                                    minHeight="50px">
+                                <Grid key={i}
+                                      size={{xs: 12 / (END - BEGIN) * 100, sm: 12 / (END - BEGIN) * 50}}
+                                      sx={{
+                                          display: {xs: year % 100 === 0? 'flex' : 'none', sm: 'flex'},
+                                          borderLeft: year === BEGIN? 0 : 1.5,
+                                          borderColor: 'text.secondary',
+                                          zIndex: 100,
+                                          pointerEvents: "none",
+                                          fontSize: "0.9em",
+                                      }}
+                                      minHeight="50px">
                                     {year}
                                 </Grid>
                             );
@@ -90,7 +88,7 @@ export default function Histogram(props) {
                 </Box>
             </Card>
         </Grid>
-        <Grid item xs={4} style={{
+        <Grid size={4} style={{
             borderBottom: "1px solid lightgrey",
             borderLeft: "1px solid lightgrey",
             borderRight: "1px solid lightgrey",
@@ -103,7 +101,7 @@ export default function Histogram(props) {
             </span>
         </Grid>
 
-        <Grid item xs={8} style={{
+        <Grid size={8} style={{
             borderBottom: "1px solid lightgrey",
             borderLeft: "1px solid lightgrey",
             borderRight: "1px solid lightgrey",

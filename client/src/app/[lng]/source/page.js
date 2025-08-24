@@ -1,7 +1,5 @@
 import React from 'react';
-import './index.css';
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { highlight } from './Highlight';
+import { highlight } from '../../../components/Highlight';
 import { Interweave } from 'interweave';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,8 +9,8 @@ import {
     TableRow, Tooltip, Select, MenuItem, FormControl, InputLabel, useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import {IMAGE_BASE_URL} from "./config";
-import { StyledTableCell, StyledTableRow } from './utils.js';
+import {IMAGE_BASE_URL} from "../../../components/config";
+import { StyledTableCell, StyledTableRow } from '../../../components/utils.js';
 import {grey} from "@mui/material/colors";
 
 

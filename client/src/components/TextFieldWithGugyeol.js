@@ -20,7 +20,7 @@ import {StyledTableCell} from "./utils";
 
 export default function TextFieldWithGugyeol(props) {
     const {t} = useTranslation();
-    const uniqueId = "#textfield-with-gugyeol-" + Math.random().toString(36).substring(7);
+    const uniqueId = "#textfield-with-gugyeol"; // + Math.random().toString(36).substring(7);
 
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);

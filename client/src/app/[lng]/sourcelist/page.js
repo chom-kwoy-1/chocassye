@@ -1,3 +1,5 @@
+'use client'
+import React from "react";
 import {
     Box,
     Grid,
@@ -10,13 +12,12 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
-import React from "react";
-import {useTranslation} from "react-i18next";
-import { StyledTableCell } from "./utils";
-import {Link} from "react-router-dom";
+import { StyledTableCell } from "../../../components/utils";
+import {useTranslation} from "../../i18n/client";
 
 function SourceListPage(props) {
-    const { t } = useTranslation();
+    const lng = props.lng;
+    const { t } = useTranslation(lng);
 
     if (!props.loaded) {
         return (

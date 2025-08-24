@@ -1,12 +1,12 @@
 import {useTranslation} from "react-i18next";
-import {useNavigate} from "react-router-dom";
 import React from "react";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {suggest} from "./api";
+import {useRouter} from "next/navigation";
 
 export default function DocSelector(props) {
     const {t} = useTranslation();
-    const navigate = useNavigate();
+    const router = useRouter();
 
     // Document suggestions
     let [docSuggestions, setDocSuggestions] = React.useState({
@@ -43,16 +43,16 @@ export default function DocSelector(props) {
         []
     );
 
-    React.useEffect(() => {
-        // Retrieve document suggestions when doc changes
-        return suggest_doc(props.doc);
-    }, [props.doc, suggest_doc]);
+    // React.useEffect(() => {
+    //   // Retrieve document suggestions when doc changes
+    //   return suggest_doc(props.doc);
+    // }, [props.doc, suggest_doc]);
 
     const [open, setOpen] = React.useState(false);
 
     function handleChange(ev, doc, reason) {
         if (reason === 'selectOption') {
-            navigate(`/source?name=${doc.name}`);
+          router.push(`/source?name=${doc.name}`);
         }
     }
 

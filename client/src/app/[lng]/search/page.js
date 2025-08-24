@@ -1,9 +1,6 @@
+'use client'
 import React from 'react';
-import './index.css';
-import {hangul_to_yale, yale_to_hangul} from './YaleToHangul';
-import {useSearchParams} from "react-router-dom";
-import './i18n';
-import {useTranslation} from 'react-i18next';
+import {hangul_to_yale, yale_to_hangul} from '../../../components/YaleToHangul.mjs';
 import {
     Backdrop, Box,
     Button,
@@ -14,15 +11,17 @@ import {
     Typography
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import {SearchResultContext} from "./SearchContext";
-import {getStats, search} from "./api";
-import DocSelector from "./DocSelector";
-import SearchResults from "./SearchResults";
-import TextFieldWithGugyeol from "./TextFieldWithGugyeol";
+import {SearchResultContext} from "../../../components/SearchContext";
+import {getStats, search} from "../../../components/api";
+import DocSelector from "../../../components/DocSelector";
+import SearchResults from "../../../components/SearchResults";
+import TextFieldWithGugyeol from "../../../components/TextFieldWithGugyeol";
+import {useTranslation} from "../../i18n/client";
 
 
 function SearchPage(props) {
-    const { t } = useTranslation();
+    const { lng } = React.use(props.params);
+    const { t } = useTranslation(lng);
 
     const [romanize, setRomanize] = React.useState(false);
     const [displayHangul, setDisplayHangul] = React.useState(true);
@@ -33,7 +32,7 @@ function SearchPage(props) {
 
     return (
         <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
-            <Grid item xs={9} sm={6}>
+            <Grid size={{xs: 9, sm: 6}}>
                 <TextFieldWithGugyeol
                     value={props.term}
                     setTerm={props.setTerm}
@@ -46,7 +45,7 @@ function SearchPage(props) {
                     }}
                 />
             </Grid>
-            <Grid item xs={3} sm={1}>
+            <Grid size={{xs: 3, sm: 1}}>
                 <Button
                     variant="contained"
                     fullWidth
@@ -55,10 +54,10 @@ function SearchPage(props) {
                 </Button>
             </Grid>
 
-            <Grid item xs={0} sm={1}>
+            <Grid size={{xs: 0, sm: 1}}>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid size={{xs: 12, sm: 4}}>
                 <DocSelector
                     doc={props.doc}
                     handleDocChange={(doc) => props.setDoc(doc)}
@@ -67,7 +66,7 @@ function SearchPage(props) {
             </Grid>
 
             {props.term !== ""?
-                <Grid item xs={12} sm={12}>
+                <Grid size={12}>
                     <Box style={{display: "inline"}}>{t("Preview")}:&nbsp;</Box>
                     <Button variant="outlined" style={{textTransform: 'none'}}
                             onClick={() => {setDisplayHangul(!displayHangul);}}>
@@ -97,9 +96,9 @@ function SearchPage(props) {
                 message={`Copied ‘${hangulSearchTerm}’ to clipboard.`}
             />
 
-            <Grid item xs={12} container columnSpacing={1}
+            <Grid size={12} container columnSpacing={1}
                   direction="row" justifyContent="flex-start" alignItems="center">
-                <Grid item xs="auto">
+                <Grid size="auto">
                     <FormControlLabel
                         control={<Checkbox size="small" sx={{py: 0}} />}
                         label={
@@ -111,7 +110,7 @@ function SearchPage(props) {
                         onChange={(event) => props.setExcludeModern(event.target.checked)}
                     />
                 </Grid>
-                <Grid item xs="auto">
+                <Grid size="auto">
                     <FormControlLabel
                         control={<Checkbox size="small" sx={{py: 0}} />}
                         label={
@@ -125,7 +124,7 @@ function SearchPage(props) {
                 </Grid>
             </Grid>
 
-            <Grid item xs={12} sm={12}>
+            <Grid size={12}>
                 <Typography sx={{fontSize: "1em", fontWeight: 600}}>
                     {t('number Results', { numResults: props.numResults })}&ensp;
                     {
@@ -136,7 +135,7 @@ function SearchPage(props) {
                 </Typography>
             </Grid>
 
-            <Grid item xs={12} sm={12} sx={{position: 'relative'}}>
+            <Grid size={12} sx={{position: 'relative'}}>
                 <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
                     <Backdrop
                         sx={{
@@ -228,7 +227,7 @@ function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchPar
 }
 
 function SearchPageWrapper(props) {
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = React.useState(new Map());//useSearchParams();
     const refSearchParams = React.useRef(searchParams);
 
     // Currently displayed search query
@@ -238,7 +237,23 @@ function SearchPageWrapper(props) {
     React.useEffect(() => { refQuery.current = query; }, [query]);
 
     // Currently displayed search results
-    const [result, setResult] = React.useContext(SearchResultContext);
+    // const [result, setResult] = React.useContext(SearchResultContext);
+    const [result, setResult] = React.useState({
+        // Search query
+        loaded: true,
+        result: [],
+        result_term: "",
+        result_page: 1,
+        result_doc: "",
+        excludeModern: false,
+        ignoreSep: false,
+        // Search stats
+        statsLoaded: true,
+        page_N: 50,
+        num_results: 0,
+        histogram: [],
+        stats_term: "",
+    });
     const prevResult = React.useRef(result);  // for preventing infinite loops
     React.useEffect(() => { prevResult.current = result; }, [result]);
 
@@ -253,90 +268,90 @@ function SearchPageWrapper(props) {
     const prevQuery = React.useRef(curQuery);
 
     // Refresh search results when curQuery changes
-    React.useEffect(() => {
-
-        function refreshSearchResults(query) {
-            let active = true;
-
-            search(
-                query,
-                async (result, page_N) => {
-                    if (active) {
-                        setResult({
-                            ...prevResult.current,
-                            loaded: true,
-                            result: result,
-                            page_N: page_N,
-                            result_term: query.term,
-                            result_page: query.page,
-                            result_doc: query.doc,
-                            excludeModern: query.excludeModern,
-                            ignoreSep: query.ignoreSep,
-                        });
-
-                        // Scroll to top of the page when result changes
-                        window.scroll({
-                            top: 0,
-                            behavior: 'smooth'
-                        });
-                    }
-                },
-                async (error) => {
-                    // TODO: handle error
-                    console.error(error);
-                }
-            );
-
-            let invalidateStats = (
-                prevQuery.current.term !== query.term ||
-                prevQuery.current.doc !== query.doc ||
-                prevQuery.current.excludeModern !== query.excludeModern ||
-                prevQuery.current.ignoreSep !== query.ignoreSep
-            );
-
-            // Do not update stats when only page changes
-            if (invalidateStats) {
-                getStats(
-                    query,
-                    async (numResults, histogram) => {
-                        if (active) {
-                            setResult({
-                                ...prevResult.current,
-                                statsLoaded: true,
-                                num_results: numResults,
-                                histogram: histogram,
-                                stats_term: query.term,
-                            });
-                        }
-                    },
-                    async (error) => {
-                        console.error(error);
-                        // TODO: handle error
-                    }
-                );
-            }
-
-            setResult({
-                ...prevResult.current,
-                statsLoaded: invalidateStats? false : prevResult.current.statsLoaded,
-                loaded: false,
-            });
-
-            return () => {
-                active = false;
-            }
-        }
-
-        if (prevQuery.current.term !== curQuery.term ||
-            prevQuery.current.doc !== curQuery.doc ||
-            prevQuery.current.page !== curQuery.page ||
-            prevQuery.current.excludeModern !== curQuery.excludeModern ||
-            prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
-            const result = refreshSearchResults(curQuery);
-            prevQuery.current = curQuery;
-            return result;
-        }
-    }, [curQuery, setResult]);
+    // React.useEffect(() => {
+    //
+    //     function refreshSearchResults(query) {
+    //         let active = true;
+    //
+    //         search(
+    //           query,
+    //           async (result, page_N) => {
+    //               if (active) {
+    //                   setResult({
+    //                       ...prevResult.current,
+    //                       loaded: true,
+    //                       result: result,
+    //                       page_N: page_N,
+    //                       result_term: query.term,
+    //                       result_page: query.page,
+    //                       result_doc: query.doc,
+    //                       excludeModern: query.excludeModern,
+    //                       ignoreSep: query.ignoreSep,
+    //                   });
+    //
+    //                   // Scroll to top of the page when result changes
+    //                   window.scroll({
+    //                       top: 0,
+    //                       behavior: 'smooth'
+    //                   });
+    //               }
+    //           },
+    //           async (error) => {
+    //               // TODO: handle error
+    //               console.error(error);
+    //           }
+    //         );
+    //
+    //         let invalidateStats = (
+    //           prevQuery.current.term !== query.term ||
+    //           prevQuery.current.doc !== query.doc ||
+    //           prevQuery.current.excludeModern !== query.excludeModern ||
+    //           prevQuery.current.ignoreSep !== query.ignoreSep
+    //         );
+    //
+    //         // Do not update stats when only page changes
+    //         if (invalidateStats) {
+    //             getStats(
+    //               query,
+    //               async (numResults, histogram) => {
+    //                   if (active) {
+    //                       setResult({
+    //                           ...prevResult.current,
+    //                           statsLoaded: true,
+    //                           num_results: numResults,
+    //                           histogram: histogram,
+    //                           stats_term: query.term,
+    //                       });
+    //                   }
+    //               },
+    //               async (error) => {
+    //                   console.error(error);
+    //                   // TODO: handle error
+    //               }
+    //             );
+    //         }
+    //
+    //         setResult({
+    //             ...prevResult.current,
+    //             statsLoaded: invalidateStats ? false : prevResult.current.statsLoaded,
+    //             loaded: false,
+    //         });
+    //
+    //         return () => {
+    //             active = false;
+    //         }
+    //     }
+    //
+    //     if (prevQuery.current.term !== curQuery.term ||
+    //       prevQuery.current.doc !== curQuery.doc ||
+    //       prevQuery.current.page !== curQuery.page ||
+    //       prevQuery.current.excludeModern !== curQuery.excludeModern ||
+    //       prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
+    //         const result = refreshSearchResults(curQuery);
+    //         prevQuery.current = curQuery;
+    //         return result;
+    //     }
+    // }, [curQuery, setResult]);
 
     // Convenience function to set page
     const setPage = React.useCallback((page) => {

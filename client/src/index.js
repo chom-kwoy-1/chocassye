@@ -1,14 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 
 import App from './components/App';
-import SearchPage from './components/SearchPage';
-import SourceListPage from './components/SourceListPage';
-import SourcePage from './components/SourcePage';
+import SearchPage from './app/[lng]/search/page';
+import SourceListPage from './app/[lng]/sourcelist/page';
+import SourcePage from './app/[lng]/source/page';
 import HowToPage from './components/HowToPage';
 import AboutPage from './components/AboutPage';
 import EnglishPage from './components/EnglishPage';
@@ -19,7 +18,7 @@ import {useMediaQuery} from "@mui/material";
 import Wordle from "./components/Wordle";
 
 
-function AppWrapper(props) {
+export function AppWrapper(props) {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)',{ noSsr: true });
     let [curTheme, setCurTheme] = React.useState(prefersDarkMode? darkTheme : lightTheme);
     return (
@@ -47,10 +46,3 @@ function AppWrapper(props) {
         </BrowserRouter>
     );
 }
-
-ReactDOM.render((
-    <React.StrictMode>
-        <AppWrapper />
-    </React.StrictMode>
-  ), document.getElementById('root')
-);

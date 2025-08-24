@@ -15,7 +15,6 @@ import {
 import {highlightColors, StyledTableCell, StyledTableRow} from "./utils";
 import {zip} from "./common_utils.mjs";
 import {Interweave} from "interweave";
-import {Link} from "react-router-dom";
 import {IMAGE_BASE_URL} from "./config";
 import {styled, ThemeProvider} from "@mui/material/styles";
 import {tooltipClasses} from "@mui/material/Tooltip";
@@ -35,7 +34,7 @@ function SearchResultsList(props) {
 
     return <React.Fragment>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
             <TableContainer component={Paper} elevation={3}>
                 <Table size="small">
                     <TableBody>
@@ -46,7 +45,7 @@ function SearchResultsList(props) {
 
                                 {/* Year column */}
                                 <StyledTableCell component="th" scope="row" sx={{ verticalAlign: 'top' }}>
-                                    <Grid item sx={{ py: 0.4 }}>
+                                    <Grid sx={{ py: 0.4 }}>
                                         <Tooltip title={book.year_string}>
                                             <Box>{
                                                 book.year === null ? (
@@ -67,7 +66,7 @@ function SearchResultsList(props) {
                                     {/* For each sentence */}
                                     {zip(book.sentences, match_ids_in_book)
                                         .map(([sentence, match_ids_in_sentence], i) =>
-                                            <Grid item key={i} sx={{ py: 0.4 }}>
+                                            <Grid key={i} sx={{ py: 0.4 }}>
                                                 <SentenceAndPage
                                                     sentence={sentence}
                                                     book={book}
@@ -88,7 +87,7 @@ function SearchResultsList(props) {
             </TableContainer>
         </Grid>
 
-        <Grid item xs={12} container alignItems="flex-start" spacing={1.5} className="searchResultsList">
+        <Grid size={12} container alignItems="flex-start" spacing={1.5} className="searchResultsList">
             {footnotes.length > 0? <div className="dividerFootnote"></div> : null}
 
             {/* Show footnotes */}
@@ -123,14 +122,14 @@ function PageImagePreview(props) {
     const { t } = useTranslation();
 
     return <Grid container>
-        <Grid item xs={12}>
+        <Grid size={12}>
             <img src={props.imageURL}
                  alt={t("Image for page", { page: props.page })}
                  style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
                  width="400px" height="600px"
             />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
             {t("Image for page", { page: props.page })}
         </Grid>
     </Grid>;
@@ -282,25 +281,29 @@ let SearchResultsWrapper = function (props) {
 
     return <React.Fragment>
 
-        <Grid item xs={12} container sx={{position: 'relative'}}>
-            <Backdrop
-                sx={{
-                    color: '#fff',
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
-                    position: 'absolute',
-                }}
-                open={!props.statsLoaded}>
-                <CircularProgress color="inherit" />
-            </Backdrop>
-            <Histogram data={props.histogram} setPage={props.setPage} pageN={props.pageN}/>
+        <Grid size={12} container sx={{position: 'relative'}}>
+            <Grid size={12}>
+                <Backdrop
+                    sx={{
+                        color: '#fff',
+                        zIndex: (theme) => theme.zIndex.drawer + 1,
+                        position: 'absolute',
+                    }}
+                    open={!props.statsLoaded}>
+                    <CircularProgress color="inherit" />
+                </Backdrop>
+            </Grid>
+            <Grid size={12}>
+                <Histogram data={props.histogram} setPage={props.setPage} pageN={props.pageN}/>
+            </Grid>
         </Grid>
 
         {/* Show highlight match legend */}
-        <Grid item xs mt={1} mb={2} container columnSpacing={1} spacing={1}>
+        <Grid mt={1} mb={2} container columnSpacing={1} spacing={1}>
             {uniqueMatches.map((part, i) => {
                 const isEnabled = !disabledMatches.has(i);
                 const color = isEnabled ? hlColors[i % hlColors.length] : "lightgrey";
-                return <Grid key={i} item xs="auto">
+                return <Grid key={i} item size="auto">
                     <ThemeProvider theme={lightTheme}>
                         <Chip
                             label={part}
@@ -317,7 +320,7 @@ let SearchResultsWrapper = function (props) {
             })}
         </Grid>
 
-        <Grid item sm="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>
+        <Grid size="auto" sx={{display: {'xs': 'none', 'sm': 'flex'}}}>
             <FormControlLabel
                 control={<Checkbox size="small" sx={{py: 0}} />}
                 label={
@@ -331,7 +334,7 @@ let SearchResultsWrapper = function (props) {
         </Grid>
 
         {/* Pager on top */}
-        <Grid item xs={12}>
+        <Grid size={12}>
             <Box
                 display="flex"
                 justifyContent="center"
@@ -350,7 +353,7 @@ let SearchResultsWrapper = function (props) {
         </Grid>
 
         {/* Results area */}
-        <Grid item xs={12}>
+        <Grid size={12}>
             {filtered_results_list.length > 0?
                 null:
                 <div>
@@ -368,7 +371,7 @@ let SearchResultsWrapper = function (props) {
         />
 
         {/* Pager on bottom */}
-        <Grid item xs={12} marginTop={1}>
+        <Grid size={12} marginTop={1}>
             <Box
                 display="flex"
                 justifyContent="center"

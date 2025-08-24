@@ -55,6 +55,10 @@ function addCustomComponents(theme) {
         components: {
             MuiCssBaseline: {
                 styleOverrides: (themeParam) => `
+                    body {
+                        font-size: 14px;
+                    }
+                    
                     a {
                         color: inherit;
                         text-decoration: underline dotted grey;

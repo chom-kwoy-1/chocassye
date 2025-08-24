@@ -1,13 +1,13 @@
 @font-face {
     font-family: 'Gugyeol';
-    src: url(./fonts/NewGulim.woff2) format('woff2');
+    src: url(fonts/NewGulim.woff2) format('woff2');
     unicode-range: U+E000-F8FF; /* PUA */
 }
 
 @font-face {
     font-family: 'Noto Sans CJK KR';
     src: local('Noto Sans CJK KR'),
-         url(./fonts/NotoSansKR-VariableFont_wght.woff2) format('woff2');
+         url(fonts/NotoSansKR-VariableFont_wght.woff2) format('woff2');
 }
 
 @media print
