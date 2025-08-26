@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import {green, grey, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
-import {postData} from "../../../components/utils";
-import {TranslationContext} from "../../../components/TranslationProvider";
-import {useTranslation} from "../../i18n/client";
+import {postData} from "../../components/utils";
+import {TranslationContext} from "../../components/TranslationProvider";
+import {useTranslation} from "../i18n/client";
 
 
 function fetchWord(numCols, practice, resultFunc) {

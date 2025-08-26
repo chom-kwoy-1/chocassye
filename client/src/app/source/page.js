@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { highlight } from '../../../components/Highlight';
+import { highlight } from '../../components/Highlight';
 import { Interweave } from 'interweave';
 import {
     Grid, Typography, FormControlLabel,
@@ -9,11 +9,11 @@ import {
     TableRow, Tooltip, Select, MenuItem, FormControl, InputLabel, useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import {IMAGE_BASE_URL} from "../../../components/config";
-import { StyledTableCell, StyledTableRow } from '../../../components/utils.js';
+import {IMAGE_BASE_URL} from "../../components/config";
+import { StyledTableCell, StyledTableRow } from '../../components/utils.js';
 import {grey} from "@mui/material/colors";
-import {TranslationContext} from "../../../components/TranslationProvider";
-import {useTranslation} from "../../i18n/client";
+import {TranslationContext} from "../../components/TranslationProvider";
+import {useTranslation} from "../i18n/client";
 import {useRouter, useSearchParams} from "next/navigation";
 
 
@@ -330,7 +330,7 @@ function SoucePageWrapper(props) {
       }
       // Update search params in the URL
       const newSearchParams = new URLSearchParams(newParams);
-      router.push(`/${lng}/source?${newSearchParams.toString()}`);
+      router.push(`/source?${newSearchParams.toString()}`);
     }, [searchParams]);
 
     let bookName = searchParams.get("name");

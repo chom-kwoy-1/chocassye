@@ -60,8 +60,8 @@ function App(props) {
         };
     }
 
-    async function handleLangSelect(event) {
-        await i18n.changeLanguage(event.target.value);
+    async function handleLangSelect(newLang) {
+        await i18n.changeLanguage(newLang);
     }
     
     return (
@@ -73,7 +73,7 @@ function App(props) {
                     <Toolbar disableGutters>
 
                         {/* For big screens */}
-                        <Link href={`/${lng}/search`}>
+                        <Link href={`/search`}>
                             <CollectionsBookmarkIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
                         </Link>
                         <Typography
@@ -88,29 +88,29 @@ function App(props) {
                                 color: 'inherit',
                                 textDecoration: 'none',
                             }}>
-                            <Box onClick={() => router.push(`/${lng}/search`)} sx={{cursor: 'pointer'}}>
+                            <Box onClick={() => router.push(`/search`)} sx={{cursor: 'pointer'}}>
                                 {t('Chocassye')}
                             </Box>
                         </Typography>
                         <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
-                                    onClick={() => router.push(`/${lng}/search`)}>
+                                    onClick={() => router.push(`/search`)}>
                                 {t('Search')}
                             </Button>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
-                                    onClick={() => router.push(`/${lng}/sourcelist`)}>
+                                    onClick={() => router.push(`/sourcelist`)}>
                                 {t('Sources')}
                             </Button>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
-                                    onClick={() => router.push(`/${lng}/howtouse`)}>
+                                    onClick={() => router.push(`/howtouse`)}>
                                 {t('How to Use')}
                             </Button>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
-                                    onClick={() => router.push(`/${lng}/word`)}>
+                                    onClick={() => router.push(`/word`)}>
                                 {t('Machwoassye')}
                             </Button>
                             <Button sx={{ my: 2, color: 'white', display: 'block' }}
-                                    onClick={() => router.push(`/${lng}/about`)}>
+                                    onClick={() => router.push(`/about`)}>
                                 {t('About')}
                             </Button>
                         </Box>
@@ -129,7 +129,7 @@ function App(props) {
                                 <FormControl size="small" fullWidth>
                                     <InputLabel id="lang-select-label">{t('Language')}</InputLabel>
                                     <Select variant="outlined" labelId="lang-select-label"
-                                            onChange={handleLangSelect}
+                                            onChange={(event) => handleLangSelect(event.target.value)}
                                             value={i18n.language}>
                                         <MenuItem value="ko">{t('Korean')}</MenuItem>
                                         <MenuItem value="en">{t('English')}</MenuItem>
@@ -166,27 +166,27 @@ function App(props) {
                                 sx={{
                                     display: { xs: 'block', md: 'none' },
                                 }}>
-                                <MenuItem onClick={() => router.push(`/${lng}/search`)}>
+                                <MenuItem onClick={() => router.push(`/search`)}>
                                     <Typography textAlign="center">
                                         {t('Search')}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={() => router.push(`/${lng}/sourcelist`)}>
+                                <MenuItem onClick={() => router.push(`/sourcelist`)}>
                                     <Typography textAlign="center">
                                         {t('Sources')}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={() => router.push(`/${lng}/howtouse`)}>
+                                <MenuItem onClick={() => router.push(`/howtouse`)}>
                                     <Typography textAlign="center">
                                         {t('How to Use')}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={() => router.push(`/${lng}/word`)}>
+                                <MenuItem onClick={() => router.push(`/word`)}>
                                     <Typography textAlign="center">
                                         {t('Machwoassye')}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={() => router.push(`/${lng}/about`)}>
+                                <MenuItem onClick={() => router.push(`/about`)}>
                                     <Typography textAlign="center">
                                         {t('About')}
                                     </Typography>
@@ -205,7 +205,7 @@ function App(props) {
                                 color: 'inherit',
                                 textDecoration: 'none',
                             }}>
-                            <Box onClick={() => router.push(`/${lng}/search`)} sx={{cursor: 'pointer'}}>
+                            <Box onClick={() => router.push(`/search`)} sx={{cursor: 'pointer'}}>
                                 {t('Chocassye')}
                             </Box>
                         </Typography>
@@ -247,12 +247,12 @@ function App(props) {
                                 sx={{
                                     display: { xs: 'block', md: 'none' },
                                 }}>
-                                <MenuItem onClick={async () => await i18n.changeLanguage('ko')}>
+                                <MenuItem onClick={() => handleLangSelect('ko')}>
                                     <Typography textAlign="center">
                                         {t('Korean')}
                                     </Typography>
                                 </MenuItem>
-                                <MenuItem onClick={async () => await i18n.changeLanguage('en')}>
+                                <MenuItem onClick={() => handleLangSelect('en')}>
                                     <Typography textAlign="center">
                                         {t('English')}
                                     </Typography>

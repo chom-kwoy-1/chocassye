@@ -3,10 +3,10 @@ import React, { createContext } from 'react';
 
 export const TranslationContext = createContext('en');
 
-export function TranslationProvider({ children, lng }: {
+export function TranslationProvider({ children }: {
   children: React.ReactNode,
-  lng: string,
 }) {
+  const [lng, setLng] = React.useState('en');
   return (
     <TranslationContext.Provider value={lng}>
       {children}

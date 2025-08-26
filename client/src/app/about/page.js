@@ -1,10 +1,12 @@
+'use client';
 import React from 'react';
 import {Box, Divider, Stack, Typography} from "@mui/material";
-import {useTranslation} from "../../i18n";
+import {useTranslation} from "../i18n/client";
+import {TranslationContext} from "../../components/TranslationProvider";
 
-async function AboutWrapper(props) {
-    const { lng } = await props.params;
-    const { t } = await useTranslation(lng);
+function AboutWrapper(props) {
+    const lng = React.useContext(TranslationContext);
+    const { t } = useTranslation(lng);
 
     return <Stack spacing={2} sx={{px: 2}}>
         <Typography variant='h4'>{t('About Chocassye')}</Typography>

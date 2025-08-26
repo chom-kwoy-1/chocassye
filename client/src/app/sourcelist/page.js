@@ -12,10 +12,10 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
-import { StyledTableCell } from "../../../components/utils";
-import {useTranslation} from "../../i18n/client";
+import { StyledTableCell } from "../../components/utils";
+import {useTranslation} from "../i18n/client";
 import Link from 'next/link';
-import {TranslationContext} from "../../../components/TranslationProvider";
+import {TranslationContext} from "../../components/TranslationProvider";
 
 function SourceListPage(props) {
     const lng = React.useContext(TranslationContext);
@@ -123,12 +123,12 @@ function load_source_list(offset, limit, resultFunc) {
             }
             else {
                 console.log(result);
-                resultFunc(null);
+                // resultFunc(null);
             }
         })
         .catch(err => {
             console.log(err);
-            resultFunc(null);
+            // resultFunc(null);
         });
 }
 

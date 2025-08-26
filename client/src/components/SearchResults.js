@@ -187,7 +187,7 @@ function SentenceAndPage(props) {
         <span style={{color: sourceTextColor}}>
             &lang;
             <Link className="sourceLink"
-                  href={`/${lng}/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
+                  href={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep? "yes" : "no"}`}
                   style={{textDecoration: `underline dotted ${sourceTextColor}`}}>
                   {props.sentence.page === null? props.book.name : `${props.book.name}:`}
             </Link>

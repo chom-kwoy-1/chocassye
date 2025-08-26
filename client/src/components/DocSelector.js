@@ -54,7 +54,7 @@ export default function DocSelector(props) {
 
     function handleChange(ev, doc, reason) {
         if (reason === 'selectOption') {
-          router.push(`/${lng}/source?name=${doc.name}`);
+          router.push(`/source?name=${doc.name}`);
         }
     }
 

@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import {hangul_to_yale, yale_to_hangul} from '../../../components/YaleToHangul.mjs';
+import {hangul_to_yale, yale_to_hangul} from '../../components/YaleToHangul.mjs';
 import {
     Backdrop, Box,
     Button,
@@ -11,13 +11,13 @@ import {
     Typography
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import {getStats, search} from "../../../components/api";
-import DocSelector from "../../../components/DocSelector";
-import SearchResults from "../../../components/SearchResults";
-import TextFieldWithGugyeol from "../../../components/TextFieldWithGugyeol";
-import {useTranslation} from "../../i18n/client";
+import {getStats, search} from "../../components/api";
+import DocSelector from "../../components/DocSelector";
+import SearchResults from "../../components/SearchResults";
+import TextFieldWithGugyeol from "../../components/TextFieldWithGugyeol";
+import {useTranslation} from "../i18n/client";
 import {useRouter, useSearchParams} from 'next/navigation';
-import {TranslationContext} from "../../../components/TranslationProvider";
+import {TranslationContext} from "../../components/TranslationProvider";
 
 
 function SearchPage(props) {
@@ -243,7 +243,7 @@ function SearchPageWrapper(props) {
         }
         // Update search params in the URL
         const newSearchParams = new URLSearchParams(newParams);
-        router.push(`/${lng}/search?${newSearchParams.toString()}`);
+        router.push(`/search?${newSearchParams.toString()}`);
     }, [searchParams]);
 
     const refSearchParams = React.useRef(searchParams);
