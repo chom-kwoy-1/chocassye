@@ -1,15 +1,21 @@
 'use client';
 import React, { createContext } from 'react';
-import { useTranslation as useTranslationOrig } from "../app/i18n/client";
+import i18next from 'i18next'
+import { useTranslation as useTranslationClient } from "../app/i18n/client";
+import { useTranslation as useTranslationOrig } from 'react-i18next';
 
-export const TranslationContext = createContext<[string, (lng: string) => void]>([
-  'en', (lng: string) => {},
+export const TranslationContext = createContext<[string | undefined, (lng: string) => void]>([
+  undefined, (lng: string) => {},
 ]); // fallback value
 
-export function TranslationProvider({ children }: {
+export function TranslationProvider({ children, defaultLng }: {
   children: React.ReactNode,
+  defaultLng?: string,
 }) {
-  const [lng, setLng] = React.useState('en');
+  // const { i18n } = useTranslationOrig();
+  // console.log("Resolved language:", i18n.resolvedLanguage);
+  // const [lng, setLng] = React.useState(i18n.resolvedLanguage?? 'en');
+  const [lng, setLng] = React.useState<string | undefined>(defaultLng);
   return (
     <TranslationContext.Provider value={[lng, setLng]}>
       {children}
@@ -18,6 +24,6 @@ export function TranslationProvider({ children }: {
 }
 
 export function useTranslation() {
-  const lng = React.useContext(TranslationContext);
-  return useTranslationOrig(lng);
+  const [lng, setLng] = React.useContext(TranslationContext);
+  return useTranslationClient(lng);
 }
