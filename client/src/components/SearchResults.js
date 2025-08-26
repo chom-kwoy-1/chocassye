@@ -27,8 +27,7 @@ import HowToPage from "./HowToPage";
 import {lightTheme} from "../themes";
 import {grey} from "@mui/material/colors";
 import Link from 'next/link';
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../components/TranslationProvider";
+import {useTranslation} from "./TranslationProvider";
 
 function SearchResultsList(props) {
     const { t } = useTranslation();

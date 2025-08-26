@@ -128,7 +128,7 @@ function App(props) {
                                     <InputLabel id="lang-select-label">{t('Language')}</InputLabel>
                                     <Select variant="outlined" labelId="lang-select-label"
                                             onChange={(event) => handleLangSelect(event.target.value)}
-                                            value={i18n.language}>
+                                            value={lng}>
                                         <MenuItem value="ko">{t('Korean')}</MenuItem>
                                         <MenuItem value="en">{t('English')}</MenuItem>
                                     </Select>
