@@ -3,7 +3,7 @@ import React from "react";
 import {TranslationContext} from "@/components/TranslationProvider";
 import {dir} from "i18next";
 import {AppRouterCacheProvider} from "@mui/material-nextjs/v15-appRouter";
-import MyThemeProvider from "@/components/theme-provider";
+import MyThemeProvider from "@/components/ThemeContext";
 import App from "@/components/App";
 
 export function RootLayout(
