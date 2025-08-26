@@ -16,8 +16,7 @@ import {
 import {green, grey, yellow} from "@mui/material/colors";
 import {Share} from "@mui/icons-material";
 import {postData} from "../../components/utils";
-import {TranslationContext} from "../../components/TranslationProvider";
-import {useTranslation} from "../i18n/client";
+import {useTranslation} from "../../components/TranslationProvider";
 
 
 function fetchWord(numCols, practice, resultFunc) {
@@ -98,8 +97,7 @@ function WordlePage(props) {
 }
 
 function WordleImpl(props) {
-  const lng = React.useContext(TranslationContext);
-  const { t } = useTranslation(lng);
+  const { t } = useTranslation();
   const theme = useTheme();
 
   const answerWord = props.answerWord;

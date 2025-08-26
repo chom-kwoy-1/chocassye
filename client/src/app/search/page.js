@@ -15,14 +15,13 @@ import {getStats, search} from "../../components/api";
 import DocSelector from "../../components/DocSelector";
 import SearchResults from "../../components/SearchResults";
 import TextFieldWithGugyeol from "../../components/TextFieldWithGugyeol";
-import {useTranslation} from "../i18n/client";
+import {useTranslation} from "../../components/TranslationProvider";
 import {useRouter, useSearchParams} from 'next/navigation';
 import {TranslationContext} from "../../components/TranslationProvider";
 
 
 function SearchPage(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     const [romanize, setRomanize] = React.useState(false);
     const [displayHangul, setDisplayHangul] = React.useState(true);
@@ -232,7 +231,6 @@ function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchPar
 }
 
 function SearchPageWrapper(props) {
-    const lng = React.useContext(TranslationContext);
     const router = useRouter();
 
     const searchParams = useSearchParams();

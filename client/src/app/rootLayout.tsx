@@ -10,7 +10,7 @@ export function RootLayout(
   {children}: {
     children: React.ReactNode,
   }) {
-  const lng = React.useContext(TranslationContext);
+  const [lng, setLng] = React.useContext(TranslationContext);
   return (
     <html lang={lng} dir={dir(lng)}>
     <body>

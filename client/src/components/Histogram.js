@@ -6,12 +6,11 @@ import {
     Box, Grid, Card, Tooltip, useTheme
 } from '@mui/material';
 import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../app/i18n/client";
+import {useTranslation} from "../components/TranslationProvider";
 
 
 export default function Histogram(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
     const theme = useTheme();
 
     const BEGIN = 1400;

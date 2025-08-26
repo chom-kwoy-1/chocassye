@@ -28,11 +28,10 @@ import {lightTheme} from "../themes";
 import {grey} from "@mui/material/colors";
 import Link from 'next/link';
 import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../app/i18n/client";
+import {useTranslation} from "../components/TranslationProvider";
 
 function SearchResultsList(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     let footnotes = [];  // TODO: fix footnotes
 
@@ -123,8 +122,7 @@ const ImageTooltip = styled(({ className, ...props }) => (
 
 
 function PageImagePreview(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     return <Grid container>
         <Grid size={12}>
@@ -141,7 +139,6 @@ function PageImagePreview(props) {
 }
 
 function SentenceAndPage(props) {
-    const lng = React.useContext(TranslationContext);
     const theme = useTheme();
     const hlColors = highlightColors.map((color) => color[theme.palette.mode === 'light'? 'A100': '300']);
     const sourceTextColor = theme.palette.mode === 'light'? grey['600'] : grey['400'];
@@ -227,8 +224,7 @@ function getResultMatches(results, searchTerm, ignoreSep) {
 }
 
 let SearchResultsWrapper = function (props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     const [disabledMatches, setDisabledMatches] = React.useState(new Set());
 

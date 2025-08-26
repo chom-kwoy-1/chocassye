@@ -3,11 +3,10 @@ import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {suggest} from "./api";
 import {useRouter} from "next/navigation";
 import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../app/i18n/client";
+import {useTranslation} from "../components/TranslationProvider";
 
 export default function DocSelector(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
     const router = useRouter();
 
     // Document suggestions

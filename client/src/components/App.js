@@ -15,14 +15,12 @@ import {ThemeProvider} from "@mui/material/styles";
 import {darkTheme, lightTheme} from '@/themes';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import {useTranslation} from "@/app/i18n/client";
+import {TranslationContext, useTranslation} from "@/components/TranslationProvider";
 import {useRouter} from "next/navigation";
-import {TranslationContext} from "@/components/TranslationProvider";
-
 
 function App(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const [lng, setLng] = React.useContext(TranslationContext);
+    const { t } = useTranslation();
     const router = useRouter();
 
     const [curTheme, setCurTheme] = React.useContext(ThemeContext);
@@ -60,8 +58,8 @@ function App(props) {
         };
     }
 
-    async function handleLangSelect(newLang) {
-        await i18n.changeLanguage(newLang);
+    function handleLangSelect(newLang) {
+        setLng(newLang);
     }
     
     return (

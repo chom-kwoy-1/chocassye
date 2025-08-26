@@ -13,13 +13,12 @@ import {
     Typography
 } from "@mui/material";
 import { StyledTableCell } from "../../components/utils";
-import {useTranslation} from "../i18n/client";
+import {useTranslation} from "../../components/TranslationProvider";
 import Link from 'next/link';
 import {TranslationContext} from "../../components/TranslationProvider";
 
 function SourceListPage(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     if (!props.loaded) {
         return (

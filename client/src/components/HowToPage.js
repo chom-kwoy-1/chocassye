@@ -8,8 +8,7 @@ import {
 } from '@mui/material';
 import {styled} from "@mui/material/styles";
 import {tableCellClasses} from "@mui/material/TableCell";
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../app/i18n/client";
+import {useTranslation} from "./TranslationProvider";
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -34,8 +33,7 @@ function MarkdownListItem(props) {
 }
 
 function HowToPageWrapper(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
 
     return <Stack spacing={2} sx={{px: 2}}>
         

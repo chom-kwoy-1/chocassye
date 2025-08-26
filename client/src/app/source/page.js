@@ -13,7 +13,7 @@ import {IMAGE_BASE_URL} from "../../components/config";
 import { StyledTableCell, StyledTableRow } from '../../components/utils.js';
 import {grey} from "@mui/material/colors";
 import {TranslationContext} from "../../components/TranslationProvider";
-import {useTranslation} from "../i18n/client";
+import {useTranslation} from "../../components/TranslationProvider";
 import {useRouter, useSearchParams} from "next/navigation";
 
 
@@ -28,8 +28,7 @@ const allowList = ['mark', 'abbr', 'span'];
 
 
 function Sentence(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
     const bookname = props.bookname;
     const sentence = props.sentence;
     const highlight_term = props.highlight_term;
@@ -79,8 +78,7 @@ function Sentence(props) {
 
 
 function SourcePage(props) {
-    const lng = React.useContext(TranslationContext);
-    const { t } = useTranslation(lng);
+    const { t } = useTranslation();
     
     function handleExcludeChineseChange(event) {
         let excludeChinese = event.target.checked;
@@ -320,7 +318,6 @@ function load_source(bookName, numberInSource, excludeChinese, viewCount, result
 
 
 function SoucePageWrapper(props) {
-    const lng = React.useContext(TranslationContext);
     const router = useRouter();
     const searchParams = useSearchParams();
     const setSearchParams = React.useCallback((newParams) => {
