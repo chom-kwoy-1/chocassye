@@ -130,6 +130,7 @@ function WordleImpl(props) {
   const [hasWon, setHasWon] = React.useState(false);
   const [copyNotifOpen, setCopyNotifOpen] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [restoredTodayNum, setRestoredTodayNum] = React.useState(null);
 
   const isFinished = hasWon || curRow === NUM_ROWS;
   const gameName = todayNum !== -1? t('마초아쎠 #') + todayNum : t('연습 문제');
@@ -139,9 +140,19 @@ function WordleImpl(props) {
     setDialogOpen(isFinished);
   }, [hasWon, curRow, isFinished]);
 
+  React.useEffect(() => {
+    setHasWon(false);
+    setTiles(initialTiles);
+    setCurRow(0);
+    setCurCol(0);
+    setCorrectLetters(new Set());
+    setMisplacedLetters(new Set());
+    setWrongLetters(new Set());
+  }, [answerWord, initialTiles]);
+
   const prefix = `wordle_${NUM_COLS}x${NUM_ROWS}_`;
   React.useEffect(() => {
-    if (todayNum === -1) {
+    if (todayNum === -1 || todayNum === null) {
       return;
     }
     const storedTiles = localStorage.getItem(prefix + 'tiles');
@@ -163,20 +174,12 @@ function WordleImpl(props) {
       }
     }
 
+    setRestoredTodayNum(todayNum);
+
   }, [prefix, todayNum]);
 
   React.useEffect(() => {
-    setHasWon(false);
-    setTiles(initialTiles);
-    setCurRow(0);
-    setCurCol(0);
-    setCorrectLetters(new Set());
-    setMisplacedLetters(new Set());
-    setWrongLetters(new Set());
-  }, [answerWord, initialTiles]);
-
-  React.useEffect(() => {
-    if (todayNum === null || todayNum === -1) {
+    if (todayNum === null || todayNum === -1 || restoredTodayNum !== todayNum) {
       return; // No answer word or today number yet
     }
     localStorage.setItem(prefix + 'tiles', JSON.stringify(tiles));
@@ -186,7 +189,7 @@ function WordleImpl(props) {
     localStorage.setItem(prefix + 'curRow', JSON.stringify(curRow));
     localStorage.setItem(prefix + 'hasWon', JSON.stringify(hasWon));
     localStorage.setItem(prefix + 'todayNum', JSON.stringify(todayNum));
-  }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon, todayNum, prefix, tiles]);
+  }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon, todayNum, prefix, tiles, restoredTodayNum]);
 
   const keyboardLayout = [
     ['ㅂ', 'ㅸ', 'ㅈ', 'ㄷ', 'ㄱ', 'ㅅ', 'ㅿ', 'ㅛ', 'ㅕ', 'ㅑ'],
@@ -381,11 +384,13 @@ function WordleImpl(props) {
           {longGameName}
         </Typography>
         {isFinished?
-          <Button variant="contained" color="primary" onClick={() => {
-            setDialogOpen(true);
-          }}>
-            {t('🎉 결과 보기')}
-          </Button>
+          <Stack alignItems="center">
+            <Button variant="contained" color="primary" onClick={() => {
+              setDialogOpen(true);
+            }}>
+              {t('🎉 결과 보기')}
+            </Button>
+          </Stack>
           : null}
         <Grid container spacing={0} alignItems="center" justifyContent="center">
           <Grid size={{xs: 12, sm: 8, md: 6, lg: 5}} container spacing={1} alignItems="center" justifyContent="center">
