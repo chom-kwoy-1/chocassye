@@ -5,6 +5,7 @@ import {TranslationProvider} from "@/components/TranslationProvider";
 import {RootLayout} from "@/app/rootLayout";
 import { getCookie } from 'cookies-next/server';
 import { cookies, headers } from 'next/headers';
+import {dir} from "i18next";
 
 export const metadata: Metadata = {
   title: 'ᄎᆞ자쎠',
@@ -24,16 +25,20 @@ async function detectLanguage() {
   return lng;
 }
 
-export default async function RootLayoutWrapper(
+export default async function Layout(
   { children }: {
   children: React.ReactNode,
 }) {
   let lng = await detectLanguage();
   return (
-    <TranslationProvider defaultLng={lng}>
-      <RootLayout>
-        {children}
-      </RootLayout>
-    </TranslationProvider>
+    <html lang={lng} dir={dir(lng)}>
+    <body>
+      <TranslationProvider defaultLng={lng}>
+        <RootLayout>
+          {children}
+        </RootLayout>
+      </TranslationProvider>
+    </body>
+    </html>
   );
 }
