@@ -37,7 +37,7 @@ function fetchWord(numCols, practice, resultFunc) {
     });
 }
 
-export default function Wordle(props) {
+export default function Wordle() {
   const [tabPage, setTabPage] = React.useState(0);
 
   return (
@@ -81,7 +81,7 @@ function WordlePage(props) {
 
   React.useEffect(() => {
     return refresh(props.numCols);
-  }, [refresh]);
+  }, [refresh, props.numCols]);
 
   function practiceWord() {
     refresh(props.numCols, true);
@@ -106,17 +106,21 @@ function WordleImpl(props) {
   const NUM_ROWS = props.numRows;
   const NUM_COLS = props.numCols;
 
-  const initialTiles = [];
-  for (let i = 0; i < NUM_ROWS; i++) {
-    const row = [];
-    for (let j = 0; j < NUM_COLS; j++) {
-      row.push({
-        letter: null,
-        status: 'empty', // empty, correct, wrong, misplaced
-      });
+  const initialTiles = React.useMemo(() => {
+    const initialTiles = [];
+    for (let i = 0; i < NUM_ROWS; i++) {
+      const row = [];
+      for (let j = 0; j < NUM_COLS; j++) {
+        row.push({
+          letter: null,
+          status: 'empty', // empty, correct, wrong, misplaced
+        });
+      }
+      initialTiles.push(row);
     }
-    initialTiles.push(row);
-  }
+    return initialTiles;
+  }, [NUM_ROWS, NUM_COLS]);
+
   const [tiles, setTiles] = React.useState(initialTiles);
   const [curRow, setCurRow] = React.useState(0);
   const [curCol, setCurCol] = React.useState(0);
@@ -133,7 +137,7 @@ function WordleImpl(props) {
 
   React.useEffect(() => {
     setDialogOpen(isFinished);
-  }, [hasWon, curRow]);
+  }, [hasWon, curRow, isFinished]);
 
   const prefix = `wordle_${NUM_COLS}x${NUM_ROWS}_`;
   React.useEffect(() => {
@@ -159,7 +163,7 @@ function WordleImpl(props) {
       }
     }
 
-  }, [todayNum]);
+  }, [prefix, todayNum]);
 
   React.useEffect(() => {
     setHasWon(false);
@@ -169,7 +173,7 @@ function WordleImpl(props) {
     setCorrectLetters(new Set());
     setMisplacedLetters(new Set());
     setWrongLetters(new Set());
-  }, [answerWord]);
+  }, [answerWord, initialTiles]);
 
   React.useEffect(() => {
     if (todayNum === null || todayNum === -1) {
@@ -182,7 +186,7 @@ function WordleImpl(props) {
     localStorage.setItem(prefix + 'curRow', JSON.stringify(curRow));
     localStorage.setItem(prefix + 'hasWon', JSON.stringify(hasWon));
     localStorage.setItem(prefix + 'todayNum', JSON.stringify(todayNum));
-  }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon]);
+  }, [correctLetters, misplacedLetters, wrongLetters, curRow, hasWon, todayNum, prefix, tiles]);
 
   const keyboardLayout = [
     ['ㅂ', 'ㅸ', 'ㅈ', 'ㄷ', 'ㄱ', 'ㅅ', 'ㅿ', 'ㅛ', 'ㅕ', 'ㅑ'],
@@ -212,7 +216,7 @@ function WordleImpl(props) {
     }
   }
 
-  async function inputLetter(letter) {
+  const inputLetter = React.useCallback(async (letter) => {
     if (isFinished) {
       return;
     }
@@ -298,7 +302,7 @@ function WordleImpl(props) {
       // Move to the next tile
       setCurCol(curCol + 1);
     }
-  }
+  }, [NUM_COLS, NUM_ROWS, answerWord, correctLetters, curCol, curRow, isFinished, misplacedLetters, t, tiles, wrongLetters]);
 
   const handleGlobalKeyDown = React.useCallback(async (event) => {
     const code = (event.shiftKey? "Shift+" : "") + event.code;
@@ -430,7 +434,7 @@ function WordleImpl(props) {
                         padding: 0,
                         backgroundColor: keyboardColor(key)[0],
                         color: keyboardColor(key)[1],
-                      }} onClick={async (e) => {await inputLetter(key)}}>
+                      }} onClick={async () => {await inputLetter(key)}}>
                         <Typography variant='h6' sx={{
                           fontWeight: "bold",
                         }}>

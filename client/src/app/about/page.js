@@ -2,9 +2,8 @@
 import React from 'react';
 import {Box, Divider, Stack, Typography} from "@mui/material";
 import {useTranslation} from "../../components/TranslationProvider";
-import {TranslationContext} from "../../components/TranslationProvider";
 
-function AboutWrapper(props) {
+function AboutWrapper() {
     const { t } = useTranslation();
 
     return <Stack spacing={2} sx={{px: 2}}>

@@ -30,7 +30,7 @@ export default async function Layout(
   { children }: {
   children: React.ReactNode,
 }) {
-  let lng = await detectLanguage();
+  const lng = await detectLanguage();
   return (
     <html lang={lng} dir={dir(lng)}>
     <body>

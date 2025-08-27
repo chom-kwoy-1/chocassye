@@ -34,7 +34,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "npx eslint"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

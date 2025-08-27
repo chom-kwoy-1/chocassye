@@ -5,8 +5,7 @@ import {range} from './common_utils.mjs';
 import {
     Box, Grid, Card, Tooltip, useTheme
 } from '@mui/material';
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../components/TranslationProvider";
+import {useTranslation} from "./TranslationProvider";
 
 
 export default function Histogram(props) {

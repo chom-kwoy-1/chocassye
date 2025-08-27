@@ -28,6 +28,7 @@ import {lightTheme} from "../themes";
 import {grey} from "@mui/material/colors";
 import Link from 'next/link';
 import {useTranslation} from "./TranslationProvider";
+import Image from 'next/image';
 
 function SearchResultsList(props) {
     const { t } = useTranslation();
@@ -125,7 +126,7 @@ function PageImagePreview(props) {
 
     return <Grid container>
         <Grid size={12}>
-            <img src={props.imageURL}
+            <Image src={props.imageURL}
                  alt={t("Image for page", { page: props.page })}
                  style={{maxHeight: "100%", maxWidth: "100%", objectFit: "scale-down"}}
                  width="400px" height="600px"

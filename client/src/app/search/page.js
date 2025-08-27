@@ -17,7 +17,6 @@ import SearchResults from "../../components/SearchResults";
 import TextFieldWithGugyeol from "../../components/TextFieldWithGugyeol";
 import {useTranslation} from "../../components/TranslationProvider";
 import {useRouter, useSearchParams} from 'next/navigation';
-import {TranslationContext} from "../../components/TranslationProvider";
 
 
 function SearchPage(props) {
@@ -242,7 +241,7 @@ function SearchPageWrapper(props) {
         // Update search params in the URL
         const newSearchParams = new URLSearchParams(newParams);
         router.push(`/search?${newSearchParams.toString()}`);
-    }, [searchParams]);
+    }, [searchParams, router]);
 
     const refSearchParams = React.useRef(searchParams);
 

@@ -12,8 +12,8 @@ export const ThemeContext = createContext([
 export default function MyThemeProvider({ children, }: {
     children: React.ReactNode
 }) {
-    let [curTheme, setCurTheme] = React.useState(lightTheme);
-    let [isThemeArtificallySet, setIsThemeArtificallySet] = React.useState(false);
+    const [curTheme, setCurTheme] = React.useState(lightTheme);
+    const [isThemeArtificallySet, setIsThemeArtificallySet] = React.useState(false);
 
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const preferredTheme = prefersDarkMode? darkTheme : lightTheme;

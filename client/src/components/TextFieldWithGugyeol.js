@@ -16,8 +16,7 @@ import {
     Typography
 } from "@mui/material";
 import {StyledTableCell} from "./utils";
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../components/TranslationProvider";
+import {useTranslation} from "./TranslationProvider";
 
 export default function TextFieldWithGugyeol(props) {
     const { t } = useTranslation();
@@ -27,7 +26,7 @@ export default function TextFieldWithGugyeol(props) {
     const [gugyeolInputOpen, setGugyeolInputOpen] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
 
-    function toggleGugyeolInput(e) {
+    function toggleGugyeolInput() {
         setAnchorEl(document.getElementById(uniqueId));
         setGugyeolInputOpen(!gugyeolInputOpen);
         setIsFocused(!gugyeolInputOpen);
@@ -63,7 +62,7 @@ export default function TextFieldWithGugyeol(props) {
             />
             <Box style={{position: "absolute", right: 0, padding: 0, top: "50%", transform: "translateY(-50%)"}}>
                 <Tooltip title={t("Toggle Gugyeol Input")}>
-                    <IconButton variant="outlined" onClick={(e) => toggleGugyeolInput(e)}>
+                    <IconButton variant="outlined" onClick={() => toggleGugyeolInput()}>
                         <Typography sx={{
                             fontSize: "20pt", fontWeight: "900", lineHeight: 0.7,
                             color: gugyeolInputOpen ? (theme) => theme.palette.primary.main : "inherit"

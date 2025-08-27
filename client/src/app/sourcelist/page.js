@@ -15,7 +15,6 @@ import {
 import { StyledTableCell } from "../../components/utils";
 import {useTranslation} from "../../components/TranslationProvider";
 import Link from 'next/link';
-import {TranslationContext} from "../../components/TranslationProvider";
 
 function SourceListPage(props) {
     const { t } = useTranslation();

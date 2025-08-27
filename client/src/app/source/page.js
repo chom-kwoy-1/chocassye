@@ -12,7 +12,6 @@ import { styled } from '@mui/material/styles';
 import {IMAGE_BASE_URL} from "../../components/config";
 import { StyledTableCell, StyledTableRow } from '../../components/utils.js';
 import {grey} from "@mui/material/colors";
-import {TranslationContext} from "../../components/TranslationProvider";
 import {useTranslation} from "../../components/TranslationProvider";
 import {useRouter, useSearchParams} from "next/navigation";
 
@@ -328,7 +327,7 @@ function SoucePageWrapper(props) {
       // Update search params in the URL
       const newSearchParams = new URLSearchParams(newParams);
       router.push(`/source?${newSearchParams.toString()}`);
-    }, [searchParams]);
+    }, [searchParams, router]);
 
     let bookName = searchParams.get("name");
     let numberInSource = searchParams.get("n") ?? 0;
