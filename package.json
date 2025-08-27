@@ -6,7 +6,8 @@
   "main": "run_server.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsc && node dist/run_server.js"
+    "start": "tsc && node dist/run_server.js",
+    "populate-db": "tsx scripts/populate_db.js"
   },
   "keywords": [],
   "author": "",

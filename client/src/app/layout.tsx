@@ -1,11 +1,12 @@
-import type {Metadata} from 'next'
-import '../index.css'
 import React from "react";
+import '../index.css';
+import type {Metadata} from 'next';
 import {TranslationProvider} from "@/components/TranslationProvider";
 import {RootLayout} from "@/app/rootLayout";
 import { getCookie } from 'cookies-next/server';
 import { cookies, headers } from 'next/headers';
-import {dir} from "i18next";
+import { dir } from "i18next";
+import { fallbackLng, languages } from "@/app/i18n/settings";
 
 export const metadata: Metadata = {
   title: 'ᄎᆞ자쎠',
@@ -15,12 +16,12 @@ export const metadata: Metadata = {
 async function detectLanguage() {
   // Determine the user's language preference from cookies or headers
   let lng = await getCookie('i18next', {cookies});
-  if (lng === undefined) {
+  if (lng === undefined || lng === 'undefined') {
     const acceptLanguage = (await headers()).get('Accept-Language');
-    lng = acceptLanguage?.split(',')[0]; // Take the first language preference
+    lng = acceptLanguage?.split(',')[0]?.split('-')[0]; // Take the first language preference
   }
-  if (lng === undefined) {
-    lng = 'en'; // default to English if no preference is found
+  if (lng === undefined || !languages.includes(lng)) {
+    lng = fallbackLng; // default to English if no preference is found
   }
   return lng;
 }
