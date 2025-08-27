@@ -140,7 +140,10 @@ export function SourceListPageWrapper(props) {
           loaded: true
         });
       }
-      // FIXME: error handling
+      else {
+        // FIXME: error handling
+        console.error("Error loading source:", newData.msg);
+      }
     },
     []
   );
@@ -148,6 +151,8 @@ export function SourceListPageWrapper(props) {
   React.useEffect(() => {
     if (offset !== prevOffset.current || limit !== prevLimit.current) {
       refresh(offset, limit);
+      prevOffset.current = offset;
+      prevLimit.current = limit;
     }
   }, [offset, limit, refresh]);
 

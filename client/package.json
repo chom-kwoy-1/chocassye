@@ -21,6 +21,7 @@
     "i18next-icu": "^2.4.0",
     "i18next-resources-to-backend": "^1.2.1",
     "interweave": "^13.1.1",
+    "interweave-ssr": "^2.0.0",
     "next": "^15.5.0",
     "next-http-proxy-middleware": "^1.2.7",
     "pg": "^8.13.0",

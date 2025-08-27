@@ -17,6 +17,6 @@ export default async function SourceList() {
     />;
   }
   else {
-    return <div>Error loading data</div>;
+    return <div>Error loading data: {initialData.msg}</div>;
   }
 }

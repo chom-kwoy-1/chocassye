@@ -9,6 +9,9 @@ import { fallbackLng, languages } from "@/app/i18n/settings";
 import {AppRouterCacheProvider} from "@mui/material-nextjs/v15-appRouter";
 import MyThemeProvider from "@/components/ThemeContext";
 import App from "@/components/App";
+import { polyfill } from 'interweave-ssr';
+
+polyfill(); // Polyfill for interweave on server side
 
 export const metadata: Metadata = {
   title: 'ᄎᆞ자쎠',
@@ -36,17 +39,17 @@ export default async function Layout(
   return (
     <html lang={lng} dir={dir(lng)}>
     <body>
-      <div id="root">
-        <TranslationProvider defaultLng={lng}>
-          <AppRouterCacheProvider>
+      <AppRouterCacheProvider>
+        <div id="root">
+          <TranslationProvider defaultLng={lng}>
             <MyThemeProvider>
               <App>
                 {children}
               </App>
             </MyThemeProvider>
-          </AppRouterCacheProvider>
-        </TranslationProvider>
-      </div>
+          </TranslationProvider>
+        </div>
+      </AppRouterCacheProvider>
     </body>
     </html>
   );

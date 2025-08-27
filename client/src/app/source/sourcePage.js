@@ -1,0 +1,388 @@
+'use client';
+import {useTranslation} from "../../components/TranslationProvider";
+import {highlight} from "../../components/Highlight";
+import {
+  Box,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Pagination,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableContainer,
+  TableRow,
+  Tooltip,
+  Typography,
+  useTheme
+} from "@mui/material";
+import {grey} from "@mui/material/colors";
+import {StyledTableCell, StyledTableRow} from "../../components/utils";
+import {Interweave} from "interweave";
+import {IMAGE_BASE_URL} from "../../components/config";
+import React from "react";
+import {useRouter, useSearchParams} from "next/navigation";
+import {styled} from "@mui/material/styles";
+import {fetchSource} from "./fetchSource";
+
+const NonAlternatingTableRow = styled(TableRow)(({theme}) => ({
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
+const allowList = ['mark', 'abbr', 'span'];
+
+function Sentence(props) {
+  const {t} = useTranslation();
+  const bookname = props.bookname;
+  const sentence = props.sentence;
+  const highlight_term = props.highlight_term;
+  const ignoreSep = props.ignoreSep;
+  const text = sentence.html ?? sentence.text;
+  const html = highlight(
+    text,
+    highlight_term,
+    null,
+    false,
+    ignoreSep,
+    null,
+  );
+
+  const theme = useTheme();
+  const sourceTextColor = theme.palette.mode === 'light' ? grey['600'] : grey['400'];
+
+  return (
+    <StyledTableRow>
+      <StyledTableCell className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}>
+        <Typography
+          component='span'
+          sx={{fontSize: "1.3em"}}>
+          <Interweave className="text" content={html} allowList={allowList} allowAttributes={true}/>
+        </Typography>
+      </StyledTableCell>
+      <StyledTableCell align="right">
+        <span className="pageNum" style={{color: sourceTextColor, userSelect: 'none'}}>
+          ({sentence.hasimages && sentence.page !== '' ?
+            sentence.page.split('-').map((page, i) =>
+              <Tooltip key={i} title={t("Image for page", {page: page})}>
+                <span>
+                  <a className="pageNum"
+                     style={{color: sourceTextColor, textDecoration: 'underline dotted'}}
+                     href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
+                     target="blank"
+                     key={i}>{page}</a>
+                  {i < sentence.page.split('-').length - 1 ? "-" : null}
+                </span>
+              </Tooltip>) : sentence.page
+          })
+        </span>
+      </StyledTableCell>
+    </StyledTableRow>
+  );
+}
+
+function SourcePage(props) {
+  const {t} = useTranslation();
+
+  function handleExcludeChineseChange(event) {
+    let excludeChinese = event.target.checked;
+    if (excludeChinese) {
+      props.setSearchParams(searchParams => {
+        searchParams.set("n", 0);
+        return searchParams;
+      })
+    }
+    props.setExcludeChinese(excludeChinese);
+  }
+
+  function handleViewCountChange(event) {
+    let viewCount = event.target.value;
+    props.setViewCount(viewCount);
+  }
+
+  if (props.result.data === null) {
+    return <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+      <Grid size={12}>
+        <Box>
+          <Typography
+            variant='h5'
+            component='span'
+            sx={{
+              fontWeight: 500
+            }}>{props.bookName}</Typography>
+        </Box>
+      </Grid>
+    </Grid>
+  }
+
+  let hl = props.highlightWord ?? "NULL";
+
+  const PAGE = props.viewCount;
+  let pageCount = Math.ceil(props.result.data.count / PAGE);
+
+  let n = props.numberInSource;
+  let page = Math.floor(n / PAGE);
+
+  return (
+    <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center" direction="row">
+      <Grid size={12}>
+        <Box>
+          <Typography
+            variant='h5'
+            component='span'
+            sx={{
+              fontWeight: 500
+            }}>{props.bookName}</Typography>
+          &ensp;
+          <span>{props.result.data.year_string}</span>
+        </Box>
+      </Grid>
+
+      {/* Bibliography and attributions */}
+      <Grid size={{xs: 10, sm: 8, lg: 6}} mx="auto">
+        <TableContainer component={Paper} elevation={1}>
+          <Table size="small">
+            <TableBody>
+              {props.result.data.bibliography === "" ? null :
+                <StyledTableRow>
+                  <StyledTableCell>
+                    <Typography color={"textSecondary"}>
+                      {t("Source")}
+                    </Typography>
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    {props.result.data.bibliography}
+                  </StyledTableCell>
+                </StyledTableRow>}
+              {props.result.data.attributions.length === 0 ? null :
+                <StyledTableRow>
+                  <StyledTableCell>
+                    <Typography color={"textSecondary"}>
+                      {t("Attributions")}
+                    </Typography>
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    <TableContainer component={Paper} elevation={0}>
+                      <Table size="small">
+                        <TableBody>
+                          {props.result.data.attributions.map((attribution, i) => (
+                            <NonAlternatingTableRow key={i}>
+                              <StyledTableCell>
+                                <Typography color={"textSecondary"}>
+                                  {attribution.role}
+                                </Typography>
+                              </StyledTableCell>
+                              <StyledTableCell>
+                                {attribution.name}
+                              </StyledTableCell>
+                            </NonAlternatingTableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </StyledTableCell>
+                </StyledTableRow>}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+
+      <Grid container size={12} alignItems="center">
+        <Grid size={{xs: 8, md: 10}}>
+          <FormControlLabel
+            control={<Checkbox size="small" sx={{py: 0}}/>}
+            label={
+              <Typography sx={{fontSize: "1em"}}>
+                {t("Exclude Chinese")}
+              </Typography>
+            }
+            checked={props.excludeChinese}
+            onChange={(event) => handleExcludeChineseChange(event)}
+          />
+        </Grid>
+        <Grid size={{xs: 4, md: 2}}>
+          <FormControl variant="standard" fullWidth>
+            <InputLabel id="view-count-select-label">{t("Results per page")}</InputLabel>
+            <Select
+              labelId="view-count-select-label"
+              id="view-count-select"
+              label={t("Results per page")}
+              value={props.viewCount}
+              onChange={(event) => handleViewCountChange(event)}
+              variant="standard">
+              <MenuItem value={25}>25</MenuItem>
+              <MenuItem value={50}>50</MenuItem>
+              <MenuItem value={100}>100</MenuItem>
+              <MenuItem value={200}>200</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      {/* Pager */}
+      <Grid size={12}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center">
+          <Pagination
+            color="primary"
+            count={pageCount}
+            siblingCount={2}
+            boundaryCount={2}
+            page={page + 1}
+            shape="rounded"
+            onChange={(_, newPage) => {
+              newPage = newPage - 1;
+              let newN = props.numberInSource;
+              if (newPage !== page) {
+                newN = newPage * PAGE;
+              }
+              props.setSearchParams(searchParams => {
+                searchParams.set("n", newN);
+                return searchParams;
+              });
+            }}
+          />
+        </Box>
+      </Grid>
+
+      <Grid size={12}>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableBody>
+              {props.result.data.sentences.map(
+                (sentence, i) => <Sentence
+                  key={i}
+                  bookname={props.bookName}
+                  sentence={sentence}
+                  highlight_term={hl}
+                  ignoreSep={props.ignoreSep}
+                />
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+
+      {/* Pager */}
+      <Grid size={12} my={1}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center">
+          <Pagination
+            color="primary"
+            count={pageCount}
+            siblingCount={2}
+            boundaryCount={2}
+            page={page + 1}
+            shape="rounded"
+            onChange={(_, newPage) => {
+              newPage = newPage - 1;
+              let newN = props.numberInSource;
+              if (newPage !== page) {
+                newN = newPage * PAGE;
+              }
+              props.setSearchParams(searchParams => {
+                searchParams.set("n", newN);
+                return searchParams;
+              });
+            }}
+          />
+        </Box>
+      </Grid>
+    </Grid>
+  );
+}
+
+export function SourcePageWrapper(props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const setSearchParams = React.useCallback((newParams) => {
+    let params = new URLSearchParams(searchParams);
+    if (typeof newParams === 'function') {
+      newParams = newParams(params);
+    }
+    // Update search params in the URL
+    const newSearchParams = new URLSearchParams(newParams);
+    router.push(`/source?${newSearchParams.toString()}`);
+  }, [searchParams, router]);
+
+  const bookName = searchParams.get("name");
+  const prevBookName = React.useRef(bookName);
+
+  const numberInSource = parseInt(searchParams.get("n") ?? '0');
+  const prevNumberInSource = React.useRef(numberInSource);
+
+  const [excludeChinese, setExcludeChinese] = React.useState(props.initialExcludeChinese);
+  const prevExcludeChinese = React.useRef(excludeChinese);
+
+  const [viewCount, setViewCount] = React.useState(props.initialViewCount);
+  const prevViewCount = React.useRef(viewCount);
+
+  const [result, setResult] = React.useState(props.initialData);
+  const prevResult = React.useRef(result);
+  React.useEffect(() => {
+    prevResult.current = result;
+  }, [result]);
+
+  const highlightWord = searchParams.get("hl");
+  const ignoreSep = (searchParams.get("is") ?? 'no') === 'yes';
+
+  const refresh = React.useCallback(
+    async (bookName, numberInSource, excludeChinese, viewCount) => {
+      setResult({
+        ...prevResult.current,
+        loaded: false
+      });
+
+      const newData = await fetchSource(bookName, numberInSource, excludeChinese, viewCount);
+      if (newData.status === "success") {
+        setResult({
+          data: newData.data,
+          loaded: true
+        });
+      }
+      else {
+        // FIXME: error handling
+        console.error("Error loading source:", newData.msg);
+      }
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    if (
+      bookName !== prevBookName.current ||
+      numberInSource !== prevNumberInSource.current ||
+      excludeChinese !== prevExcludeChinese.current ||
+      viewCount !== prevViewCount.current
+    ) {
+      refresh(bookName, numberInSource, excludeChinese, viewCount);
+      prevBookName.current = bookName;
+      prevNumberInSource.current = numberInSource;
+      prevExcludeChinese.current = excludeChinese;
+      prevViewCount.current = viewCount;
+    }
+  }, [bookName, numberInSource, excludeChinese, viewCount, refresh]);
+
+  return <SourcePage
+    {...props}
+    bookName={bookName}
+    numberInSource={numberInSource}
+    result={result}
+    setSearchParams={setSearchParams}
+    highlightWord={highlightWord}
+    ignoreSep={ignoreSep}
+    excludeChinese={excludeChinese}
+    setExcludeChinese={setExcludeChinese}
+    viewCount={viewCount}
+    setViewCount={setViewCount}
+  />;
+}
