@@ -9,7 +9,6 @@ import {
     Typography, Box, IconButton, Menu,
     MenuItem, Paper, Select, FormControl, InputLabel
 } from '@mui/material';
-import i18n from "i18next";
 import {ThemeContext} from "./ThemeContext";
 import {ThemeProvider} from "@mui/material/styles";
 import {darkTheme, lightTheme} from '@/themes';
