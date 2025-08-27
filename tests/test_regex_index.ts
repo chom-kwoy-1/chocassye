@@ -1,8 +1,6 @@
-// @ts-ignore
-import {make_ngrams} from "../utils/ngram.js";
-// @ts-ignore
-import {insert_documents} from "../utils/parse_xml.js";
-import {find_candidate_ids} from "../utils/regex_index.js";
+import {make_ngrams} from "@/utils/ngram";
+import {insert_documents} from "@/utils/parse_xml";
+import {find_candidate_ids} from "@/utils/regex_index";
 
 
 async function make_db(num_data: number): Promise<[string[], Map<string, number[]>]> {

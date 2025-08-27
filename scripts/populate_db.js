@@ -1,8 +1,8 @@
 'use strict';
 
 import pg from 'pg';
-import {insert_into_db} from "../utils/insert_into_db.js";
-import {insert_documents} from "../utils/parse_xml.js";
+import {insert_into_db} from "../src/utils/insert_into_db.js";
+import {insert_documents} from "../src/utils/parse_xml.js";
 import fs from "fs";
 
 async function populate_db(database_name, doc_cnt) {

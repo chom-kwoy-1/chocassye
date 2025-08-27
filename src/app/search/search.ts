@@ -8,7 +8,7 @@ import escapeStringRegexp from "escape-string-regexp";
 
 const PAGE_N: number = parseInt(process.env.PAGE_N || '50');
 
-const ngramIndex = await loadNgramIndex(path.join(process.cwd(), '../index'));
+const ngramIndex = await loadNgramIndex(path.join(process.cwd(), 'index'));
 console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
 
 type SearchRequest = {

@@ -5,7 +5,7 @@ import Rand from "rand-seed";
 import {promisify} from "node:util";
 
 const wordlist5: string[] = [];
-await promisify(fs.readFile)(path.join(process.cwd(), '../chocassye-corpus/wordle5.txt'), 'utf8')
+await promisify(fs.readFile)(path.join(process.cwd(), 'chocassye-corpus/wordle5.txt'), 'utf8')
   .then(data => {
     // split by new line and remove empty lines
     const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
@@ -19,7 +19,7 @@ await promisify(fs.readFile)(path.join(process.cwd(), '../chocassye-corpus/wordl
   });
 
 const wordlist6: string[] = [];
-await promisify(fs.readFile)(path.join(process.cwd(), '../chocassye-corpus/wordle6.txt'), 'utf8')
+await promisify(fs.readFile)(path.join(process.cwd(), 'chocassye-corpus/wordle6.txt'), 'utf8')
   .then(data => {
     // split by new line and remove empty lines
     const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);

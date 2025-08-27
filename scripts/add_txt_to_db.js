@@ -4,9 +4,9 @@ import pg from "pg";
 import {promisify} from "util";
 import glob from "glob";
 import fs from "fs";
-import {insert_into_db} from "../utils/insert_into_db.js";
-import {parse_year_string, year_and_bookname_from_filename} from "../utils/parse_utils.js";
-import {hangul_to_yale, normalize_string} from "../modules/YaleToHangul.mjs";
+import {insert_into_db} from "../src/utils/insert_into_db.js";
+import {parse_year_string, year_and_bookname_from_filename} from "../src/utils/parse_utils.js";
+import {hangul_to_yale, normalize_string} from "../src/components/YaleToHangul.mjs";
 import path from "path";
 
 function parse_format_1(file, lines) {
