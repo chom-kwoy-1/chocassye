@@ -3,6 +3,8 @@ import path from "path";
 import { getPool } from '@/app/db';
 import {loadNgramIndex} from "@/utils/load_ngram_index";
 import {makeCorpusQuery} from "@/utils/search";
+import {format} from "node-pg-format";
+import escapeStringRegexp from "escape-string-regexp";
 
 const PAGE_N: number = parseInt(process.env.PAGE_N || '50');
 
@@ -182,6 +184,50 @@ export async function getStats(
     };
   }
   catch(err){
+    console.log(err);
+    return {
+      status: "error",
+      msg: "Database query failed",
+    };
+  }
+}
+
+export async function docSuggest(
+  doc: string
+): Promise<
+  {status: "success", total_rows: number, results: any[]} |
+  {status: "error", msg: string}
+> {
+  const timestamp = new Date().toISOString();
+  console.log(`${timestamp} | docSuggest doc=${doc}`);
+
+  try {
+    const pool = await getPool();
+    const docs = await pool.query(format(`
+    SELECT * FROM books
+    WHERE filename ~ %L
+    ORDER BY year_sort ASC, filename::bytea ASC
+    LIMIT 10
+  `, [escapeStringRegexp(doc)]));
+
+    // rename keys in docs
+    const renamedDocs = docs.rows.map(doc => {
+      return {
+        name: doc.filename,
+        year: doc.year,
+        year_start: doc.year_start,
+        year_end: doc.year_end,
+        year_string: doc.year_string
+      };
+    });
+
+    return {
+      status: "success",
+      total_rows: renamedDocs.length,
+      results: renamedDocs
+    };
+  }
+  catch(err) {
     console.log(err);
     return {
       status: "error",

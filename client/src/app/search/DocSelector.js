@@ -1,9 +1,8 @@
 import React from "react";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
-import {suggest} from "./api";
 import {useRouter} from "next/navigation";
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../components/TranslationProvider";
+import {useTranslation} from "../../components/TranslationProvider";
+import {docSuggest} from "./search";
 
 export default function DocSelector(props) {
     const { t } = useTranslation();
@@ -27,14 +26,20 @@ export default function DocSelector(props) {
                 loaded: false,
             });
 
-            suggest(doc, (result, num_results) => {
-                if (active) {
-                    setDocSuggestions({
-                        result: result,
-                        num_results: num_results,
-                        loaded: true,
-                    });
+            docSuggest(doc).then(result => {
+              if (active) {
+                if (result.status === "success") {
+                  setDocSuggestions({
+                    result: result.results,
+                    num_results: result.total_rows,
+                    loaded: true,
+                  });
                 }
+                else {
+                  console.error("Error loading document suggestions:", result.msg);
+                  // TODO: error handling
+                }
+              }
             });
 
             return () => {

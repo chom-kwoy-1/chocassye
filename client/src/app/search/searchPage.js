@@ -15,7 +15,7 @@ import {
   Typography
 } from "@mui/material";
 import TextFieldWithGugyeol from "../../components/TextFieldWithGugyeol";
-import DocSelector from "../../components/DocSelector";
+import DocSelector from "./DocSelector";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchResults from "../../components/SearchResults";
 import {useRouter, useSearchParams} from "next/navigation";
