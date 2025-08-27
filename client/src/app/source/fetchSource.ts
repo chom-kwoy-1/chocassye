@@ -1,12 +1,25 @@
 'use server';
 import { getPool } from '@/app/db';
 
+type Sentence = {
+  text: string,
+};
+
+type SourceData = {
+  name: string,
+  year_string: string,
+  bibliography: string,
+  attributions: string,
+  sentences: Sentence[],
+  count: number,
+};
+
 export async function fetchSource(
   bookName: string,
   numberInSource: number,
   excludeChinese: boolean,
   pageSize: number,
-): Promise<{status: "success", data: any} | {status: "error", msg: string}> {
+): Promise<{status: "success", data: SourceData} | {status: "error", msg: string}> {
   if (isNaN(pageSize) || pageSize > 200) {
     return {
       status: "error",

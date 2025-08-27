@@ -1,10 +1,15 @@
 'use server';
 import { getPool } from '@/app/db';
 
+type ListData = {
+  text: string,
+  full_count: number,
+};
+
 export async function fetchList(
   offset: number,
   limit: number
-): Promise<{status: "success", data: any[]} | {status: "error", msg: string}> {
+): Promise<{status: "success", data: ListData[]} | {status: "error", msg: string}> {
   console.log(`source_list offset=${offset} limit=${limit}`);
   try {
     const pool = await getPool();

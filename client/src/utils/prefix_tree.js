@@ -77,7 +77,6 @@ export function add(word, T) {
       // into new common prefix subtrie
       T[commonPrefix] = {};
       add(sibling.substr(s), T[commonPrefix]);
-      // @ts-ignore
       T[commonPrefix][sibling.substr(s)] = T[sibling];
       add(word.substr(s), T[commonPrefix]);
       delete T[sibling];

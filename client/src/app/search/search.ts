@@ -19,6 +19,10 @@ type SearchRequest = {
   ignoreSep: boolean
 };
 
+type Sentence = {
+  text: string,
+};
+
 type Book = {
   name: string,
   year: number,
@@ -26,7 +30,7 @@ type Book = {
   year_end: number,
   year_string: string,
   year_sort: number,
-  sentences: any[],
+  sentences: Sentence[],
   count: number,
 };
 
@@ -192,10 +196,18 @@ export async function getStats(
   }
 }
 
+type DocSuggestResult = {
+  name: string,
+  year: number,
+  year_start: number,
+  year_end: number,
+  year_string: string,
+};
+
 export async function docSuggest(
   doc: string
 ): Promise<
-  {status: "success", total_rows: number, results: any[]} |
+  {status: "success", total_rows: number, results: DocSuggestResult[]} |
   {status: "error", msg: string}
 > {
   const timestamp = new Date().toISOString();
