@@ -1,7 +1,7 @@
 import {promisify} from "util";
 import fs from "fs";
 import { Packr } from 'msgpackr';
-import glob from "glob";
+import {glob} from "glob";
 
 export type NgramMaps = {
   common: Map<string, number[]>,
@@ -10,7 +10,7 @@ export type NgramMaps = {
 };
 
 async function loadFiles(dirName: string, prefix: string): Promise<Map<string, number[]>> {
-  const files = await promisify(glob)(`${dirName}/${prefix}_*.bin`);
+  const files = await glob(`${dirName}/${prefix}_*.bin`);
   if (files.length === 0) {
     throw new Error(`No index files found in directory: ${dirName}/${prefix}_*.bin`);
   }

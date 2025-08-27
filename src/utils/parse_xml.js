@@ -4,7 +4,7 @@ import {hangul_to_yale} from '../modules/YaleToHangul.mjs';
 import {parse_year_string, year_and_bookname_from_filename} from "./parse_utils.js";
 import jsdom from "jsdom";
 import {promisify} from "util";
-import glob from "glob";
+import {glob} from "glob";
 import fs from "fs";
 
 function uni(str) {
@@ -221,9 +221,8 @@ export async function insert_documents(insert_fn, batch_size, slice) {
     const dom = new jsdom.JSDOM("");
     const parser = new dom.window.DOMParser;
 
-    const xmlFiles = await promisify(glob)(
-      "chocassye-corpus/data/*/*.xml"
-    );
+
+    const xmlFiles = await glob("chocassye-corpus/data/*/*.xml");
     console.log("Total", xmlFiles.length, "files");
     let promises = [];
     for (let [i, file] of xmlFiles.entries()) {

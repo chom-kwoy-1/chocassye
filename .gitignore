@@ -1,8 +1,8 @@
 node_modules/*
+build/*
 */build/*
 */node_modules/*
 db/*
-*/build/*
 *.log
 dump/*
 .idea/*
@@ -13,4 +13,3 @@ __pycache__/*
 index/*
 dist/*
 **/.next/*
-

@@ -2,7 +2,7 @@
 
 import pg from "pg";
 import {promisify} from "util";
-import glob from "glob";
+import {glob} from "glob";
 import fs from "fs";
 import {insert_into_db} from "../src/utils/insert_into_db.js";
 import {parse_year_string, year_and_bookname_from_filename} from "../src/utils/parse_utils.js";
@@ -226,7 +226,7 @@ function add_text_file(file, text) {
 }
 
 function insert_documents(pool) {
-    return promisify(glob)(
+    return glob(
         "chocassye-corpus/data/*/*.txt"
     ).then(async files => {
         console.log("Total", files.length, "files");
