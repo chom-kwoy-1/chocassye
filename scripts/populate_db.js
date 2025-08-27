@@ -146,6 +146,7 @@ if (!process.env.DB_NAME) {
   process.exit(1);
 }
 const doc_cnt = process.env.DOC_CNT ? parseInt(process.env.DOC_CNT) : null;
-await populate_db(process.env.DB_NAME, doc_cnt);
-
-console.log("Database populated successfully.");
+populate_db(process.env.DB_NAME, doc_cnt)
+  .then(() => {
+    console.log("Database populated successfully.");
+  })
