@@ -2,11 +2,13 @@ import React from "react";
 import '../index.css';
 import type {Metadata} from 'next';
 import {TranslationProvider} from "@/components/TranslationProvider";
-import {RootLayout} from "@/app/rootLayout";
 import { getCookie } from 'cookies-next/server';
 import { cookies, headers } from 'next/headers';
 import { dir } from "i18next";
 import { fallbackLng, languages } from "@/app/i18n/settings";
+import {AppRouterCacheProvider} from "@mui/material-nextjs/v15-appRouter";
+import MyThemeProvider from "@/components/ThemeContext";
+import App from "@/components/App";
 
 export const metadata: Metadata = {
   title: 'ᄎᆞ자쎠',
@@ -34,11 +36,17 @@ export default async function Layout(
   return (
     <html lang={lng} dir={dir(lng)}>
     <body>
-      <TranslationProvider defaultLng={lng}>
-        <RootLayout>
-          {children}
-        </RootLayout>
-      </TranslationProvider>
+      <div id="root">
+        <TranslationProvider defaultLng={lng}>
+          <AppRouterCacheProvider>
+            <MyThemeProvider>
+              <App>
+                {children}
+              </App>
+            </MyThemeProvider>
+          </AppRouterCacheProvider>
+        </TranslationProvider>
+      </div>
     </body>
     </html>
   );
