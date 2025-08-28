@@ -3,7 +3,7 @@ import {format} from "node-pg-format";
 import type {NgramMaps} from "./load_ngram_index";
 import {find_candidate_ids} from "./regex_index";
 import {make_ngrams} from "./ngram";
-import {searchTerm2Regex} from "../components/Regex.mjs";
+import {searchTerm2Regex} from "@/components/Regex.mjs";
 
 export function makeCorpusQuery(
   term: string,

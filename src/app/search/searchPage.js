@@ -1,7 +1,7 @@
 'use client';
-import {useTranslation} from "../../components/TranslationProvider";
+import {useTranslation} from "@/components/TranslationProvider";
 import React from "react";
-import {hangul_to_yale, yale_to_hangul} from "../../components/YaleToHangul.mjs";
+import {hangul_to_yale, yale_to_hangul} from "@/components/YaleToHangul.mjs";
 import {
   Backdrop,
   Box,
@@ -14,10 +14,10 @@ import {
   Snackbar,
   Typography
 } from "@mui/material";
-import TextFieldWithGugyeol from "../../components/TextFieldWithGugyeol";
+import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
 import DocSelector from "./DocSelector";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import SearchResults from "../../components/SearchResults";
+import SearchResults from "@/components/SearchResults";
 import {useRouter, useSearchParams} from "next/navigation";
 import {getStats, search} from "./search";
 

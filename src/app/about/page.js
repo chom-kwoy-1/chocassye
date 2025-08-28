@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import {Box, Divider, Stack, Typography} from "@mui/material";
-import {useTranslation} from "../../components/TranslationProvider";
+import {useTranslation} from "@/components/TranslationProvider";
 
 function AboutWrapper() {
     const { t } = useTranslation();

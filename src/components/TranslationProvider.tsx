@@ -1,6 +1,6 @@
 'use client';
 import React, { createContext } from 'react';
-import { useTranslation as useTranslationClient } from "../app/i18n/client";
+import { useTranslation as useTranslationClient } from "@/app/i18n/client";
 
 export const TranslationContext = createContext<[string | undefined, (lng: string) => void]>([
   undefined, (lng: string) => {},

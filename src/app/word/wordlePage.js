@@ -1,5 +1,5 @@
 'use client';
-import {useTranslation} from "../../components/TranslationProvider";
+import {useTranslation} from "@/components/TranslationProvider";
 import {
   Box,
   Button,

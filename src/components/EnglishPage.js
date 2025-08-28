@@ -1,6 +1,6 @@
 import React from 'react';
 import './i18n';
-import {postData} from './utils.js';
+import {postData} from './client_utils.js';
 
 
 function TestWrapper(props) {

@@ -1,6 +1,6 @@
 'use client';
 import React from "react";
-import {useTranslation} from "../../components/TranslationProvider";
+import {useTranslation} from "@/components/TranslationProvider";
 import {
   Box,
   Grid,
@@ -13,7 +13,7 @@ import {
   TableRow,
   Typography
 } from "@mui/material";
-import {StyledTableCell} from "../../components/utils";
+import {StyledTableCell} from "@/components/client_utils";
 import Link from "next/link";
 import {fetchList} from "./fetchList";
 

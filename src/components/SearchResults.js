@@ -12,7 +12,7 @@ import {
     TableContainer,
     Tooltip, Typography, useTheme
 } from "@mui/material";
-import {highlightColors, StyledTableCell, StyledTableRow} from "./utils";
+import {highlightColors, StyledTableCell, StyledTableRow} from "./client_utils";
 import {zip} from "./common_utils.mjs";
 import {Interweave} from "interweave";
 import {IMAGE_BASE_URL} from "./config";
@@ -24,7 +24,7 @@ import {
 import {yale_to_hangul} from "./YaleToHangul.mjs";
 import Histogram from "./Histogram";
 import HowToPage from "./HowToPage";
-import {lightTheme} from "../themes";
+import {lightTheme} from "@/themes";
 import {grey} from "@mui/material/colors";
 import Link from 'next/link';
 import {useTranslation} from "./TranslationProvider";

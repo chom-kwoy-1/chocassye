@@ -15,7 +15,7 @@ import {
     Tooltip,
     Typography
 } from "@mui/material";
-import {StyledTableCell} from "./utils";
+import {StyledTableCell} from "./client_utils";
 import {useTranslation} from "./TranslationProvider";
 
 export default function TextFieldWithGugyeol(props) {

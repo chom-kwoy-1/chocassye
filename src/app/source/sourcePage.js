@@ -1,6 +1,6 @@
 'use client';
-import {useTranslation} from "../../components/TranslationProvider";
-import {highlight} from "../../components/Highlight";
+import {useTranslation} from "@/components/TranslationProvider";
+import {highlight} from "@/components/Highlight";
 import {
   Box,
   Checkbox,
@@ -21,9 +21,9 @@ import {
   useTheme
 } from "@mui/material";
 import {grey} from "@mui/material/colors";
-import {StyledTableCell, StyledTableRow} from "../../components/utils";
+import {StyledTableCell, StyledTableRow} from "@/components/client_utils";
 import {Interweave} from "interweave";
-import {IMAGE_BASE_URL} from "../../components/config";
+import {IMAGE_BASE_URL} from "@/components/config";
 import React from "react";
 import {useRouter, useSearchParams} from "next/navigation";
 import {styled} from "@mui/material/styles";

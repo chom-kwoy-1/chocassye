@@ -1,6 +1,6 @@
 import React from 'react';
 import './i18n';
-import {postData} from './utils.js';
+import {postData} from './client_utils.js';
 import {
     Box,
     Button,
@@ -12,8 +12,7 @@ import {
     TextField
 } from "@mui/material";
 import {yale_to_hangul} from './YaleToHangul';
-import {TranslationContext} from "./TranslationProvider";
-import {useTranslation} from "../components/TranslationProvider";
+import {useTranslation} from "./TranslationProvider";
 
 
 function makeParseTreeDOM(parseTree) {

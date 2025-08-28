@@ -1,7 +1,7 @@
 import React from "react";
 import {Autocomplete, CircularProgress, TextField} from "@mui/material";
 import {useRouter} from "next/navigation";
-import {useTranslation} from "../../components/TranslationProvider";
+import {useTranslation} from "@/components/TranslationProvider";
 import {docSuggest} from "./search";
 
 export default function DocSelector(props) {
