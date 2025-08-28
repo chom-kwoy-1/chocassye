@@ -66,111 +66,111 @@ function addCustomComponents(theme) {
     components: {
       MuiCssBaseline: {
         styleOverrides: (themeParam) => `
-                    body {
-                        font-size: 14px;
-                    }
-                    
-                    a {
-                        color: inherit;
-                        text-decoration: underline dotted grey;
-                    }
-                    a.sourceLink:visited {
-                        color: ${deepOrange["400"]};
-                    }
-                    
-                    span[orig-tag="anno"] {
-                        font-size: smaller;
-                    }
-                    
-                    span[data-tone] {
-                        position: relative;
-                        margin-top: 10%;
-                    }
-                    
-                    span[data-tone]::after {
-                        position: absolute;
-                        width: 200%;
-                        text-align: center;
-                        font-size: 0.6em;
-                        line-height: 1.0;
-                        transform: translate(-50%, -50%);
-                        top: 0;
-                        left: 50%;
-                        opacity: 0.6;
-                    }
-                    
-                    span[data-tone="H"]::after {
-                        content: "•";
-                    }
-                    
-                    span[data-tone="R"]::after {
-                        content: "••";
-                    }
-                    
-                    span[orig-tag="uncertain-tone"] > span[data-tone="L"]::after {
-                        content: "[ ]";
-                        color: ${red["400"]};
-                    }
-                    span[orig-tag="uncertain-tone"] > span[data-tone="H"]::after {
-                        content: "[•]";
-                        color: ${red["400"]};
-                    }
-                    span[orig-tag="uncertain-tone"] > span[data-tone="R"]::after {
-                        content: "[••]";
-                        color: ${red["400"]};
-                    }
-                    
-                    span[is-tone]::before {
-                        content: "\\00200c";
-                    }
-                    
-                    span[is-tone] {
-                        width: 0.001pt;
-                        display: inline-block;
-                        position: relative;
-                        z-index: -100;
-                        opacity: 0;
-                    }
-                    
-                    .sourceSentence.sentence_type_title {
-                        line-height: 30pt;
-                    }
-                    .sourceSentence.sentence_type_title .text {
-                        font-size: 20pt;
-                    }
-                    
-                    .sourceSentence.sentence_lang_chi .text,
-                    .sourceSentence.sentence_type_chi .text {
-                        color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-                    }
-                    
-                    .sourceSentence.sentence_lang_mod .text,
-                    .sourceSentence.sentence_type_mod .text {
-                        color: ${themeParam.palette.mode === "light" ? brown["600"] : brown["200"]};
-                    }
-                    
-                    .sourceSentence[class*="sentence_type_anno"] .text,
-                    .sourceSentence[class*="sentence_type_note"] .text {
-                        font-size: 13pt;
-                        padding-left: 20pt;
-                    }
-                    
-                    .text span[orig-tag="g"] {
-                        font-size: 20pt;
-                        margin-right: 4pt;
-                        color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-                    }
-                    .text span[orig-tag="m"] {
-                        margin-right: 4pt;
-                    }
-                    .text span[orig-tag="s"] {
-                        margin-right: 4pt;
-                    }
-                    .text span[orig-tag="expl"] {
-                        color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-                        font-weight: lighter;
-                    }
-                `,
+          body {
+              font-size: 14px;
+          }
+          
+          a {
+              color: inherit;
+              text-decoration: underline dotted grey;
+          }
+          a.sourceLink:visited {
+              color: ${deepOrange["400"]};
+          }
+          
+          span[orig-tag="anno"] {
+              font-size: smaller;
+          }
+          
+          span[data-tone] {
+              position: relative;
+              margin-top: 10%;
+          }
+          
+          span[data-tone]::after {
+              position: absolute;
+              width: 200%;
+              text-align: center;
+              font-size: 0.6em;
+              line-height: 1.0;
+              transform: translate(-50%, -50%);
+              top: 0;
+              left: 50%;
+              opacity: 0.6;
+          }
+          
+          span[data-tone="H"]::after {
+              content: "•";
+          }
+          
+          span[data-tone="R"]::after {
+              content: "••";
+          }
+          
+          span[orig-tag="uncertain-tone"] > span[data-tone="L"]::after {
+              content: "[ ]";
+              color: ${red["400"]};
+          }
+          span[orig-tag="uncertain-tone"] > span[data-tone="H"]::after {
+              content: "[•]";
+              color: ${red["400"]};
+          }
+          span[orig-tag="uncertain-tone"] > span[data-tone="R"]::after {
+              content: "[••]";
+              color: ${red["400"]};
+          }
+          
+          span[is-tone]::before {
+              content: "\\00200c";
+          }
+          
+          span[is-tone] {
+              width: 0.001pt;
+              display: inline-block;
+              position: relative;
+              z-index: -100;
+              opacity: 0;
+          }
+          
+          .sourceSentence.sentence_type_title {
+              line-height: 30pt;
+          }
+          .sourceSentence.sentence_type_title .text {
+              font-size: 20pt;
+          }
+          
+          .sourceSentence.sentence_lang_chi .text,
+          .sourceSentence.sentence_type_chi .text {
+              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
+          }
+          
+          .sourceSentence.sentence_lang_mod .text,
+          .sourceSentence.sentence_type_mod .text {
+              color: ${themeParam.palette.mode === "light" ? brown["600"] : brown["200"]};
+          }
+          
+          .sourceSentence[class*="sentence_type_anno"] .text,
+          .sourceSentence[class*="sentence_type_note"] .text {
+              font-size: 13pt;
+              padding-left: 20pt;
+          }
+          
+          .text span[orig-tag="g"] {
+              font-size: 20pt;
+              margin-right: 4pt;
+              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
+          }
+          .text span[orig-tag="m"] {
+              margin-right: 4pt;
+          }
+          .text span[orig-tag="s"] {
+              margin-right: 4pt;
+          }
+          .text span[orig-tag="expl"] {
+              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
+              font-weight: lighter;
+          }
+        `,
       },
     },
   });

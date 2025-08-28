@@ -220,11 +220,11 @@ export async function docSuggest(
     const docs = await pool.query(
       format(
         `
-    SELECT * FROM books
-    WHERE filename ~ %L
-    ORDER BY year_sort ASC, filename::bytea ASC
-    LIMIT 10
-  `,
+        SELECT * FROM books
+        WHERE filename ~ %L
+        ORDER BY year_sort ASC, filename::bytea ASC
+        LIMIT 10
+      `,
         [escapeStringRegexp(doc)],
       ),
     );

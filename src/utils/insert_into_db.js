@@ -26,12 +26,13 @@ export async function insert_into_db(pool, index, book_details, sentences) {
   await deadlock_retry(
     pool,
     `
-        INSERT INTO books (
-            filename, year, year_sort, decade_sort, year_start, year_end, year_string,
-            attributions, bibliography, num_sentences, non_chinese_sentence_count
-        ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-        );`,
+      INSERT INTO books (
+        filename, year, year_sort, decade_sort, year_start, year_end, year_string,
+        attributions, bibliography, num_sentences, non_chinese_sentence_count
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+      );
+    `,
     [
       book_details.filename,
       book_details.year,
@@ -54,13 +55,14 @@ export async function insert_into_db(pool, index, book_details, sentences) {
     await deadlock_retry(
       pool,
       `
-            INSERT INTO sentences (
-                filename, text, text_without_sep, text_with_tone, html, 
-                type, lang, page, orig_tag, number_in_page, number_in_book, hasImages, 
-                year_sort, decade_sort
-            ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-            ) RETURNING id;`,
+        INSERT INTO sentences (
+          filename, text, text_without_sep, text_with_tone, html, 
+          type, lang, page, orig_tag, number_in_page, number_in_book, hasImages, 
+          year_sort, decade_sort
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+        ) RETURNING id;
+      `,
       [
         sentence.filename,
         sentence.text,
@@ -177,21 +179,21 @@ function pg_insert_ngrams(sentence, sentence_id, pool) {
   data = data.slice(0, -1);
 
   const query = `
-        WITH 
-            input_rows(ngram, is_without_sep) AS (VALUES ${data}),
-            ins AS (
-                INSERT INTO ngrams(ngram, is_without_sep)
-                SELECT * FROM input_rows
-                ON CONFLICT DO NOTHING
-                RETURNING id
-            )
-        INSERT INTO ngram_rel(ngram_id, sentence_id)
-            SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
-                UNION ALL
-            SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
-                input_rows JOIN ngrams n USING (ngram, is_without_sep)
-            ON CONFLICT DO NOTHING;
-    `;
+    WITH 
+      input_rows(ngram, is_without_sep) AS (VALUES ${data}),
+      ins AS (
+        INSERT INTO ngrams(ngram, is_without_sep)
+        SELECT * FROM input_rows
+        ON CONFLICT DO NOTHING
+        RETURNING id
+      )
+    INSERT INTO ngram_rel(ngram_id, sentence_id)
+      SELECT id AS ngram_id, ${sentence_id} AS sentence_id FROM ins
+        UNION ALL
+      SELECT n.id AS ngram_id, ${sentence_id} AS sentence_id FROM 
+        input_rows JOIN ngrams n USING (ngram, is_without_sep)
+      ON CONFLICT DO NOTHING;
+  `;
 
   return deadlock_retry(pool, query);
 }

@@ -48,9 +48,7 @@ export function makeCorpusQuery(
     }
 
     queryString = format(
-      `
-      sentences s WHERE s.id IN (%L) AND ${textFieldName} ~ %L
-    `,
+      `sentences s WHERE s.id IN (%L) AND ${textFieldName} ~ %L`,
       Array.from(cand_ids),
       [regex.source],
     );
@@ -59,12 +57,9 @@ export function makeCorpusQuery(
       `Error while searching "${term}", falling back to psql`,
       error,
     );
-    queryString = format(
-      `
-      sentences s WHERE ${textFieldName} ~ %L
-    `,
-      [regex.source],
-    );
+    queryString = format(`sentences s WHERE ${textFieldName} ~ %L`, [
+      regex.source,
+    ]);
   }
 
   if (doc !== "") {
@@ -127,9 +122,9 @@ function makeCorpusQueryLegacy(
     const regex = searchTerm2Regex(term, ignoreSep);
     queryString = format(
       `
-      ngram_rel r JOIN sentences s ON s.id = r.sentence_id
-        WHERE ${textFieldName} ~ %L
-    `,
+        ngram_rel r JOIN sentences s ON s.id = r.sentence_id
+          WHERE ${textFieldName} ~ %L
+      `,
       [regex.source],
     );
   }
