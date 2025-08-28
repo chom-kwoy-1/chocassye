@@ -4,6 +4,7 @@ import pg from 'pg';
 import {insert_into_db} from "../src/utils/insert_into_db.js";
 import {insert_documents} from "../src/utils/parse_xml.js";
 import fs from "fs";
+import {insert_txt_documents} from "./add_txt_to_db";
 
 async function populate_db(database_name, doc_cnt) {
   const {Pool} = pg;
@@ -96,7 +97,7 @@ async function populate_db(database_name, doc_cnt) {
       `;
       return pool.query(create_ngram_rel);
     })
-    .then(() => {
+    .then(async () => {
       const BATCH_SIZE = process.env.BATCH ? parseInt(process.env.BATCH) : 16;
       console.log("Batch size:", BATCH_SIZE);
 
@@ -104,7 +105,8 @@ async function populate_db(database_name, doc_cnt) {
         return insert_into_db(pool, index, book_details, sentences);
       }
 
-      return insert_documents(insert, BATCH_SIZE, doc_cnt);
+      await insert_txt_documents(pool, doc_cnt);
+      await insert_documents(insert, BATCH_SIZE, doc_cnt);
     })
     .then(() => {
       console.log("Populated tables.");

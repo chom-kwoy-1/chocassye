@@ -225,7 +225,7 @@ function add_text_file(file, text) {
     }
 }
 
-function insert_documents(pool) {
+export function insert_txt_documents(pool, doc_cnt, index_offset=10000) {
     return glob(
         "chocassye-corpus/data/*/*.txt"
     ).then(async files => {
@@ -234,13 +234,17 @@ function insert_documents(pool) {
         let inserted_books = [];
         let promises = [];
         for (let [i, file] of files.entries()) {
+            if (doc_cnt && i >= doc_cnt) {
+                break;
+            }
+
             const pushTask = promisify(fs.readFile)(file, "utf8")
                 .then(async text => {
                     text = text.replace(/^\uFEFF/, '');  // remove BOM
                     const [book_details, sentences] = add_text_file(file, text);
                     const DRY_RUN = (process.env.DRY_RUN || "no") === "yes";
                     if (!DRY_RUN) {
-                        return insert_into_db(pool, book_details, sentences);
+                        return insert_into_db(pool, index_offset + i, book_details, sentences);
                     }
                 })
                 .then(() => {
@@ -267,18 +271,3 @@ function insert_documents(pool) {
         }
     });
 }
-
-function populate_db() {
-    const {Pool} = pg;
-    const pool = new Pool({
-        user: 'postgres',
-        host: 'localhost',
-        database: 'chocassye',
-        password: 'password',
-    });
-    console.log("Connected successfully to server");
-
-    return insert_documents(pool);
-}
-
-await populate_db();
