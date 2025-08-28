@@ -1,59 +1,67 @@
 @font-face {
-    font-family: 'Gugyeol';
-    src: url(fonts/NewGulim.woff2) format('woff2');
-    unicode-range: U+E000-F8FF; /* PUA */
+  font-family: "Gugyeol";
+  src: url(fonts/NewGulim.woff2) format("woff2");
+  unicode-range: U+E000-F8FF; /* PUA */
 }
 
 @font-face {
-    font-family: 'Noto Sans CJK KR';
-    src: local('Noto Sans CJK KR'),
-         url(fonts/NotoSansKR-VariableFont_wght.woff2) format('woff2');
+  font-family: "Noto Sans CJK KR";
+  src:
+    local("Noto Sans CJK KR"),
+    url(fonts/NotoSansKR-VariableFont_wght.woff2) format("woff2");
 }
 
-@media print
-{
-    header { display: none !important; }
-    footer { display: none !important; }
-    .paginator { display: none !important; }
-    main.bottom { display: none !important; }
+@media print {
+  header {
+    display: none !important;
+  }
+  footer {
+    display: none !important;
+  }
+  .paginator {
+    display: none !important;
+  }
+  main.bottom {
+    display: none !important;
+  }
 }
 
 body {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 abbr {
-    border-bottom: 1px dotted grey;
-    text-decoration: none;
-    font-size: inherit;
-    position: relative;
+  border-bottom: 1px dotted grey;
+  text-decoration: none;
+  font-size: inherit;
+  position: relative;
 }
 
 abbr[data-title]:hover::after,
 abbr[data-title]:focus::after,
 .tooltip[data-title]:hover::after,
 .tooltip[data-title]:focus::after {
-    content: attr(data-title);
+  content: attr(data-title);
 
-    /* position tooltip like the native one */
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, 0);
-    bottom: -30px;
-    width: auto;
-    white-space: nowrap;
+  /* position tooltip like the native one */
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+  bottom: -30px;
+  width: auto;
+  white-space: nowrap;
 
-    /* style tooltip */
-    background-color: #1e1e1ecc;
-    color: #fff;
-    border-radius: 3px;
-    box-shadow: 1px 1px 5px 0 rgba(0,0,0,0.4);
-    font-size: 14px;
-    padding: 4px 5px;
-    line-height: 1.2;
-    z-index: 500;
+  /* style tooltip */
+  background-color: #1e1e1ecc;
+  color: #fff;
+  border-radius: 3px;
+  box-shadow: 1px 1px 5px 0 rgba(0, 0, 0, 0.4);
+  font-size: 14px;
+  padding: 4px 5px;
+  line-height: 1.2;
+  z-index: 500;
 }
 
 .MuiPagination-ul {
-    justify-content: center;
+  justify-content: center;
 }

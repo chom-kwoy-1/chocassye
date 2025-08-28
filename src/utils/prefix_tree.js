@@ -19,8 +19,7 @@ export class CompactPrefixTree {
     if (typeof word !== "string") {
       throw new TypeError(`Expected string, got ${typeof word}`);
     }
-    if (!word.length)
-      return;
+    if (!word.length) return;
     this.words.add(word);
     add(word, this.T);
     return this;
@@ -47,8 +46,7 @@ export default CompactPrefixTree;
  */
 export function add(word, T) {
   let l = word.length;
-  if (!l)
-    return;
+  if (!l) return;
   // search for existing prefixes
   while (l--) {
     const prefix = word.substr(0, l + 1);
@@ -62,15 +60,13 @@ export function add(word, T) {
       return add(word.substr(l + 1), T[prefix]);
     }
   }
-  if (T === null)
-    throw new Error("Unexpected error.");
+  if (T === null) throw new Error("Unexpected error.");
   // no prefix found. insert word and check for prefix collision
   const siblings = Object.keys(T);
   l = word.length;
-  const hasSiblings = siblings.some(sibling => {
+  const hasSiblings = siblings.some((sibling) => {
     let s = 0;
-    while (s < l && sibling[s] == word[s])
-      s++;
+    while (s < l && sibling[s] == word[s]) s++;
     const commonPrefix = s < l && s > 1 ? sibling.substr(0, s) : "";
     if (commonPrefix) {
       // rearrange the trie to move word with prefix collision
@@ -101,8 +97,7 @@ export function getPrefix(word, T) {
     while (!T.hasOwnProperty(key) && i < len) {
       key += word[i++];
     }
-    if (!T.hasOwnProperty(key))
-      break;
+    if (!T.hasOwnProperty(key)) break;
     prefix += key;
     T = T[key] || null;
   }
@@ -120,8 +115,7 @@ export function getWordsFromTrie(T) {
  * Get all entries from the trie
  */
 function _getWords(T, words, prefix) {
-  if (T === null)
-    return;
+  if (T === null) return;
   for (const pre of Object.keys(T)) {
     const word = prefix + pre;
     words.add(word);
