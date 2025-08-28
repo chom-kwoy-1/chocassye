@@ -1,15 +1,21 @@
-import React from 'react';
-import {SourcePageWrapper} from "./sourcePage";
-import {fetchSource} from "./fetchSource";
+import React from "react";
+
+import { fetchSource } from "./fetchSource";
+import { SourcePageWrapper } from "./sourcePage";
 
 export default async function Source({ searchParams }) {
   const params = await searchParams;
   const bookName = params.name;
-  const numberInSource = parseInt(params.n ?? '0');
+  const numberInSource = parseInt(params.n ?? "0");
   const excludeChinese = false;
   const viewCount = 25;
 
-  const sourceData = await fetchSource(bookName, numberInSource, excludeChinese, viewCount);
+  const sourceData = await fetchSource(
+    bookName,
+    numberInSource,
+    excludeChinese,
+    viewCount,
+  );
   if (sourceData.status === "success") {
     return (
       <SourcePageWrapper
@@ -17,12 +23,11 @@ export default async function Source({ searchParams }) {
         initialViewCount={viewCount}
         initialData={{
           data: sourceData.data,
-          loaded: true
+          loaded: true,
         }}
       />
     );
-  }
-  else {
+  } else {
     return <div>Error loading data: {sourceData.msg}</div>;
   }
 }

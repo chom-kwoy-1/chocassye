@@ -40,7 +40,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "NGRAM_TRUNCATE=5 next build",
     "start": "next start",
     "lint": "npx eslint",
     "populate-db": "tsx scripts/populate_db.js"

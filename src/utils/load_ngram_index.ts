@@ -1,22 +1,27 @@
-import {promisify} from "util";
 import fs from "fs";
-import { Packr } from 'msgpackr';
-import {glob} from "glob";
+import { glob } from "glob";
+import { Packr } from "msgpackr";
+import { promisify } from "util";
 
 export type NgramMaps = {
-  common: Map<string, number[]>,
-  sep: Map<string, number[]>,
-  nosep: Map<string, number[]>,
+  common: Map<string, number[]>;
+  sep: Map<string, number[]>;
+  nosep: Map<string, number[]>;
 };
 
-async function loadFiles(dirName: string, prefix: string): Promise<Map<string, number[]>> {
+async function loadFiles(
+  dirName: string,
+  prefix: string,
+): Promise<Map<string, number[]>> {
   const files = await glob(`${dirName}/${prefix}_*.bin`);
   if (files.length === 0) {
-    throw new Error(`No index files found in directory: ${dirName}/${prefix}_*.bin`);
+    throw new Error(
+      `No index files found in directory: ${dirName}/${prefix}_*.bin`,
+    );
   }
   const result: Map<string, number[]> = new Map();
   const packr = new Packr();
-  const truncate = parseInt(process.env.NGRAM_TRUNCATE || '-1');  // For testing purposes
+  const truncate = parseInt(process.env.NGRAM_TRUNCATE || "-1"); // For testing purposes
   let fileCount = 0;
   for (const file of files) {
     fileCount++;
@@ -48,5 +53,5 @@ export async function loadNgramIndex(dirName: string): Promise<NgramMaps> {
     common: ngram_map_common,
     sep: ngram_map_sep,
     nosep: ngram_map_nosep,
-  }
+  };
 }

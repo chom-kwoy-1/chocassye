@@ -1,44 +1,46 @@
-'use server';
-import path from "path";
-import { getPool } from '@/app/db';
-import {loadNgramIndex} from "@/utils/load_ngram_index";
-import {makeCorpusQuery} from "@/utils/search";
-import {format} from "node-pg-format";
+"use server";
+
 import escapeStringRegexp from "escape-string-regexp";
+import { format } from "node-pg-format";
+import path from "path";
 
-const PAGE_N: number = parseInt(process.env.PAGE_N || '50');
+import { getPool } from "@/app/db";
+import { loadNgramIndex } from "@/utils/load_ngram_index";
+import { makeCorpusQuery } from "@/utils/search";
 
-const ngramIndex = await loadNgramIndex(path.join(process.cwd(), 'index'));
+const PAGE_N: number = parseInt(process.env.PAGE_N || "50");
+
+const ngramIndex = await loadNgramIndex(path.join(process.cwd(), "index"));
 console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
 
 type SearchRequest = {
-  term: string,
-  doc: string,
-  page: number,
-  excludeModern: boolean,
-  ignoreSep: boolean
+  term: string;
+  doc: string;
+  page: number;
+  excludeModern: boolean;
+  ignoreSep: boolean;
 };
 
 type Sentence = {
-  text: string,
+  text: string;
 };
 
 type Book = {
-  name: string,
-  year: number,
-  year_start: number,
-  year_end: number,
-  year_string: string,
-  year_sort: number,
-  sentences: Sentence[],
-  count: number,
+  name: string;
+  year: number;
+  year_start: number;
+  year_end: number;
+  year_string: string;
+  year_sort: number;
+  sentences: Sentence[];
+  count: number;
 };
 
 export async function search(
   query: SearchRequest,
 ): Promise<
-  {status: "success", results: Book[], page_N: number} |
-  {status: "error", msg: string}
+  | { status: "success"; results: Book[]; page_N: number }
+  | { status: "error"; msg: string }
 > {
   // Get current time
   const beginTime = new Date();
@@ -125,8 +127,7 @@ export async function search(
       results: books,
       page_N: PAGE_N,
     };
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     return {
       status: "error",
@@ -135,11 +136,13 @@ export async function search(
   }
 }
 
-export async function getStats(
-  query: SearchRequest,
-): Promise<
-  {status: "success", num_results: number, histogram: {period: number, num_hits: number}[]} |
-  {status: "error", msg: string}
+export async function getStats(query: SearchRequest): Promise<
+  | {
+      status: "success";
+      num_results: number;
+      histogram: { period: number; num_hits: number }[];
+    }
+  | { status: "error"; msg: string }
 > {
   // Get current time
   const beginTime = new Date();
@@ -186,8 +189,7 @@ export async function getStats(
       num_results: totalCount,
       histogram: results.rows,
     };
-  }
-  catch(err){
+  } catch (err) {
     console.log(err);
     return {
       status: "error",
@@ -197,49 +199,53 @@ export async function getStats(
 }
 
 type DocSuggestResult = {
-  name: string,
-  year: number,
-  year_start: number,
-  year_end: number,
-  year_string: string,
+  name: string;
+  year: number;
+  year_start: number;
+  year_end: number;
+  year_string: string;
 };
 
 export async function docSuggest(
-  doc: string
+  doc: string,
 ): Promise<
-  {status: "success", total_rows: number, results: DocSuggestResult[]} |
-  {status: "error", msg: string}
+  | { status: "success"; total_rows: number; results: DocSuggestResult[] }
+  | { status: "error"; msg: string }
 > {
   const timestamp = new Date().toISOString();
   console.log(`${timestamp} | docSuggest doc=${doc}`);
 
   try {
     const pool = await getPool();
-    const docs = await pool.query(format(`
+    const docs = await pool.query(
+      format(
+        `
     SELECT * FROM books
     WHERE filename ~ %L
     ORDER BY year_sort ASC, filename::bytea ASC
     LIMIT 10
-  `, [escapeStringRegexp(doc)]));
+  `,
+        [escapeStringRegexp(doc)],
+      ),
+    );
 
     // rename keys in docs
-    const renamedDocs = docs.rows.map(doc => {
+    const renamedDocs = docs.rows.map((doc) => {
       return {
         name: doc.filename,
         year: doc.year,
         year_start: doc.year_start,
         year_end: doc.year_end,
-        year_string: doc.year_string
+        year_string: doc.year_string,
       };
     });
 
     return {
       status: "success",
       total_rows: renamedDocs.length,
-      results: renamedDocs
+      results: renamedDocs,
     };
-  }
-  catch(err) {
+  } catch (err) {
     console.log(err);
     return {
       status: "error",
