@@ -66,4 +66,4 @@ async function test() {
   }
 }
 
-await test();
+test();

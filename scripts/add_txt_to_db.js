@@ -1,6 +1,5 @@
 'use strict';
 
-import pg from "pg";
 import {promisify} from "util";
 import {glob} from "glob";
 import fs from "fs";
