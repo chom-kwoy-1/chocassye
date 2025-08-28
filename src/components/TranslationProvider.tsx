@@ -1,18 +1,14 @@
-"use client";
-
+'use client';
+import React, { createContext } from 'react';
 import { useTranslation as useTranslationClient } from "@/app/i18n/client";
-import React, { createContext } from "react";
 
-export const TranslationContext = createContext<
-  [string | undefined, (lng: string) => void]
->([undefined, (lng: string) => {}]); // fallback value
+export const TranslationContext = createContext<[string | undefined, (lng: string) => void]>([
+  undefined, (lng: string) => {},
+]); // fallback value
 
-export function TranslationProvider({
-  children,
-  defaultLng,
-}: {
-  children: React.ReactNode;
-  defaultLng: string;
+export function TranslationProvider({ children, defaultLng }: {
+  children: React.ReactNode,
+  defaultLng: string,
 }) {
   const [lng, setLng] = React.useState<string>(defaultLng);
   return (

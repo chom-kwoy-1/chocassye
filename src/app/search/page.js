@@ -1,21 +1,17 @@
-import React from "react";
-
-import { getStats, search } from "./search";
-import { SearchPageWrapper } from "./searchPage";
+import React from 'react';
+import {SearchPageWrapper} from "./searchPage";
+import {getStats, search} from "./search";
 
 export default async function Search({ searchParams }) {
   const params = await searchParams;
   const query = {
     term: params.term ?? "",
     doc: params.doc ?? "",
-    page: parseInt(params.page ?? "1"),
+    page: parseInt(params.page ?? '1'),
     excludeModern: params.excludeModern === "yes",
     ignoreSep: params.ignoreSep === "yes",
   };
-  const [initialData, initialStats] = await Promise.all([
-    search(query),
-    getStats(query),
-  ]);
+  const [initialData, initialStats] = await Promise.all([search(query), getStats(query)]);
   if (initialData.status === "success" && initialStats.status === "success") {
     return (
       <SearchPageWrapper
@@ -36,7 +32,8 @@ export default async function Search({ searchParams }) {
         }}
       />
     );
-  } else {
+  }
+  else {
     return <div>Error loading data</div>;
   }
 }

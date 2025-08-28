@@ -1,71 +1,60 @@
-import { blue, brown, deepOrange, red } from "@mui/material/colors";
-import { createTheme } from "@mui/material/styles";
+import { createTheme } from '@mui/material/styles';
+import { blue, deepOrange, red, brown } from '@mui/material/colors';
 
 const fonts = [
-  "Gugyeol",
-  "Source Han Sans KR",
-  "Source Han Sans K",
-  "Noto Sans CJK KR",
-  "NanumBarunGothic YetHangul",
-  "나눔바른고딕 옛한글",
-  "함초롬돋움 LVT",
-  "HCR Dotum LVT",
-  "함초롬돋움",
-  "HCR Dotum",
-  "본고딕",
-  "본고딕 KR",
-  "sans-serif",
+    'Gugyeol', 'Source Han Sans KR', 'Source Han Sans K', 'Noto Sans CJK KR', 'NanumBarunGothic YetHangul',
+    '나눔바른고딕 옛한글', '함초롬돋움 LVT', 'HCR Dotum LVT', '함초롬돋움', 'HCR Dotum', '본고딕', '본고딕 KR', 'sans-serif'
 ];
 
 // A custom theme for this app
 const lightThemeBase = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#465168",
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#465168',
+        },
+        secondary: {
+            main: '#D5EED7',
+        },
+        background: {
+            default: '#e1e8ef',
+        },
     },
-    secondary: {
-      main: "#D5EED7",
+    typography: {
+        fontFamily: fonts.join(','),
+        h4: {
+            fontSize: '1.6rem',
+        },
     },
-    background: {
-      default: "#e1e8ef",
-    },
-  },
-  typography: {
-    fontFamily: fonts.join(","),
-    h4: {
-      fontSize: "1.6rem",
-    },
-  },
 });
 
 const darkThemeBase = createTheme({
-  palette: {
-    mode: "dark",
-    primary: {
-      main: "#e5e5ea",
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#e5e5ea',
+        },
+        secondary: {
+            main: '#D5EED7',
+        },
+        background: {
+            default: '#262c39',
+            paper: '#262c39',
+        },
     },
-    secondary: {
-      main: "#D5EED7",
+    typography: {
+        fontFamily: fonts.join(','),
+        h4: {
+            fontSize: '1.6rem',
+        },
     },
-    background: {
-      default: "#262c39",
-      paper: "#262c39",
-    },
-  },
-  typography: {
-    fontFamily: fonts.join(","),
-    h4: {
-      fontSize: "1.6rem",
-    },
-  },
 });
 
 function addCustomComponents(theme) {
-  return createTheme(theme, {
-    components: {
-      MuiCssBaseline: {
-        styleOverrides: (themeParam) => `
+    return createTheme(theme, {
+        components: {
+            MuiCssBaseline: {
+                styleOverrides: (themeParam) => `
                     body {
                         font-size: 14px;
                     }
@@ -75,7 +64,7 @@ function addCustomComponents(theme) {
                         text-decoration: underline dotted grey;
                     }
                     a.sourceLink:visited {
-                        color: ${deepOrange["400"]};
+                        color: ${deepOrange['400']};
                     }
                     
                     span[orig-tag="anno"] {
@@ -109,15 +98,15 @@ function addCustomComponents(theme) {
                     
                     span[orig-tag="uncertain-tone"] > span[data-tone="L"]::after {
                         content: "[ ]";
-                        color: ${red["400"]};
+                        color: ${red['400']};
                     }
                     span[orig-tag="uncertain-tone"] > span[data-tone="H"]::after {
                         content: "[•]";
-                        color: ${red["400"]};
+                        color: ${red['400']};
                     }
                     span[orig-tag="uncertain-tone"] > span[data-tone="R"]::after {
                         content: "[••]";
-                        color: ${red["400"]};
+                        color: ${red['400']};
                     }
                     
                     span[is-tone]::before {
@@ -141,20 +130,12 @@ function addCustomComponents(theme) {
                     
                     .sourceSentence.sentence_lang_chi .text,
                     .sourceSentence.sentence_type_chi .text {
-                        color: ${
-                          themeParam.palette.mode === "light"
-                            ? blue["900"]
-                            : blue["300"]
-                        };
+                        color: ${themeParam.palette.mode === 'light'? blue['900'] : blue['300']};
                     }
                     
                     .sourceSentence.sentence_lang_mod .text,
                     .sourceSentence.sentence_type_mod .text {
-                        color: ${
-                          themeParam.palette.mode === "light"
-                            ? brown["600"]
-                            : brown["200"]
-                        };
+                        color: ${themeParam.palette.mode === 'light'? brown['600'] : brown['200']};
                     }
                     
                     .sourceSentence[class*="sentence_type_anno"] .text,
@@ -166,11 +147,7 @@ function addCustomComponents(theme) {
                     .text span[orig-tag="g"] {
                         font-size: 20pt;
                         margin-right: 4pt;
-                        color: ${
-                          themeParam.palette.mode === "light"
-                            ? blue["900"]
-                            : blue["300"]
-                        };
+                        color: ${themeParam.palette.mode === 'light'? blue['900'] : blue['300']};
                     }
                     .text span[orig-tag="m"] {
                         margin-right: 4pt;
@@ -179,17 +156,13 @@ function addCustomComponents(theme) {
                         margin-right: 4pt;
                     }
                     .text span[orig-tag="expl"] {
-                        color: ${
-                          themeParam.palette.mode === "light"
-                            ? blue["900"]
-                            : blue["300"]
-                        };
+                        color: ${themeParam.palette.mode === 'light'? blue['900'] : blue['300']};
                         font-weight: lighter;
                     }
                 `,
-      },
-    },
-  });
+            }
+        },
+    });
 }
 
 export const lightTheme = addCustomComponents(lightThemeBase);

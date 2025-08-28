@@ -1,10 +1,7 @@
-"use client";
-
-import SearchResults from "@/components/SearchResults";
-import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
-import { useTranslation } from "@/components/TranslationProvider";
-import { hangul_to_yale, yale_to_hangul } from "@/components/YaleToHangul.mjs";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+'use client';
+import {useTranslation} from "@/components/TranslationProvider";
+import React from "react";
+import {hangul_to_yale, yale_to_hangul} from "@/components/YaleToHangul.mjs";
 import {
   Backdrop,
   Box,
@@ -15,16 +12,17 @@ import {
   Grid,
   IconButton,
   Snackbar,
-  Typography,
+  Typography
 } from "@mui/material";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
-
+import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
 import DocSelector from "./DocSelector";
-import { getStats, search } from "./search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import SearchResults from "@/components/SearchResults";
+import {useRouter, useSearchParams} from "next/navigation";
+import {getStats, search} from "./search";
 
 function SearchPage(props) {
-  const { t } = useTranslation();
+  const {t} = useTranslation();
 
   const [romanize, setRomanize] = React.useState(false);
   const [displayHangul, setDisplayHangul] = React.useState(true);
@@ -34,8 +32,8 @@ function SearchPage(props) {
   const normalizedSearchTerm = hangul_to_yale(props.term);
 
   return (
-    <Grid container spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
-      <Grid size={{ xs: 9, sm: 6 }}>
+    <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
+      <Grid size={{xs: 9, sm: 6}}>
         <TextFieldWithGugyeol
           value={props.term}
           setTerm={props.setTerm}
@@ -48,15 +46,19 @@ function SearchPage(props) {
           }}
         />
       </Grid>
-      <Grid size={{ xs: 3, sm: 1 }}>
-        <Button variant="contained" fullWidth onClick={() => props.onRefresh()}>
+      <Grid size={{xs: 3, sm: 1}}>
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={() => props.onRefresh()}>
           {t("Search")}
         </Button>
       </Grid>
 
-      <Grid size={{ xs: 0, sm: 1 }}></Grid>
+      <Grid size={{xs: 0, sm: 1}}>
+      </Grid>
 
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{xs: 12, sm: 4}}>
         <DocSelector
           doc={props.doc}
           handleDocChange={(doc) => props.setDoc(doc)}
@@ -64,63 +66,48 @@ function SearchPage(props) {
         />
       </Grid>
 
-      {props.term !== "" ? (
+      {props.term !== "" ?
         <Grid size={12}>
-          <Box style={{ display: "inline" }}>{t("Preview")}:&nbsp;</Box>
-          <Button
-            variant="outlined"
-            style={{ textTransform: "none" }}
-            onClick={() => {
-              setDisplayHangul(!displayHangul);
-            }}
-          >
+          <Box style={{display: "inline"}}>{t("Preview")}:&nbsp;</Box>
+          <Button variant="outlined" style={{textTransform: 'none'}}
+                  onClick={() => {
+                    setDisplayHangul(!displayHangul);
+                  }}>
             <Typography
               sx={{
                 fontSize: "1.5em",
                 fontWeight: 500,
-                color: "inherit",
-                textDecoration: "none",
-                fontFamily: displayHangul ? "inherit" : "monospace",
-              }}
-            >
+                color: 'inherit',
+                textDecoration: 'none',
+                fontFamily: displayHangul ? 'inherit' : 'monospace',
+              }}>
               {displayHangul ? hangulSearchTerm : normalizedSearchTerm}
             </Typography>
           </Button>
-          {displayHangul ? (
-            <IconButton
-              aria-label="copy"
-              onClick={async () => {
-                await navigator.clipboard.writeText(hangulSearchTerm);
-                setCopyNotifOpen(true);
-              }}
-            >
-              <ContentCopyIcon />
-            </IconButton>
-          ) : null}
-        </Grid>
-      ) : null}
+          {displayHangul ?
+            <IconButton aria-label="copy" onClick={async () => {
+              await navigator.clipboard.writeText(hangulSearchTerm);
+              setCopyNotifOpen(true);
+            }}>
+              <ContentCopyIcon/>
+            </IconButton> : null}
+        </Grid> : null}
       <Snackbar
         open={copyNotifOpen}
         autoHideDuration={1000}
         onClose={() => {
-          setCopyNotifOpen(false);
+          setCopyNotifOpen(false)
         }}
         message={`Copied ‘${hangulSearchTerm}’ to clipboard.`}
       />
 
-      <Grid
-        size={12}
-        container
-        columnSpacing={1}
-        direction="row"
-        justifyContent="flex-start"
-        alignItems="center"
-      >
+      <Grid size={12} container columnSpacing={1}
+            direction="row" justifyContent="flex-start" alignItems="center">
         <Grid size="auto">
           <FormControlLabel
-            control={<Checkbox size="small" sx={{ py: 0 }} />}
+            control={<Checkbox size="small" sx={{py: 0}}/>}
             label={
-              <Typography sx={{ fontSize: "1em" }}>
+              <Typography sx={{fontSize: "1em"}}>
                 {t("Exclude modern translations")}
               </Typography>
             }
@@ -130,9 +117,9 @@ function SearchPage(props) {
         </Grid>
         <Grid size="auto">
           <FormControlLabel
-            control={<Checkbox size="small" sx={{ py: 0 }} />}
+            control={<Checkbox size="small" sx={{py: 0}}/>}
             label={
-              <Typography sx={{ fontSize: "1em" }}>
+              <Typography sx={{fontSize: "1em"}}>
                 {t("Ignore syllable separators")}
               </Typography>
             }
@@ -143,33 +130,32 @@ function SearchPage(props) {
       </Grid>
 
       <Grid size={12}>
-        <Typography sx={{ fontSize: "1em", fontWeight: 600 }}>
-          {t("number Results", { numResults: props.numResults })}
+        <Typography sx={{fontSize: "1em", fontWeight: 600}}>
+          {t('number Results', {numResults: props.numResults})}
           &ensp;
-          {props.result.length > 0 ? (
-            t("current page", {
-              startYear: props.result[0].year,
-              endYear: props.result[props.result.length - 1].year,
-            })
-          ) : (
-            <span></span>
-          )}
+          {
+            props.result.length > 0 ?
+              t('current page', {
+                startYear: props.result[0].year,
+                endYear: props.result[props.result.length - 1].year
+              })
+              : <span></span>
+          }
         </Typography>
       </Grid>
 
-      <Grid size={12} sx={{ position: "relative" }}>
-        <Grid container spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
+      <Grid size={12} sx={{position: 'relative'}}>
+        <Grid container spacing={{xs: 0.5, sm: 1}} alignItems="center">
           <Backdrop
             sx={{
-              color: "#fff",
+              color: '#fff',
               zIndex: (theme) => theme.zIndex.drawer + 1,
-              position: "absolute",
-              alignItems: "flex-start",
+              position: 'absolute',
+              alignItems: 'flex-start',
               pt: 10,
             }}
-            open={!props.loaded}
-          >
-            <CircularProgress color="inherit" />
+            open={!props.loaded}>
+            <CircularProgress color="inherit"/>
           </Backdrop>
 
           <SearchResults
@@ -178,18 +164,19 @@ function SearchPage(props) {
             romanize={romanize}
             handleRomanizeChange={setRomanize}
             ignoreSep={props.resultIgnoreSep}
-            resultTerm={props.resultTerm} // for triggering re-render
-            resultPage={props.resultPage} // for triggering re-render
-            resultDoc={props.resultDoc} // for triggering re-render
+            resultTerm={props.resultTerm}  // for triggering re-render
+            resultPage={props.resultPage}  // for triggering re-render
+            resultDoc={props.resultDoc}  // for triggering re-render
             histogram={props.histogram}
             statsLoaded={props.statsLoaded}
-            statsTerm={props.statsTerm} // for triggering re-render
+            statsTerm={props.statsTerm}  // for triggering re-render
             pageN={props.pageN}
             page={props.page}
             setPage={props.setPage}
           />
         </Grid>
       </Grid>
+
     </Grid>
   );
 }
@@ -224,36 +211,23 @@ function makeSearchParams(query) {
   return params;
 }
 
-function commitQuery(
-  query,
-  pageValid,
-  setPage,
-  curQuery,
-  setCurQuery,
-  searchParams,
-  setSearchParams,
-) {
+function commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams) {
   // Reset page when search query changes
-  if (
-    query.page !== 1 &&
-    !pageValid.current &&
-    (query.term !== curQuery.term ||
-      query.doc !== curQuery.doc ||
-      query.excludeModern !== curQuery.excludeModern ||
-      query.ignoreSep !== curQuery.ignoreSep)
-  ) {
+  if (query.page !== 1 && !pageValid.current && (
+    query.term !== curQuery.term ||
+    query.doc !== curQuery.doc ||
+    query.excludeModern !== curQuery.excludeModern ||
+    query.ignoreSep !== curQuery.ignoreSep)) {
     setPage(1);
   } else {
     setCurQuery(query);
 
     const params = parseSearchParams(searchParams);
-    if (
-      params.term !== query.term ||
+    if (params.term !== query.term ||
       params.doc !== query.doc ||
       params.page !== query.page ||
       params.excludeModern !== query.excludeModern ||
-      params.ignoreSep !== query.ignoreSep
-    ) {
+      params.ignoreSep !== query.ignoreSep) {
       setSearchParams(makeSearchParams(query));
     }
   }
@@ -264,18 +238,15 @@ export function SearchPageWrapper(props) {
   const router = useRouter();
 
   const searchParams = useSearchParams();
-  const setSearchParams = React.useCallback(
-    (newParams) => {
-      let params = new URLSearchParams(searchParams);
-      if (typeof newParams === "function") {
-        newParams = newParams(params);
-      }
-      // Update search params in the URL
-      const newSearchParams = new URLSearchParams(newParams);
-      router.push(`/search?${newSearchParams.toString()}`);
-    },
-    [searchParams, router],
-  );
+  const setSearchParams = React.useCallback((newParams) => {
+    let params = new URLSearchParams(searchParams);
+    if (typeof newParams === 'function') {
+      newParams = newParams(params);
+    }
+    // Update search params in the URL
+    const newSearchParams = new URLSearchParams(newParams);
+    router.push(`/search?${newSearchParams.toString()}`);
+  }, [searchParams, router]);
 
   const refSearchParams = React.useRef(searchParams);
 
@@ -290,7 +261,7 @@ export function SearchPageWrapper(props) {
   // Currently displayed search results
   // const [result, setResult] = React.useContext(SearchResultContext);
   const [result, setResult] = React.useState(props.initialData);
-  const prevResult = React.useRef(result); // for preventing infinite loops
+  const prevResult = React.useRef(result);  // for preventing infinite loops
 
   // Previously sent search query (may be on the run)
   const [curQuery, setCurQuery] = React.useState({
@@ -304,6 +275,7 @@ export function SearchPageWrapper(props) {
 
   // Refresh search results when curQuery changes
   React.useEffect(() => {
+
     function refreshSearchResults(query) {
       let active = true;
 
@@ -322,14 +294,15 @@ export function SearchPageWrapper(props) {
                 excludeModern: query.excludeModern,
                 ignoreSep: query.ignoreSep,
               };
-              setResult({ ...prevResult.current });
+              setResult({...prevResult.current});
 
               // Scroll to top of the page when result changes
               window.scroll({
                 top: 0,
-                behavior: "smooth",
+                behavior: 'smooth'
               });
-            } else {
+            }
+            else {
               console.error("Error loading search results:", newData.msg);
               // TODO: handle error
             }
@@ -339,11 +312,12 @@ export function SearchPageWrapper(props) {
           console.error("Error loading search results:", error);
         });
 
-      let invalidateStats =
+      let invalidateStats = (
         prevQuery.current.term !== query.term ||
         prevQuery.current.doc !== query.doc ||
         prevQuery.current.excludeModern !== query.excludeModern ||
-        prevQuery.current.ignoreSep !== query.ignoreSep;
+        prevQuery.current.ignoreSep !== query.ignoreSep
+      );
 
       // Do not update stats when only page changes
       if (invalidateStats) {
@@ -357,9 +331,10 @@ export function SearchPageWrapper(props) {
                   num_results: newStats.num_results,
                   histogram: newStats.histogram,
                   stats_term: query.term,
-                };
-                setResult({ ...prevResult.current });
-              } else {
+                }
+                setResult({...prevResult.current});
+              }
+              else {
                 console.error("Error loading search stats:", newData.msg);
                 // TODO: handle error
               }
@@ -378,16 +353,14 @@ export function SearchPageWrapper(props) {
 
       return () => {
         active = false;
-      };
+      }
     }
 
-    if (
-      prevQuery.current.term !== curQuery.term ||
+    if (prevQuery.current.term !== curQuery.term ||
       prevQuery.current.doc !== curQuery.doc ||
       prevQuery.current.page !== curQuery.page ||
       prevQuery.current.excludeModern !== curQuery.excludeModern ||
-      prevQuery.current.ignoreSep !== curQuery.ignoreSep
-    ) {
+      prevQuery.current.ignoreSep !== curQuery.ignoreSep) {
       const result = refreshSearchResults(curQuery);
       prevQuery.current = curQuery;
       return result;
@@ -395,35 +368,22 @@ export function SearchPageWrapper(props) {
   }, [curQuery, setResult]);
 
   // Convenience function to set page
-  const setPage = React.useCallback(
-    (page) => {
-      setQuery((query) => {
-        return { ...query, page: page };
-      });
-    },
-    [setQuery],
-  );
+  const setPage = React.useCallback((page) => {
+    setQuery((query) => {
+      return {...query, page: page};
+    });
+  }, [setQuery]);
 
-  const pageValid = React.useRef(true); // true if page is valid, false if page needs to be reset
-  const forceRefresh = React.useRef(true); // true if search results need to be refreshed
+  const pageValid = React.useRef(true);  // true if page is valid, false if page needs to be reset
+  const forceRefresh = React.useRef(true);  // true if search results need to be refreshed
 
   // Update query and results when page, excludeModern, or ignoreSep changes or when forceRefresh is set
   React.useEffect(() => {
-    if (
-      forceRefresh.current ||
+    if (forceRefresh.current ||
       query.page !== prevQuery.current.page ||
       query.excludeModern !== prevQuery.current.excludeModern ||
-      query.ignoreSep !== prevQuery.current.ignoreSep
-    ) {
-      commitQuery(
-        query,
-        pageValid,
-        setPage,
-        prevQuery.current,
-        setCurQuery,
-        refSearchParams.current,
-        setSearchParams,
-      );
+      query.ignoreSep !== prevQuery.current.ignoreSep) {
+      commitQuery(query, pageValid, setPage, prevQuery.current, setCurQuery, refSearchParams.current, setSearchParams);
       forceRefresh.current = false;
     }
   }, [query, setPage, setSearchParams]);
@@ -431,13 +391,11 @@ export function SearchPageWrapper(props) {
   // Update query and results when back button is pressed
   React.useEffect(() => {
     const params = parseSearchParams(searchParams);
-    if (
-      params.term !== refQuery.current.term ||
+    if (params.term !== refQuery.current.term ||
       params.doc !== refQuery.current.doc ||
       params.page !== refQuery.current.page ||
       params.excludeModern !== refQuery.current.excludeModern ||
-      params.ignoreSep !== refQuery.current.ignoreSep
-    ) {
+      params.ignoreSep !== refQuery.current.ignoreSep) {
       setQuery(params);
       pageValid.current = true;
       forceRefresh.current = true;
@@ -446,47 +404,37 @@ export function SearchPageWrapper(props) {
   }, [searchParams]);
 
   function forceRefreshResults() {
-    commitQuery(
-      query,
-      pageValid,
-      setPage,
-      curQuery,
-      setCurQuery,
-      searchParams,
-      setSearchParams,
-    );
+    commitQuery(query, pageValid, setPage, curQuery, setCurQuery, searchParams, setSearchParams);
   }
 
-  return (
-    <SearchPage
-      {...props}
-      // Search parameters
-      term={query.term}
-      setTerm={(value) => setQuery({ ...query, term: value })}
-      doc={query.doc}
-      setDoc={(value) => setQuery({ ...query, doc: value })}
-      page={query.page}
-      setPage={setPage}
-      excludeModern={query.excludeModern}
-      setExcludeModern={(value) => setQuery({ ...query, excludeModern: value })}
-      ignoreSep={query.ignoreSep}
-      setIgnoreSep={(value) => setQuery({ ...query, ignoreSep: value })}
-      // Current Results
-      loaded={result.loaded}
-      result={result.result}
-      resultTerm={result.result_term}
-      resultPage={result.result_page}
-      resultDoc={result.result_doc}
-      resultExcludeModern={result.excludeModern}
-      resultIgnoreSep={result.ignoreSep}
-      // Current Stats
-      statsLoaded={result.statsLoaded}
-      statsTerm={result.stats_term}
-      pageN={result.page_N}
-      numResults={result.num_results}
-      histogram={result.histogram}
-      // Callbacks
-      onRefresh={forceRefreshResults}
-    />
-  );
+  return <SearchPage
+    {...props}
+    // Search parameters
+    term={query.term}
+    setTerm={(value) => setQuery({...query, term: value})}
+    doc={query.doc}
+    setDoc={(value) => setQuery({...query, doc: value})}
+    page={query.page}
+    setPage={setPage}
+    excludeModern={query.excludeModern}
+    setExcludeModern={(value) => setQuery({...query, excludeModern: value})}
+    ignoreSep={query.ignoreSep}
+    setIgnoreSep={(value) => setQuery({...query, ignoreSep: value})}
+    // Current Results
+    loaded={result.loaded}
+    result={result.result}
+    resultTerm={result.result_term}
+    resultPage={result.result_page}
+    resultDoc={result.result_doc}
+    resultExcludeModern={result.excludeModern}
+    resultIgnoreSep={result.ignoreSep}
+    // Current Stats
+    statsLoaded={result.statsLoaded}
+    statsTerm={result.stats_term}
+    pageN={result.page_N}
+    numResults={result.num_results}
+    histogram={result.histogram}
+    // Callbacks
+    onRefresh={forceRefreshResults}
+  />;
 }

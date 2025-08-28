@@ -1,51 +1,41 @@
-"use server";
-
+'use server';
 import fs from "fs";
-import { promisify } from "node:util";
 import path from "path";
 import Rand from "rand-seed";
+import {promisify} from "node:util";
 
 const wordlist5: string[] = [];
-await promisify(fs.readFile)(
-  path.join(process.cwd(), "chocassye-corpus/wordle5.txt"),
-  "utf8",
-)
-  .then((data) => {
+await promisify(fs.readFile)(path.join(process.cwd(), 'chocassye-corpus/wordle5.txt'), 'utf8')
+  .then(data => {
     // split by new line and remove empty lines
-    const lines = data
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+    const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     for (const line of lines) {
       wordlist5.push(line);
     }
     console.log(`Loaded ${wordlist5.length} words from wordle5.txt`);
   })
-  .catch((err) => {
-    console.error("Error reading wordle5.txt:", err);
+  .catch(err => {
+    console.error('Error reading wordle5.txt:', err);
   });
 
 const wordlist6: string[] = [];
-await promisify(fs.readFile)(
-  path.join(process.cwd(), "chocassye-corpus/wordle6.txt"),
-  "utf8",
-)
-  .then((data) => {
+await promisify(fs.readFile)(path.join(process.cwd(), 'chocassye-corpus/wordle6.txt'), 'utf8')
+  .then(data => {
     // split by new line and remove empty lines
-    const lines = data
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+    const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     for (const line of lines) {
       wordlist6.push(line);
     }
     console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
   })
-  .catch((err) => {
-    console.error("Error reading wordle6.txt:", err);
+  .catch(err => {
+    console.error('Error reading wordle6.txt:', err);
   });
 
-export async function fetchWord(numCols: number, isPractice: boolean): Promise {
+export async function fetchWord(
+  numCols: number,
+  isPractice: boolean
+): Promise<{status: string, todayNum: number, word: string}> {
   // Get current timestamp
   const timestamp = new Date().toISOString();
   console.log(`${timestamp} | Wordle request`);
@@ -62,10 +52,11 @@ export async function fetchWord(numCols: number, isPractice: boolean): Promise {
       todayNum: -1, // -1 indicates practice mode
       word: word,
     };
-  } else {
+  }
+  else {
     // Get today's number (offset from 2025-08-04)
     const today = new Date();
-    const startDate = new Date("2025-08-04 GMT+0900");
+    const startDate = new Date('2025-08-04 GMT+0900');
     const diffTime = today.getTime() - startDate.getTime();
     const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
@@ -78,7 +69,7 @@ export async function fetchWord(numCols: number, isPractice: boolean): Promise {
     do {
       word = wordlist[index];
       index = (index + 1) % wordlist.length;
-    } while (word.startsWith("#"));
+    } while (word.startsWith('#'));
 
     console.log(`Today's word (${numCols}): ${word}`);
 
@@ -90,7 +81,10 @@ export async function fetchWord(numCols: number, isPractice: boolean): Promise {
   }
 }
 
-export async function checkWord(numCols: number, word: string): Promise {
+export async function checkWord(
+  numCols: number,
+  word: string,
+): Promise<{status: "success", included: boolean} | {status: "error", msg: string}> {
   // Get current timestamp
   const timestamp = new Date().toISOString();
   console.log(`${timestamp} | Wordle check request`);
@@ -100,13 +94,13 @@ export async function checkWord(numCols: number, word: string): Promise {
   if (word === undefined) {
     return {
       status: "error",
-      msg: "Invalid word",
+      msg: "Invalid word"
     };
   }
 
   // Check if the word is in the wordlist
   return {
     status: "success",
-    included: wordlist.includes(word),
+    included: wordlist.includes(word)
   };
 }

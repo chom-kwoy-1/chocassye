@@ -1,18 +1,19 @@
-"use strict";
+'use strict';
 
-import escapeStringRegexp from "escape-string-regexp";
-import express from "express";
-import fs from "fs";
+import express from 'express';
+import path from "path";
 import http from "http";
 import https from "https";
-import nodecallspython from "node-calls-python";
-import { format } from "node-pg-format";
-import path from "path";
-import pg from "pg";
-import Rand from "rand-seed";
+import fs from "fs";
+import Rand from 'rand-seed';
 
-import { loadNgramIndex } from "./utils/load_ngram_index.js";
-import { makeCorpusQuery } from "./utils/search.js";
+import pg from 'pg';
+import {format} from 'node-pg-format';
+
+import escapeStringRegexp from 'escape-string-regexp';
+import nodecallspython from 'node-calls-python';
+import {loadNgramIndex} from "./utils/load_ngram_index.js";
+import {makeCorpusQuery} from "./utils/search.js";
 
 const __dirname = path.resolve();
 
@@ -20,128 +21,103 @@ const __dirname = path.resolve();
 const app = express();
 const port = process.env.PORT || 5000;
 const sslport = process.env.SSLPORT || 5001;
-const DB_NAME = process.env.DB_NAME || "chocassye";
-const SSL_DIR =
-  process.env.SSL_DIR || "/etc/letsencrypt/live/find.xn--gt1b.xyz";
+const DB_NAME = process.env.DB_NAME || 'chocassye';
+const SSL_DIR = process.env.SSL_DIR || '/etc/letsencrypt/live/find.xn--gt1b.xyz';
 const DOMAIN = process.env.DOMAIN || "find.xn--gt1b.xyz";
 const PAGE_N = process.env.PAGE_N || 50;
 
 const { Pool } = pg;
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: DB_NAME,
-  password: "password",
-  statement_timeout: 10000, // 10 seconds
+    user: 'postgres',
+    host: 'localhost',
+    database: DB_NAME,
+    password: 'password',
+    statement_timeout: 10000, // 10 seconds
 });
 console.log(`Connected successfully to DB ${DB_NAME}`);
 
 let http_server;
 let https_server = null;
 if (process.env.SSL === "ON") {
-  // start listening
-  const http_redirect_app = express();
-  http_redirect_app.use(function (req, res) {
-    res.redirect("https://" + DOMAIN + req.originalUrl);
-  });
-  http_server = http
-    .createServer(http_redirect_app)
-    .listen(port, () => console.log(`Listening on port ${port}`));
+    // start listening
+    const http_redirect_app = express();
+    http_redirect_app.use(function(req, res) {
+        res.redirect('https://' + DOMAIN + req.originalUrl);
+    });
+    http_server = http.createServer(http_redirect_app).listen(port, () => console.log(`Listening on port ${port}`));
 
-  const privateKey = fs.readFileSync(SSL_DIR + "/privkey.pem");
-  const certificate = fs.readFileSync(SSL_DIR + "/cert.pem");
-  const ca = fs.readFileSync(SSL_DIR + "/chain.pem");
-  const credentials = { key: privateKey, cert: certificate, ca: ca };
-  https_server = https
-    .createServer(credentials, app)
-    .listen(sslport, () =>
-      console.log(`Listening on port ${sslport} with SSL`),
-    );
-} else {
-  // start listening
-  http_server = http
-    .createServer(app)
-    .listen(port, () => console.log(`Listening on port ${port}`));
+    const privateKey = fs.readFileSync(SSL_DIR + "/privkey.pem");
+    const certificate = fs.readFileSync(SSL_DIR + "/cert.pem");
+    const ca = fs.readFileSync(SSL_DIR + "/chain.pem");
+    const credentials = { key: privateKey, cert: certificate, ca: ca };
+    https_server = https.createServer(credentials, app).listen(sslport, () => console.log(`Listening on port ${sslport} with SSL`));
+}  else {
+    // start listening
+    http_server = http.createServer(app).listen(port, () => console.log(`Listening on port ${port}`));
 }
 
 console.log("Loading files...");
 
-const ngramIndex = await loadNgramIndex(path.join(__dirname, "./index"));
+const ngramIndex = await loadNgramIndex(path.join(__dirname, './index'));
 console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
 
 const wordlist5 = [];
-fs.readFile(
-  path.join(__dirname, "chocassye-corpus/wordle5.txt"),
-  "utf8",
-  (err, data) => {
+fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle5.txt'), 'utf8', (err, data) => {
     if (err) {
-      console.error("Error reading wordle5.txt:", err);
-      return;
+        console.error('Error reading wordle5.txt:', err);
+        return;
     }
     // split by new line and remove empty lines
-    const lines = data
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+    const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     for (const line of lines) {
-      wordlist5.push(line);
+        wordlist5.push(line);
     }
     console.log(`Loaded ${wordlist5.length} words from wordle5.txt`);
-  },
-);
+});
 
 const wordlist6 = [];
-fs.readFile(
-  path.join(__dirname, "chocassye-corpus/wordle6.txt"),
-  "utf8",
-  (err, data) => {
+fs.readFile(path.join(__dirname, 'chocassye-corpus/wordle6.txt'), 'utf8', (err, data) => {
     if (err) {
-      console.error("Error reading wordle6.txt:", err);
-      return;
+        console.error('Error reading wordle6.txt:', err);
+        return;
     }
     // split by new line and remove empty lines
-    const lines = data
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+    const lines = data.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     for (const line of lines) {
-      wordlist6.push(line);
+        wordlist6.push(line);
     }
     console.log(`Loaded ${wordlist6.length} words from wordle6.txt`);
-  },
-);
+});
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "client/build")));
 
-app.post("/api/search", (req, res) => {
-  // Get current time
-  const beginTime = new Date();
+app.post('/api/search', (req, res) => {
+    // Get current time
+    const beginTime = new Date();
 
-  // Get current timestamp
-  const timestamp = new Date().toISOString();
-  console.log(
-    `${timestamp} ip=${req.socket.remoteAddress} | Search text=${req.body.term} doc=${req.body.doc}`,
-  );
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} ip=${req.socket.remoteAddress} | Search text=${req.body.term} doc=${req.body.doc}`);
 
-  let queryString = makeCorpusQuery(
-    req.body.term,
-    req.body.doc,
-    req.body.excludeModern,
-    req.body.ignoreSep,
-    ngramIndex,
-  );
+    let queryString = makeCorpusQuery(
+        req.body.term,
+        req.body.doc,
+        req.body.excludeModern,
+        req.body.ignoreSep,
+        ngramIndex,
+    );
 
-  if (queryString === null) {
-    res.send({
-      status: "success",
-      results: [],
-      page_N: PAGE_N,
-    });
-    return;
-  }
+    if (queryString === null) {
+        res.send({
+            status: "success",
+            results: [],
+            page_N: PAGE_N,
+        });
+        return;
+    }
 
-  queryString = `
+    queryString = `
         WITH 
             ids AS (
                 SELECT s.id AS id
@@ -170,166 +146,144 @@ app.post("/api/search", (req, res) => {
                 st.number_in_book ASC
     `;
 
-  const page = req.body.page ?? 1;
-  const offset = (page - 1) * PAGE_N;
+    const page = req.body.page ?? 1;
+    const offset = (page - 1) * PAGE_N;
 
-  pool
-    .query(queryString, [offset, PAGE_N])
-    .then((results) => {
-      const elapsed = new Date() - beginTime;
-      console.log("Successfully retrieved search results in " + elapsed + "ms");
-      let books = [];
-      for (const row of results.rows) {
-        if (
-          books.length === 0 ||
-          books[books.length - 1].name !== row.filename
-        ) {
-          books.push({
-            name: row.filename,
-            year: row.year,
-            year_start: row.year_start,
-            year_end: row.year_end,
-            year_string: row.year_string,
-            year_sort: row.year_sort,
-            sentences: [],
-            count: 0,
-          });
+    pool.query(queryString, [offset, PAGE_N]).then((results) => {
+        const elapsed = new Date() - beginTime;
+        console.log("Successfully retrieved search results in " + elapsed + "ms");
+        let books = [];
+        for (const row of results.rows) {
+            if (books.length === 0 || books[books.length - 1].name !== row.filename) {
+                books.push({
+                    name: row.filename,
+                    year: row.year,
+                    year_start: row.year_start,
+                    year_end: row.year_end,
+                    year_string: row.year_string,
+                    year_sort: row.year_sort,
+                    sentences: [],
+                    count: 0,
+                });
+            }
+            books[books.length - 1].sentences.push(row);
+            books[books.length - 1].count += 1;
         }
-        books[books.length - 1].sentences.push(row);
-        books[books.length - 1].count += 1;
-      }
-      res.send({
-        status: "success",
-        results: books,
-        page_N: PAGE_N,
-      });
-    })
-    .catch((err) => {
-      console.log(err.stack);
-      res.send({
-        status: "error",
-        msg: err.message,
-      });
+        res.send({
+            status: "success",
+            results: books,
+            page_N: PAGE_N,
+        });
+    }).catch(err => {
+        console.log(err.stack);
+        res.send({
+            status: "error",
+            msg: err.message
+        });
     });
 });
 
-app.post("/api/search_stats", (req, res) => {
-  // Get current time
-  const beginTime = new Date();
+app.post('/api/search_stats', (req, res) => {
+    // Get current time
+    const beginTime = new Date();
 
-  // Get current timestamp
-  const timestamp = new Date().toISOString();
-  console.log(
-    `${timestamp} ip=${req.socket.remoteAddress} | SearchStats text=${req.body.term} doc=${req.body.doc}`,
-  );
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} ip=${req.socket.remoteAddress} | SearchStats text=${req.body.term} doc=${req.body.doc}`);
 
-  let queryString = makeCorpusQuery(
-    req.body.term,
-    req.body.doc,
-    req.body.excludeModern,
-    req.body.ignoreSep,
-    ngramIndex,
-  );
+    let queryString = makeCorpusQuery(
+      req.body.term,
+      req.body.doc,
+      req.body.excludeModern,
+      req.body.ignoreSep,
+      ngramIndex,
+    );
 
-  if (queryString === null) {
-    res.send({
-      status: "success",
-      num_results: 0,
-      histogram: [],
-    });
-    return;
-  }
+    if (queryString === null) {
+        res.send({
+            status: "success",
+            num_results: 0,
+            histogram: [],
+        });
+        return;
+    }
 
-  queryString = `
+    queryString = `
         SELECT s.decade_sort AS period, CAST(COUNT(DISTINCT s.id) AS INTEGER) AS num_hits
             FROM ${queryString}
             GROUP BY s.decade_sort
     `;
 
-  pool
-    .query(queryString)
-    .then((results) => {
-      const elapsed = new Date() - beginTime;
-      console.log("Successfully retrieved search stats in " + elapsed + "ms");
-      let totalCount = 0;
-      for (const row of results.rows) {
-        totalCount += row.num_hits;
-      }
-      res.send({
-        status: "success",
-        num_results: totalCount,
-        histogram: results.rows,
-      });
-    })
-    .catch((err) => {
-      console.log(err.message);
-      res.send({
-        status: "error",
-        msg: err.message,
-      });
+    pool.query(queryString).then((results) => {
+        const elapsed = new Date() - beginTime;
+        console.log("Successfully retrieved search stats in " + elapsed + "ms");
+        let totalCount = 0;
+        for (const row of results.rows) {
+            totalCount += row.num_hits;
+        }
+        res.send({
+            status: "success",
+            num_results: totalCount,
+            histogram: results.rows,
+        });
+    }).catch(err => {
+        console.log(err.message);
+        res.send({
+            status: "error",
+            msg: err.message
+        });
     });
 });
 
-app.post("/api/doc_suggest", (req, res) => {
-  let doc = req.body.doc;
-  console.log(`suggest doc=${doc} ip=${req.socket.remoteAddress}`);
+app.post('/api/doc_suggest', (req, res) => {
+    let doc = req.body.doc;
+    console.log(`suggest doc=${doc} ip=${req.socket.remoteAddress}`);
 
-  pool
-    .query(
-      format(
-        `
+    pool.query(format(`
         SELECT * FROM books
         WHERE filename ~ %L
         ORDER BY year_sort ASC, filename::bytea ASC
         LIMIT 10
-    `,
-        [escapeStringRegexp(doc)],
-      ),
-    )
-    .then((docs) => {
-      // rename keys in docs
-      docs = docs.rows.map((doc) => {
-        return {
-          name: doc.filename,
-          year: doc.year,
-          year_start: doc.year_start,
-          year_end: doc.year_end,
-          year_string: doc.year_string,
-        };
+    `, [escapeStringRegexp(doc)]))
+      .then((docs) => {
+          // rename keys in docs
+          docs = docs.rows.map(doc => {
+              return {
+                  name: doc.filename,
+                  year: doc.year,
+                  year_start: doc.year_start,
+                  year_end: doc.year_end,
+                  year_string: doc.year_string
+              };
+          });
+          res.send({
+              status: "success",
+              total_rows: docs.length,
+              results: docs
+          });
       });
-      res.send({
-        status: "success",
-        total_rows: docs.length,
-        results: docs,
-      });
-    });
 });
 
-app.get("/api/source", (req, res) => {
-  let n = req.query.number_in_source;
-  let excludeChinese = req.query.exclude_chinese === "true";
-  const page_size = parseInt(req.query.view_count);
-  if (isNaN(page_size) || page_size > 200) {
-    res.send({
-      status: "error",
-      msg: "Invalid view_count",
-    });
-    return;
-  }
-  let start = Math.floor(n / page_size) * page_size;
-  let end = start + page_size;
-  console.log(
-    `source doc=${
-      req.query.name
-    } page=${start}-${end} ${typeof excludeChinese}`,
-  );
+app.get('/api/source', (req, res) => {
+    let n = req.query.number_in_source;
+    let excludeChinese = req.query.exclude_chinese === "true";
+    const page_size = parseInt(req.query.view_count);
+    if (isNaN(page_size) || page_size > 200) {
+        res.send({
+            status: "error",
+            msg: "Invalid view_count"
+        });
+        return;
+    }
+    let start = Math.floor(n / page_size) * page_size;
+    let end = start + page_size;
+    console.log(`source doc=${req.query.name} page=${start}-${end} ${typeof(excludeChinese)}`)
 
-  const excludeChineseString = excludeChinese ? "AND lang NOT IN ('chi')" : "";
+    const excludeChineseString = excludeChinese? "AND lang NOT IN ('chi')" : "";
 
-  Promise.all([
-    pool.query(`SELECT * FROM books WHERE filename = $1`, [req.query.name]),
-    pool.query(
-      `
+    Promise.all([
+        pool.query(`SELECT * FROM books WHERE filename = $1`, [req.query.name]),
+        pool.query(`
             SELECT * FROM sentences
                 WHERE
                     filename = $1
@@ -337,227 +291,204 @@ app.get("/api/source", (req, res) => {
                 ORDER BY number_in_book ASC
                 OFFSET $2
                 limit $3
-        `,
-      [req.query.name, start, page_size],
-    ),
-  ])
-    .then(([book, sentences]) => {
-      console.log("Successfully retrieved source");
-      if (book.rows.length === 0 || sentences.rows.length === 0) {
+        `, [req.query.name, start, page_size])
+    ]).then(([book, sentences]) => {
+        console.log("Successfully retrieved source");
+        if (book.rows.length === 0 || sentences.rows.length === 0) {
+            res.send({
+                status: "error",
+                msg: "No results found"
+            });
+        }
+        else {
+            book = book.rows[0];
+            sentences = sentences.rows;
+            let data = {
+                name: book.filename,
+                year_string: book.year_string,
+                bibliography: book.bibliography,
+                attributions: book.attributions,
+                sentences: sentences,
+                count: excludeChinese? book.non_chinese_sentence_count : book.num_sentences,
+            };
+            res.send({
+                status: "success",
+                data: data,
+            });
+        }
+    }).catch(err => {
+        console.log(err.message);
         res.send({
-          status: "error",
-          msg: "No results found",
+            status: "error",
+            msg: err.message
         });
-      } else {
-        book = book.rows[0];
-        sentences = sentences.rows;
-        let data = {
-          name: book.filename,
-          year_string: book.year_string,
-          bibliography: book.bibliography,
-          attributions: book.attributions,
-          sentences: sentences,
-          count: excludeChinese
-            ? book.non_chinese_sentence_count
-            : book.num_sentences,
-        };
-        res.send({
-          status: "success",
-          data: data,
-        });
-      }
-    })
-    .catch((err) => {
-      console.log(err.message);
-      res.send({
-        status: "error",
-        msg: err.message,
-      });
     });
 });
 
-app.get("/api/source_list", (req, res) => {
-  let offset = req.query.offset;
-  let limit = req.query.limit;
-  console.log(`source_list offset=${offset} limit=${limit}`);
+app.get('/api/source_list', (req, res) => {
+    let offset = req.query.offset;
+    let limit = req.query.limit;
+    console.log(`source_list offset=${offset} limit=${limit}`);
 
-  pool
-    .query(
-      `
+    pool.query(`
         SELECT *, count(*) OVER() AS full_count FROM books
         ORDER BY year_sort ASC, filename::bytea ASC
         OFFSET $1
         LIMIT $2
-    `,
-      [offset, limit],
-    )
+    `, [offset, limit])
     .then((result) => {
-      console.log("Successfully retrieved source list");
-      res.send({
-        status: "success",
-        data: result.rows,
-      });
-    })
-    .catch((err) => {
-      console.log(err.message);
-      res.send({
-        status: "error",
-        msg: err.message,
-      });
-    });
-});
-
-app.post("/api/parse", (req, res) => {
-  nodecallspython
-    .import(path.join(__dirname, "KoreanVerbParser/main.py"))
-    .then(async function (pymodule) {
-      nodecallspython
-        .call(pymodule, "parse_into_json", req.body.text, 20)
-        .then((result) => {
-          result = JSON.parse(result);
-          if (result.error !== undefined) {
-            res.send({
-              status: "error",
-              msg: result.error,
-            });
-          } else {
-            res.send({
-              status: "success",
-              data: result,
-            });
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          res.send({
-            status: "error",
-            msg: err.msg,
-          });
-        });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.send({
-        status: "error",
-        msg: err.msg,
-      });
-    });
-});
-
-app.post("/api/hangulize", (req, res) => {
-  let text = req.body.text;
-  nodecallspython
-    .import(path.join(__dirname, "./utils/english_hangul.py"))
-    .then(async function (pymodule) {
-      nodecallspython
-        .call(pymodule, "hangulize", text)
-        .then((result) => {
-          res.send({
+        console.log("Successfully retrieved source list");
+        res.send({
             status: "success",
-            phonemes: result[0],
-            hangul: result[1],
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          res.send({
+            data: result.rows,
+        });
+    }).catch(err => {
+        console.log(err.message);
+        res.send({
             status: "error",
-            msg: err.msg,
-          });
+            msg: err.message
+        });
+    });
+});
+
+app.post('/api/parse', (req, res) => {
+    nodecallspython.import(path.join(__dirname, "KoreanVerbParser/main.py")).then(async function (pymodule) {
+        nodecallspython.call(pymodule, "parse_into_json", req.body.text, 20).then(result => {
+            result = JSON.parse(result);
+            if (result.error !== undefined) {
+                res.send({
+                    status: "error",
+                    msg: result.error
+                });
+            } else {
+                res.send({
+                    status: "success",
+                    data: result,
+                });
+            }
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        });
+    }).catch(err => {
+        console.log(err);
+        res.send({
+            status: "error",
+            msg: err.msg
+        });
+    });
+});
+
+app.post('/api/hangulize', (req, res) => {
+    let text = req.body.text;
+    nodecallspython.import(path.join(__dirname, "./utils/english_hangul.py")).then(async function (pymodule) {
+        nodecallspython.call(pymodule, "hangulize", text).then(result => {
+            res.send({
+                status: "success",
+                phonemes: result[0],
+                hangul: result[1],
+            });
+        }).catch(err => {
+            console.log(err);
+            res.send({
+                status: "error",
+                msg: err.msg
+            });
+        });
+    }).catch(err => {
+        console.log(err);
+        res.send({
+            status: "error",
+            msg: err.msg
         });
     })
-    .catch((err) => {
-      console.log(err);
-      res.send({
-        status: "error",
-        msg: err.msg,
-      });
-    });
 });
 
-app.get("/api/wordle", (req, res) => {
-  // Get current timestamp
-  const timestamp = new Date().toISOString();
-  console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle request`);
+app.get('/api/wordle', (req, res) => {
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle request`);
 
-  const isPractice = req.query.practice === "true";
+    const isPractice = req.query.practice === "true";
 
-  const numCols = parseInt(req.query.numCols ?? "6");
-  const wordlist = numCols === 5 ? wordlist5 : wordlist6;
-  const seedAdd = numCols === 5 ? "..." : "";
+    const numCols = parseInt(req.query.numCols?? '6');
+    const wordlist = numCols === 5 ? wordlist5 : wordlist6;
+    const seedAdd = numCols === 5 ? "..." : "";
 
-  if (isPractice) {
-    const index = Math.floor(Math.random() * (wordlist.length - 1));
-    const word = wordlist[index];
-    console.log(`Practice word (${numCols}): ${word}`);
-    res.send({
-      status: "success",
-      todayNum: -1, // -1 indicates practice mode
-      word: word,
-    });
-  } else {
-    // Get today's number (offset from 2025-08-04)
-    const today = new Date();
-    const startDate = new Date("2025-08-04 GMT+0900");
-    const diffTime = today - startDate;
-    const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    if (isPractice) {
+        const index = Math.floor(Math.random() * (wordlist.length - 1));
+        const word = wordlist[index];
+        console.log(`Practice word (${numCols}): ${word}`);
+        res.send({
+            status: "success",
+            todayNum: -1, // -1 indicates practice mode
+            word: word,
+        });
+    }
+    else {
+        // Get today's number (offset from 2025-08-04)
+        const today = new Date();
+        const startDate = new Date('2025-08-04 GMT+0900');
+        const diffTime = today - startDate;
+        const todayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-    console.log(`Today's number (${numCols}): ${todayNum}`);
+        console.log(`Today's number (${numCols}): ${todayNum}`);
 
-    // randomly select a word from the wordlist using the today's number as seed
-    const rand = new Rand(todayNum.toString() + seedAdd);
-    let index = Math.floor(rand.next() * (wordlist.length - 1));
-    let word;
-    do {
-      word = wordlist[index];
-      index = (index + 1) % wordlist.length;
-    } while (word.startsWith("#"));
+        // randomly select a word from the wordlist using the today's number as seed
+        const rand = new Rand(todayNum.toString() + seedAdd);
+        let index = Math.floor(rand.next() * (wordlist.length - 1));
+        let word;
+        do {
+            word = wordlist[index];
+            index = (index + 1) % wordlist.length;
+        } while (word.startsWith('#'));
 
-    console.log(`Today's word (${numCols}): ${word}`);
+        console.log(`Today's word (${numCols}): ${word}`);
 
-    res.send({
-      status: "success",
-      todayNum: todayNum,
-      word: word,
-    });
-  }
+        res.send({
+            status: "success",
+            todayNum: todayNum,
+            word: word,
+        });
+    }
 });
 
-app.post("/api/wordle_check", (req, res) => {
-  // Get current timestamp
-  const timestamp = new Date().toISOString();
-  console.log(
-    `${timestamp} ip=${req.socket.remoteAddress} | Wordle check request`,
-  );
+app.post('/api/wordle_check', (req, res) => {
+    // Get current timestamp
+    const timestamp = new Date().toISOString();
+    console.log(`${timestamp} ip=${req.socket.remoteAddress} | Wordle check request`);
 
-  const numCols = parseInt(req.body.numCols ?? "6");
-  const wordlist = numCols === 5 ? wordlist5 : wordlist6;
+    const numCols = parseInt(req.body.numCols?? '6');
+    const wordlist = numCols === 5 ? wordlist5 : wordlist6;
 
-  const word = req.body.word;
-  if (word === undefined) {
+    const word = req.body.word;
+    if (word === undefined) {
+        res.send({
+            status: "error",
+            msg: "Invalid word"
+        });
+        return;
+    }
+
+    // Check if the word is in the wordlist
     res.send({
-      status: "error",
-      msg: "Invalid word",
+        status: "success",
+        included: wordlist.includes(word)
     });
-    return;
-  }
-
-  // Check if the word is in the wordlist
-  res.send({
-    status: "success",
-    included: wordlist.includes(word),
-  });
 });
 
 // Handles any requests that don't match the ones above
-app.get("*", (req, res) => {
-  console.log(req.url);
-  res.sendFile(path.join(__dirname, "/client/build/index.html"));
+app.get('*', (req, res) => {
+    console.log(req.url);
+    res.sendFile(path.join(__dirname, '/client/build/index.html'));
 });
 
-process.on("SIGINT", () => {
-  if (https_server !== null) {
-    https_server.close();
-  }
-  http_server.close();
+process.on('SIGINT', () => {
+    if (https_server !== null) {
+        https_server.close();
+    }
+    http_server.close();
 });

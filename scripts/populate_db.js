@@ -1,46 +1,41 @@
-"use strict";
+'use strict';
 
+import pg from 'pg';
+import {insert_into_db} from "../src/utils/insert_into_db.js";
+import {insert_documents} from "../src/utils/parse_xml.js";
 import fs from "fs";
-import pg from "pg";
-
-import { insert_into_db } from "../src/utils/insert_into_db.js";
-import { insert_documents } from "../src/utils/parse_xml.js";
-import { insert_txt_documents } from "./add_txt_to_db";
+import {insert_txt_documents} from "./add_txt_to_db";
 
 async function populate_db(database_name, doc_cnt) {
-  const { Pool } = pg;
+  const {Pool} = pg;
   const startPool = new Pool({
-    user: "postgres",
-    host: "localhost",
-    database: "postgres",
-    password: "password",
+    user: 'postgres',
+    host: 'localhost',
+    database: 'postgres',
+    password: 'password',
   });
 
   // drop tables `books` and `sentences`
-  const pool = await startPool
-    .query(
-      `
+  const pool = await startPool.query(`
     CREATE DATABASE ${database_name} 
       WITH OWNER postgres ENCODING 'UTF8' LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0;
-    `,
-    )
-    .catch((err) => {})
+    `)
+    .catch(err => {})
     .then(() => {
       const pool = new Pool({
-        user: "postgres",
-        host: "localhost",
+        user: 'postgres',
+        host: 'localhost',
         database: database_name,
-        password: "password",
+        password: 'password',
       });
       console.log("Connected successfully to server");
       return pool;
     });
 
   // make new directory called `index`
-  fs.mkdirSync("index", { recursive: true });
+  fs.mkdirSync('index', { recursive: true });
 
-  return pool
-    .query("DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;")
+  return pool.query('DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;')
     .then(() => {
       console.log("Dropped tables.");
       const create_books = `
@@ -153,6 +148,7 @@ if (!process.env.DB_NAME) {
   process.exit(1);
 }
 const doc_cnt = process.env.DOC_CNT ? parseInt(process.env.DOC_CNT) : null;
-populate_db(process.env.DB_NAME, doc_cnt).then(() => {
-  console.log("Database populated successfully.");
-});
+populate_db(process.env.DB_NAME, doc_cnt)
+  .then(() => {
+    console.log("Database populated successfully.");
+  })
