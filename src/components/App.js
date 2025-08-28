@@ -147,7 +147,7 @@ function App(props) {
                 aria-controls="lang-change-appbar"
                 aria-haspopup="true"
                 onClick={() =>
-                  setCurTheme(curTheme === lightTheme ? darkTheme : lightTheme)
+                  setCurTheme(curTheme === lightTheme ? "dark" : "light")
                 }
                 color="inherit"
               >
@@ -246,7 +246,7 @@ function App(props) {
                 aria-controls="lang-change-appbar"
                 aria-haspopup="true"
                 onClick={() =>
-                  setCurTheme(curTheme === lightTheme ? darkTheme : lightTheme)
+                  setCurTheme(curTheme === lightTheme ? "dark" : "light")
                 }
                 color="inherit"
               >

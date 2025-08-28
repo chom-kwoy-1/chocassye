@@ -1,32 +1,51 @@
 "use client";
 
-import { Theme, useMediaQuery } from "@mui/material";
+import { useMediaQuery } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
+import { setCookie } from "cookies-next";
 import React, { createContext } from "react";
 
+import { THEME_COOKIE_KEY } from "@/components/config";
 import { darkTheme, lightTheme } from "@/themes";
 
-export const ThemeContext = createContext([{}, (value: Theme) => {}]);
+export const ThemeContext = createContext([{}, (_: "light" | "dark") => {}]);
 
-export default function MyThemeProvider({
+const THEMES = new Map([
+  ["light", lightTheme],
+  ["dark", darkTheme],
+]);
+
+export default function DarkLightThemeProvider({
   children,
+  initialThemeType,
 }: {
   children: React.ReactNode;
+  initialThemeType: string | undefined;
 }) {
-  const [curTheme, setCurTheme] = React.useState(lightTheme);
-  const [isThemeArtificallySet, setIsThemeArtificallySet] =
-    React.useState(false);
+  let initialTheme = lightTheme;
+  if (
+    initialThemeType !== undefined &&
+    ["light", "dark"].includes(initialThemeType)
+  ) {
+    initialTheme = THEMES.get(initialThemeType)!;
+  }
+  const [curTheme, setCurTheme] = React.useState(initialTheme);
+  const [isThemeArtificallySet, setIsThemeArtificallySet] = React.useState(
+    initialThemeType !== undefined,
+  );
 
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const preferredTheme = prefersDarkMode ? darkTheme : lightTheme;
   if (!isThemeArtificallySet && preferredTheme !== curTheme) {
     setCurTheme(preferredTheme);
+    setCookie(THEME_COOKIE_KEY, prefersDarkMode ? "dark" : "light");
   }
 
-  const setTheme = React.useCallback((theme: Theme) => {
-    setCurTheme(theme);
+  const setTheme = React.useCallback((theme: "light" | "dark") => {
+    setCurTheme(theme === "dark" ? darkTheme : lightTheme);
     setIsThemeArtificallySet(true);
+    setCookie(THEME_COOKIE_KEY, theme);
   }, []);
 
   return (

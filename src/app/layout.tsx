@@ -8,8 +8,9 @@ import React from "react";
 
 import { fallbackLng, languages } from "@/app/i18n/settings";
 import App from "@/components/App";
-import MyThemeProvider from "@/components/ThemeContext";
+import DarkLightThemeProvider from "@/components/ThemeContext";
 import { TranslationProvider } from "@/components/TranslationProvider";
+import { THEME_COOKIE_KEY } from "@/components/config";
 
 import "../index.css";
 
@@ -39,15 +40,16 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const lng = await detectLanguage();
+  const theme = await getCookie(THEME_COOKIE_KEY, { cookies });
   return (
     <html lang={lng} dir={dir(lng)}>
       <body>
         <AppRouterCacheProvider>
           <div id="root">
             <TranslationProvider defaultLng={lng}>
-              <MyThemeProvider>
+              <DarkLightThemeProvider initialThemeType={theme}>
                 <App>{children}</App>
-              </MyThemeProvider>
+              </DarkLightThemeProvider>
             </TranslationProvider>
           </div>
         </AppRouterCacheProvider>
