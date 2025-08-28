@@ -43,7 +43,8 @@
     "build": "NGRAM_TRUNCATE=5 next build",
     "start": "next start",
     "lint": "npx eslint",
-    "populate-db": "tsx scripts/populate_db.js"
+    "populate-db": "tsx scripts/populate_db.js",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -55,10 +56,26 @@
     "@types/tmp": "^0.2.6",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
+    "husky": "^8.0.0",
+    "lint-staged": "^16.1.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tmp": "^0.2.3",
     "tsx": "^4.19.4",
     "typescript": "^5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,mjs,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{html,css,less,ejs}": [
+      "prettier --write"
+    ]
   }
 }
