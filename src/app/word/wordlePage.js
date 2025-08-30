@@ -43,16 +43,16 @@ export function Wordle(props) {
         <WordlePage
           numCols={6}
           numRows={6}
-          initialAnswerWord={props.answer6.word}
-          initialTodayNum={props.answer6.todayNum}
+          answerWord={props.answer6.word}
+          todayNum={props.answer6.todayNum}
         />
       ) : null}
       {tabPage === 1 ? (
         <WordlePage
           numCols={5}
           numRows={5}
-          initialAnswerWord={props.answer5.word}
-          initialTodayNum={props.answer5.todayNum}
+          answerWord={props.answer5.word}
+          todayNum={props.answer5.todayNum}
         />
       ) : null}
     </Stack>
@@ -60,22 +60,14 @@ export function Wordle(props) {
 }
 
 export function WordlePage(props) {
-  const [answerWord, setAnswerWord] = React.useState(props.initialAnswerWord);
-  const [todayNum, setTodayNum] = React.useState(props.initialTodayNum);
-
-  const refresh = React.useCallback(async (numCols, practice = false) => {
-    fetchWord(numCols, practice).then((result) => {
-      setAnswerWord(result.word);
-      setTodayNum(practice ? -1 : result.todayNum);
-    });
-  }, []);
-
-  React.useEffect(() => {
-    refresh(props.numCols);
-  }, [refresh, props.numCols]);
+  const [answerWord, setAnswerWord] = React.useState(props.answerWord);
+  const [todayNum, setTodayNum] = React.useState(props.todayNum);
 
   function practiceWord() {
-    refresh(props.numCols, true);
+    fetchWord(props.numCols, true).then((result) => {
+      setAnswerWord(result.word);
+      setTodayNum(-1);
+    });
   }
 
   return (
