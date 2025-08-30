@@ -353,7 +353,7 @@ let SearchResultsWrapper = function (props) {
       </Grid>
 
       {/* Show highlight match legend */}
-      <Grid mt={1} mb={2} container columnSpacing={1} spacing={1}>
+      <Grid size="grow" mt={1} mb={2} container columnSpacing={1} spacing={1}>
         {uniqueMatches.map((part, i) => {
           const isEnabled = !disabledMatches.has(i);
           const color = isEnabled ? hlColors[i % hlColors.length] : "lightgrey";
