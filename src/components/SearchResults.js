@@ -153,8 +153,8 @@ function PageImagePreview(props) {
             maxWidth: "100%",
             objectFit: "scale-down",
           }}
-          width="400px"
-          height="600px"
+          width={400}
+          height={600}
         />
       </Grid>
       <Grid size={12}>{t("Image for page", { page: props.page })}</Grid>

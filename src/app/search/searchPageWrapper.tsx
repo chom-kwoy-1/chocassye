@@ -62,21 +62,28 @@ export function SearchPageWrapper({
   const initialQuery = parseSearchParams(searchParams);
   const [query, setQuery] = React.useState(initialQuery);
 
+  const refresh = React.useCallback(
+    (query: SearchQuery) => {
+      // Update URL
+      const params = makeSearchParams(query).toString();
+      const url = params ? `/search?${params}` : "/search";
+      router.push(url);
+    },
+    [router],
+  );
+
   // Convenience function to set page
   const setPage = React.useCallback(
     (page: number) => {
-      setQuery((query) => {
-        return { ...query, page: page };
-      });
+      const newQuery = { ...query, page: page };
+      setQuery(newQuery);
+      refresh(newQuery);
     },
-    [setQuery],
+    [refresh, query],
   );
 
   function forceRefreshResults() {
-    // Update URL
-    const params = makeSearchParams(query).toString();
-    const url = params ? `/search?${params}` : "/search";
-    router.push(url);
+    refresh(query);
   }
 
   return (

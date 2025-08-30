@@ -1,8 +1,8 @@
-import type {NextConfig} from 'next'
+import type { NextConfig } from "next";
 import path from "node:path";
 
 const nextConfig: NextConfig = {
-  distDir: 'build', // Changes the build output directory to `build`
+  distDir: "build", // Changes the build output directory to `build`
   turbopack: {
     root: path.resolve(__dirname),
   },
@@ -13,7 +13,10 @@ const nextConfig: NextConfig = {
         destination: `http://localhost:5000/api/:path*`, // send it to your API
       },
     ];
-  }
-}
+  },
+  images: {
+    remotePatterns: [new URL("https://*.backblazeb2.com/**")],
+  },
+};
 
 export default nextConfig;
