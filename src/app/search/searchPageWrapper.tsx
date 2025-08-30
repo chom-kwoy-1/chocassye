@@ -62,16 +62,27 @@ export function SearchPageWrapper({
   const initialQuery = parseSearchParams(searchParams);
   const [query, setQuery] = React.useState(initialQuery);
 
+  const [loaded, setLoaded] = React.useState(result.loaded);
+  const [statsLoaded, setStatsLoaded] = React.useState(result.statsLoaded);
+  React.useEffect(() => {
+    setLoaded(result.loaded);
+    setStatsLoaded(result.statsLoaded);
+  }, [result]);
+
   const refresh = React.useCallback(
     (query: SearchQuery) => {
+      // Show loading state
+      setLoaded(false);
+      // Reset page if search term changed
       if (
         initialQuery.term !== query.term ||
         initialQuery.doc !== query.doc ||
         initialQuery.excludeModern !== query.excludeModern ||
         initialQuery.ignoreSep !== query.ignoreSep
       ) {
-        query.page = 1; // Reset page if term changed
+        query.page = 1;
         setQuery(query);
+        setStatsLoaded(false);
       }
       // Update URL
       const params = makeSearchParams(query).toString();
@@ -113,7 +124,7 @@ export function SearchPageWrapper({
         setQuery({ ...query, ignoreSep: value })
       }
       // Current Results
-      loaded={result.loaded}
+      loaded={loaded}
       result={result.result}
       resultTerm={result.result_term}
       resultPage={result.result_page}
@@ -121,7 +132,7 @@ export function SearchPageWrapper({
       resultExcludeModern={result.excludeModern}
       resultIgnoreSep={result.ignoreSep}
       // Current Stats
-      statsLoaded={result.statsLoaded}
+      statsLoaded={statsLoaded}
       statsTerm={result.stats_term}
       pageN={result.page_N}
       numResults={result.num_results}
