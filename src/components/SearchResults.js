@@ -164,9 +164,6 @@ function PageImagePreview(props) {
 
 function SentenceAndPage(props) {
   const theme = useTheme();
-  const hlColors = highlightColors.map(
-    (color) => color[theme.palette.mode === "light" ? "A100" : "300"],
-  );
   const sourceTextColor =
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
@@ -212,7 +209,6 @@ function SentenceAndPage(props) {
           props.match_ids_in_sentence,
           props.romanize,
           props.ignoreSep,
-          hlColors,
         )}
         allowList={["mark", "span", "a"]}
         allowAttributes={true}

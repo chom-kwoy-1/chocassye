@@ -1,6 +1,7 @@
 import { GUGYEOL_READINGS, GUGYEOL_REGEX } from "./Gugyeol";
 import { searchTerm2Regex } from "./Regex.mjs";
 import { yale_to_hangul } from "./YaleToHangul";
+import { highlightColors } from "./client_utils";
 
 // TODO: Generate these from YaleToHangul.js
 const HANGUL_REGEX =
@@ -357,25 +358,20 @@ function removeOverlappingRanges(match_ranges, max_length) {
   return match_ranges_unique;
 }
 
-function addHighlights(
-  displayHTML,
-  match_ranges,
-  highlightIds = null,
-  highlightColors = null,
-) {
+function addHighlights(displayHTML, match_ranges, highlightIds = null) {
   let output = "";
   let last_idx = 0;
   let hl_idx = 0;
   for (let range of match_ranges) {
     output += displayHTML.slice(last_idx, range[0]);
 
-    let color = "#ffff00";
-    if (highlightIds !== null && highlightColors !== null) {
+    let color = null;
+    if (highlightIds !== null) {
       let colorIdx = highlightIds[hl_idx];
-      color = highlightColors[colorIdx % highlightColors.length];
+      color = colorIdx % highlightColors.length;
     }
     let mark_text = displayHTML.slice(range[0], range[1]);
-    output += `<mark style="background-color: ${color}; color: black;">${mark_text}</mark>`;
+    output += `<mark data-hl-id="${color}">${mark_text}</mark>`;
 
     hl_idx += 1;
     last_idx = range[1];
@@ -415,14 +411,7 @@ export function findMatchingRanges(
   }
 }
 
-export function highlight(
-  text,
-  searchTerm,
-  match_ids,
-  romanize,
-  ignoreSep,
-  highlightColors,
-) {
+export function highlight(text, searchTerm, match_ids, romanize, ignoreSep) {
   // Into HTML for display
   let [displayHTML, displayHTMLMapping] = toDisplayHTML(text, romanize);
 
@@ -436,5 +425,5 @@ export function highlight(
   );
 
   // Add highlights
-  return addHighlights(displayHTML, match_ranges, match_ids, highlightColors);
+  return addHighlights(displayHTML, match_ranges, match_ids);
 }
