@@ -22,17 +22,16 @@ import {
 import { grey } from "@mui/material/colors";
 import { styled } from "@mui/material/styles";
 import { Interweave } from "interweave";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React from "react";
 
+import { SearchQuery } from "@/app/search/search";
 import { highlight } from "@/components/Highlight";
 import { useTranslation } from "@/components/TranslationProvider";
 import { StyledTableCell, StyledTableRow } from "@/components/client_utils";
 import { IMAGE_BASE_URL } from "@/components/config";
 
-import { fetchSource } from "./fetchSource";
-
-const NonAlternatingTableRow = styled(TableRow)(({ theme }) => ({
+const NonAlternatingTableRow = styled(TableRow)(({}) => ({
   // hide last border
   "&:last-child td, &:last-child th": {
     border: 0,
@@ -53,6 +52,29 @@ function Sentence(props) {
   const sourceTextColor =
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
+  let displayPage = sentence.page;
+  if (sentence.hasimages && sentence.page !== "") {
+    displayPage = sentence.page.split("-").map((page, i) => (
+      <Tooltip key={i} title={t("Image for page", { page: page })}>
+        <span>
+          <a
+            className="pageNum"
+            style={{
+              color: sourceTextColor,
+              textDecoration: "underline dotted",
+            }}
+            href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
+            target="blank"
+            key={i}
+          >
+            {page}
+          </a>
+          {i < sentence.page.split("-").length - 1 ? "-" : null}
+        </span>
+      </Tooltip>
+    ));
+  }
+
   return (
     <StyledTableRow>
       <StyledTableCell
@@ -72,52 +94,83 @@ function Sentence(props) {
           className="pageNum"
           style={{ color: sourceTextColor, userSelect: "none" }}
         >
-          (
-          {sentence.hasimages && sentence.page !== ""
-            ? sentence.page.split("-").map((page, i) => (
-                <Tooltip key={i} title={t("Image for page", { page: page })}>
-                  <span>
-                    <a
-                      className="pageNum"
-                      style={{
-                        color: sourceTextColor,
-                        textDecoration: "underline dotted",
-                      }}
-                      href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
-                      target="blank"
-                      key={i}
-                    >
-                      {page}
-                    </a>
-                    {i < sentence.page.split("-").length - 1 ? "-" : null}
-                  </span>
-                </Tooltip>
-              ))
-            : sentence.page}
-          )
+          ({displayPage})
         </span>
       </StyledTableCell>
     </StyledTableRow>
   );
 }
 
-function SourcePage(props) {
+function makeSearchParams(
+  bookName,
+  numberInSource,
+  excludeChinese,
+  viewCount,
+  highlightWord,
+  ignoreSep,
+) {
+  console.log(highlightWord);
+  const params = new URLSearchParams();
+  params.set("name", bookName);
+  if (numberInSource !== 0) {
+    params.set("n", numberInSource.toString());
+  }
+  if (excludeChinese) {
+    params.set("nozh", "yes");
+  }
+  if (viewCount !== 25) {
+    params.set("N", viewCount.toString());
+  }
+  if (highlightWord) {
+    params.set("hl", highlightWord);
+  }
+  if (ignoreSep) {
+    params.set("is", "yes");
+  }
+  return params;
+}
+
+export function SourcePage(props) {
+  const router = useRouter();
+
   const { t } = useTranslation();
+
+  function setNumberInSource(n) {
+    const params = makeSearchParams(
+      props.bookName,
+      n,
+      props.excludeChinese,
+      props.viewCount,
+      props.highlightWord,
+      props.ignoreSep,
+    );
+    router.push(`/source?${params.toString()}`);
+  }
 
   function handleExcludeChineseChange(event) {
     let excludeChinese = event.target.checked;
-    if (excludeChinese) {
-      props.setSearchParams((searchParams) => {
-        searchParams.set("n", 0);
-        return searchParams;
-      });
-    }
-    props.setExcludeChinese(excludeChinese);
+    const params = makeSearchParams(
+      props.bookName,
+      0,
+      excludeChinese,
+      props.viewCount,
+      props.highlightWord,
+      props.ignoreSep,
+    );
+    router.push(`/source?${params.toString()}`);
   }
 
   function handleViewCountChange(event) {
     let viewCount = event.target.value;
-    props.setViewCount(viewCount);
+    const params = makeSearchParams(
+      props.bookName,
+      props.numberInSource,
+      props.excludeChinese,
+      viewCount,
+      props.highlightWord,
+      props.ignoreSep,
+    );
+    router.push(`/source?${params.toString()}`);
   }
 
   if (props.result.data === null) {
@@ -280,10 +333,7 @@ function SourcePage(props) {
               if (newPage !== page) {
                 newN = newPage * PAGE;
               }
-              props.setSearchParams((searchParams) => {
-                searchParams.set("n", newN);
-                return searchParams;
-              });
+              setNumberInSource(newN);
             }}
           />
         </Box>
@@ -323,111 +373,11 @@ function SourcePage(props) {
               if (newPage !== page) {
                 newN = newPage * PAGE;
               }
-              props.setSearchParams((searchParams) => {
-                searchParams.set("n", newN);
-                return searchParams;
-              });
+              setNumberInSource(newN);
             }}
           />
         </Box>
       </Grid>
     </Grid>
-  );
-}
-
-export function SourcePageWrapper(props) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const setSearchParams = React.useCallback(
-    (newParams) => {
-      let params = new URLSearchParams(searchParams);
-      if (typeof newParams === "function") {
-        newParams = newParams(params);
-      }
-      // Update search params in the URL
-      const newSearchParams = new URLSearchParams(newParams);
-      router.push(`/source?${newSearchParams.toString()}`);
-    },
-    [searchParams, router],
-  );
-
-  const bookName = searchParams.get("name");
-  const prevBookName = React.useRef(bookName);
-
-  const numberInSource = parseInt(searchParams.get("n") ?? "0");
-  const prevNumberInSource = React.useRef(numberInSource);
-
-  const [excludeChinese, setExcludeChinese] = React.useState(
-    props.initialExcludeChinese,
-  );
-  const prevExcludeChinese = React.useRef(excludeChinese);
-
-  const [viewCount, setViewCount] = React.useState(props.initialViewCount);
-  const prevViewCount = React.useRef(viewCount);
-
-  const [result, setResult] = React.useState(props.initialData);
-  const prevResult = React.useRef(result);
-  React.useEffect(() => {
-    prevResult.current = result;
-  }, [result]);
-
-  const highlightWord = searchParams.get("hl");
-  const ignoreSep = (searchParams.get("is") ?? "no") === "yes";
-
-  const refresh = React.useCallback(
-    async (bookName, numberInSource, excludeChinese, viewCount) => {
-      setResult({
-        ...prevResult.current,
-        loaded: false,
-      });
-
-      const newData = await fetchSource(
-        bookName,
-        numberInSource,
-        excludeChinese,
-        viewCount,
-      );
-      if (newData.status === "success") {
-        setResult({
-          data: newData.data,
-          loaded: true,
-        });
-      } else {
-        // FIXME: error handling
-        console.error("Error loading source:", newData.msg);
-      }
-    },
-    [],
-  );
-
-  React.useEffect(() => {
-    if (
-      bookName !== prevBookName.current ||
-      numberInSource !== prevNumberInSource.current ||
-      excludeChinese !== prevExcludeChinese.current ||
-      viewCount !== prevViewCount.current
-    ) {
-      refresh(bookName, numberInSource, excludeChinese, viewCount);
-      prevBookName.current = bookName;
-      prevNumberInSource.current = numberInSource;
-      prevExcludeChinese.current = excludeChinese;
-      prevViewCount.current = viewCount;
-    }
-  }, [bookName, numberInSource, excludeChinese, viewCount, refresh]);
-
-  return (
-    <SourcePage
-      {...props}
-      bookName={bookName}
-      numberInSource={numberInSource}
-      result={result}
-      setSearchParams={setSearchParams}
-      highlightWord={highlightWord}
-      ignoreSep={ignoreSep}
-      excludeChinese={excludeChinese}
-      setExcludeChinese={setExcludeChinese}
-      viewCount={viewCount}
-      setViewCount={setViewCount}
-    />
   );
 }
