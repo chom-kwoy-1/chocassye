@@ -64,12 +64,21 @@ export function SearchPageWrapper({
 
   const refresh = React.useCallback(
     (query: SearchQuery) => {
+      if (
+        initialQuery.term !== query.term ||
+        initialQuery.doc !== query.doc ||
+        initialQuery.excludeModern !== query.excludeModern ||
+        initialQuery.ignoreSep !== query.ignoreSep
+      ) {
+        query.page = 1; // Reset page if term changed
+        setQuery(query);
+      }
       // Update URL
       const params = makeSearchParams(query).toString();
       const url = params ? `/search?${params}` : "/search";
       router.push(url);
     },
-    [router],
+    [initialQuery, setQuery, router],
   );
 
   // Convenience function to set page
