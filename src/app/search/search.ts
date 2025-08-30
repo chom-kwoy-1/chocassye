@@ -2,18 +2,13 @@
 
 import escapeStringRegexp from "escape-string-regexp";
 import { format } from "node-pg-format";
-import path from "path";
 
-import { getPool } from "@/app/db";
-import { loadNgramIndex } from "@/utils/load_ngram_index";
+import { getNgramIndex, getPool } from "@/app/db";
 import { makeCorpusQuery } from "@/utils/search";
 
 const PAGE_N: number = parseInt(process.env.PAGE_N || "50");
 
-const ngramIndex = await loadNgramIndex(path.join(process.cwd(), "index"));
-console.log("Loaded ngram index with", ngramIndex.common.size, "ngrams");
-
-type SearchRequest = {
+export type SearchQuery = {
   term: string;
   doc: string;
   page: number;
@@ -25,7 +20,7 @@ type Sentence = {
   text: string;
 };
 
-type Book = {
+export type Book = {
   name: string;
   year: number;
   year_start: number;
@@ -37,7 +32,7 @@ type Book = {
 };
 
 export async function search(
-  query: SearchRequest,
+  query: SearchQuery,
 ): Promise<
   | { status: "success"; results: Book[]; page_N: number }
   | { status: "error"; msg: string }
@@ -54,7 +49,7 @@ export async function search(
     query.doc,
     query.excludeModern,
     query.ignoreSep,
-    ngramIndex,
+    await getNgramIndex(),
   );
 
   if (queryString === null) {
@@ -92,7 +87,7 @@ export async function search(
         st.year_sort ASC,
         st.filename ASC,
         st.number_in_book ASC
-    `;
+  `;
 
   const page = query.page ?? 1;
   const offset = (page - 1) * PAGE_N;
@@ -136,7 +131,7 @@ export async function search(
   }
 }
 
-export async function getStats(query: SearchRequest): Promise<
+export async function getStats(query: SearchQuery): Promise<
   | {
       status: "success";
       num_results: number;
@@ -156,7 +151,7 @@ export async function getStats(query: SearchRequest): Promise<
     query.doc,
     query.excludeModern,
     query.ignoreSep,
-    ngramIndex,
+    await getNgramIndex(),
   );
 
   if (queryString === null) {

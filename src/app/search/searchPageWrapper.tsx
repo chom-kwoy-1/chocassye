@@ -1,0 +1,117 @@
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import React from "react";
+
+import { Book, SearchQuery } from "./search";
+import { SearchPage } from "./searchPage";
+
+function parseSearchParams(searchParams: URLSearchParams): SearchQuery {
+  return {
+    term: searchParams.get("term") ?? "",
+    doc: searchParams.get("doc") ?? "",
+    page: parseInt(searchParams.get("page") ?? "1"),
+    excludeModern: searchParams.get("excludeModern") === "yes",
+    ignoreSep: searchParams.get("ignoreSep") === "yes",
+  };
+}
+
+function makeSearchParams(query: SearchQuery): URLSearchParams {
+  const params = new URLSearchParams();
+  if (query.term !== "") {
+    params.set("term", query.term);
+  }
+  if (query.doc !== "") {
+    params.set("doc", query.doc);
+  }
+  if (query.page !== 1) {
+    params.set("page", query.page.toString());
+  }
+  if (query.excludeModern) {
+    params.set("excludeModern", "yes");
+  }
+  if (query.ignoreSep) {
+    params.set("ignoreSep", "yes");
+  }
+  return params;
+}
+
+export function SearchPageWrapper({
+  result,
+}: {
+  result: {
+    loaded: boolean;
+    result: Book[];
+    result_term: string;
+    result_page: number;
+    result_doc: string;
+    excludeModern: boolean;
+    ignoreSep: boolean;
+    statsLoaded: boolean;
+    stats_term: string;
+    page_N: number;
+    num_results: number;
+    histogram: { period: number; num_hits: number }[];
+  };
+}) {
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+
+  // Currently displayed search query
+  const initialQuery = parseSearchParams(searchParams);
+  const [query, setQuery] = React.useState(initialQuery);
+
+  // Convenience function to set page
+  const setPage = React.useCallback(
+    (page: number) => {
+      setQuery((query) => {
+        return { ...query, page: page };
+      });
+    },
+    [setQuery],
+  );
+
+  function forceRefreshResults() {
+    // Update URL
+    const params = makeSearchParams(query).toString();
+    const url = params ? `/search?${params}` : "/search";
+    router.push(url);
+  }
+
+  return (
+    <SearchPage
+      // Search parameters
+      term={query.term}
+      setTerm={(value: string) => setQuery({ ...query, term: value })}
+      doc={query.doc}
+      setDoc={(value: string) => setQuery({ ...query, doc: value })}
+      page={query.page}
+      setPage={setPage}
+      excludeModern={query.excludeModern}
+      setExcludeModern={(value: boolean) =>
+        setQuery({ ...query, excludeModern: value })
+      }
+      ignoreSep={query.ignoreSep}
+      setIgnoreSep={(value: boolean) =>
+        setQuery({ ...query, ignoreSep: value })
+      }
+      // Current Results
+      loaded={result.loaded}
+      result={result.result}
+      resultTerm={result.result_term}
+      resultPage={result.result_page}
+      resultDoc={result.result_doc}
+      resultExcludeModern={result.excludeModern}
+      resultIgnoreSep={result.ignoreSep}
+      // Current Stats
+      statsLoaded={result.statsLoaded}
+      statsTerm={result.stats_term}
+      pageN={result.page_N}
+      numResults={result.num_results}
+      histogram={result.histogram}
+      // Callbacks
+      onRefresh={forceRefreshResults}
+    />
+  );
+}

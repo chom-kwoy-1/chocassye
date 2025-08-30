@@ -1,7 +1,7 @@
 import React from "react";
 
 import { getStats, search } from "./search";
-import { SearchPageWrapper } from "./searchPage";
+import { SearchPageWrapper } from "./searchPageWrapper";
 
 export default async function Search({ searchParams }) {
   const params = await searchParams;
@@ -19,7 +19,7 @@ export default async function Search({ searchParams }) {
   if (initialData.status === "success" && initialStats.status === "success") {
     return (
       <SearchPageWrapper
-        initialData={{
+        result={{
           loaded: true,
           result: initialData.results,
           page_N: initialData.page_N,
