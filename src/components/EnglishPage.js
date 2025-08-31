@@ -3,7 +3,7 @@ import React from "react";
 import { postData } from "./client_utils.js";
 import "./i18n";
 
-function TestWrapper(props) {
+function TestWrapper() {
   const [state, setState] = React.useState({
     hangulOutput: "우오티즈디쓰",
     englishInput: "What is this?",

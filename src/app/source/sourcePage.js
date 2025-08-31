@@ -25,7 +25,6 @@ import { Interweave } from "interweave";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { SearchQuery } from "@/app/search/search";
 import { highlight } from "@/components/Highlight";
 import { useTranslation } from "@/components/TranslationProvider";
 import { StyledTableCell, StyledTableRow } from "@/components/client_utils";

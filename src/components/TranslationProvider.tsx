@@ -6,7 +6,7 @@ import { useTranslation as useTranslationClient } from "@/app/i18n/client";
 
 export const TranslationContext = createContext<
   [string | undefined, (lng: string) => void]
->([undefined, (lng: string) => {}]); // fallback value
+>([undefined, (_: string) => {}]); // fallback value
 
 export function TranslationProvider({
   children,
@@ -24,6 +24,6 @@ export function TranslationProvider({
 }
 
 export function useTranslation() {
-  const [lng, setLng] = React.useContext(TranslationContext);
+  const [lng, _] = React.useContext(TranslationContext);
   return useTranslationClient(lng);
 }

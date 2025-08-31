@@ -4,7 +4,7 @@ import escapeStringRegexp from "escape-string-regexp";
 import { format } from "node-pg-format";
 
 import { getNgramIndex, getPool } from "@/app/db";
-import { makeCorpusQuery } from "@/utils/search";
+import { makeCorpusQuery, makeCorpusStatsQuery } from "@/utils/search";
 
 const PAGE_N: number = parseInt(process.env.PAGE_N || "50");
 
@@ -44,63 +44,37 @@ export async function search(
   const timestamp = new Date().toISOString();
   console.log(`${timestamp} | Search text=${query.term} doc=${query.doc}`);
 
-  let queryString = makeCorpusQuery(
-    query.term,
-    query.doc,
-    query.excludeModern,
-    query.ignoreSep,
-    await getNgramIndex(),
-  );
-
-  if (queryString === null) {
-    return {
-      status: "success",
-      results: [],
-      page_N: PAGE_N,
-    };
-  }
-
-  queryString = `
-    WITH 
-      ids AS (
-        SELECT s.id AS id
-          FROM ${queryString}
-          GROUP BY s.id, s.year_sort, s.filename, s.number_in_book
-          ORDER BY
-            s.year_sort ASC,
-            s.filename::bytea ASC,
-            s.number_in_book ASC
-        OFFSET $1
-        LIMIT $2
-      )
-    SELECT 
-      b.filename AS filename,
-      b.year AS year,
-      b.year_start AS year_start,
-      b.year_end AS year_end,
-      b.year_string AS year_string,
-      b.year_sort AS year_sort,
-      st.*
-      FROM sentences st JOIN ids ON st.id = ids.id
-        JOIN books b ON st.filename = b.filename
-      ORDER BY
-        st.year_sort ASC,
-        st.filename ASC,
-        st.number_in_book ASC
-  `;
-
-  const page = query.page ?? 1;
-  const offset = (page - 1) * PAGE_N;
+  const pool = await getPool();
+  const client = await pool.connect();
 
   try {
-    const pool = await getPool();
-    const results = await pool.query(queryString, [offset, PAGE_N]);
+    const page = query.page ?? 1;
+    const offset = (page - 1) * PAGE_N;
+
+    const results = await makeCorpusQuery(
+      client,
+      query.term,
+      query.doc,
+      query.excludeModern,
+      query.ignoreSep,
+      offset,
+      PAGE_N,
+      await getNgramIndex(),
+    );
 
     const elapsed = new Date().getTime() - beginTime.getTime();
     console.log("Successfully retrieved search results in " + elapsed + "ms");
 
+    if (results === null) {
+      return {
+        status: "success",
+        results: [],
+        page_N: PAGE_N,
+      };
+    }
+
     const books: Book[] = [];
-    for (const row of results.rows) {
+    for (const row of results) {
       if (books.length === 0 || books[books.length - 1].name !== row.filename) {
         books.push({
           name: row.filename,
@@ -128,6 +102,8 @@ export async function search(
       status: "error",
       msg: "Database query failed",
     };
+  } finally {
+    client.release();
   }
 }
 
@@ -146,31 +122,27 @@ export async function getStats(query: SearchQuery): Promise<
   const timestamp = new Date().toISOString();
   console.log(`${timestamp} | SearchStats text=${query.term} doc=${query.doc}`);
 
-  let queryString = makeCorpusQuery(
-    query.term,
-    query.doc,
-    query.excludeModern,
-    query.ignoreSep,
-    await getNgramIndex(),
-  );
-
-  if (queryString === null) {
-    return {
-      status: "success",
-      num_results: 0,
-      histogram: [],
-    };
-  }
-
-  queryString = `
-    SELECT s.decade_sort AS period, CAST(COUNT(DISTINCT s.id) AS INTEGER) AS num_hits
-      FROM ${queryString}
-      GROUP BY s.decade_sort
-  `;
+  const pool = await getPool();
+  const client = await pool.connect();
 
   try {
-    const pool = await getPool();
-    const results = await pool.query(queryString);
+    const queryString = await makeCorpusStatsQuery(
+      query.term,
+      query.doc,
+      query.excludeModern,
+      query.ignoreSep,
+      await getNgramIndex(),
+    );
+
+    if (queryString === null) {
+      return {
+        status: "success",
+        num_results: 0,
+        histogram: [],
+      };
+    }
+
+    const results = await client.query(queryString);
 
     const elapsed = new Date().getTime() - beginTime.getTime();
     console.log("Successfully retrieved search stats in " + elapsed + "ms");
@@ -190,6 +162,8 @@ export async function getStats(query: SearchQuery): Promise<
       status: "error",
       msg: "Database query failed",
     };
+  } finally {
+    client.release();
   }
 }
 

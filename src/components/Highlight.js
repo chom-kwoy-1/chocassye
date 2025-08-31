@@ -153,13 +153,9 @@ export function toText(sentence, ignoreSep) {
   let mapping;
 
   // Remove HTML tags
-  [sentence, mapping] = replace_and_map(
-    sentence,
-    /(<[^>]*>)/g,
-    function (match) {
-      return ".";
-    },
-  );
+  [sentence, mapping] = replace_and_map(sentence, /(<[^>]*>)/g, function () {
+    return ".";
+  });
 
   // Select full syllables
   [sentence, mapping] = replace_and_map(
@@ -176,7 +172,7 @@ export function toText(sentence, ignoreSep) {
     [sentence, mapping] = replace_and_map(
       sentence,
       /[ .^]/g,
-      function (match) {
+      function () {
         return "";
       },
       mapping,
@@ -190,19 +186,15 @@ export function toTextIgnoreTone(sentence, ignoreSep) {
   let mapping;
 
   // Remove HTML tags
-  [sentence, mapping] = replace_and_map(
-    sentence,
-    /(<[^>]*>)/g,
-    function (match) {
-      return ".";
-    },
-  );
+  [sentence, mapping] = replace_and_map(sentence, /(<[^>]*>)/g, function () {
+    return ".";
+  });
 
   // Replace toned syllables with untoned syllables
   [sentence, mapping] = replace_and_map(
     sentence,
     TONED_SYLLABLE_REGEX,
-    function (_, syllable, tone) {
+    function (_, syllable) {
       return syllable;
     },
     mapping,
@@ -213,7 +205,7 @@ export function toTextIgnoreTone(sentence, ignoreSep) {
     [sentence, mapping] = replace_and_map(
       sentence,
       /[ .^]/g,
-      function (match) {
+      function () {
         return "";
       },
       mapping,

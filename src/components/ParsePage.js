@@ -75,7 +75,7 @@ function makeName(parseTree) {
   return result.join(" + ");
 }
 
-function ParsePage(props) {
+function ParsePage() {
   const { t } = useTranslation();
 
   const [currentQuery, setCurrentQuery] = React.useState("안녕하시겠어요");
@@ -146,7 +146,7 @@ function ParsePage(props) {
         />
       </Grid>
       <Grid item xs={3} sm={2} md={1}>
-        <Button variant="contained" fullWidth onClick={(event) => refresh()}>
+        <Button variant="contained" fullWidth onClick={() => refresh()}>
           {t("Parse")}
         </Button>
       </Grid>
