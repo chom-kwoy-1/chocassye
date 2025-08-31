@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-import { Book, SearchQuery } from "./search";
+import { Book, SearchQuery, getStats } from "./search";
 import { SearchPage } from "./searchPage";
 
 function parseSearchParams(searchParams: URLSearchParams): SearchQuery {
@@ -42,16 +42,12 @@ export function SearchPageWrapper({
   result: {
     loaded: boolean;
     result: Book[];
+    page_N: number;
     result_term: string;
     result_page: number;
     result_doc: string;
     excludeModern: boolean;
     ignoreSep: boolean;
-    statsLoaded: boolean;
-    stats_term: string;
-    page_N: number;
-    num_results: number;
-    histogram: { period: number; num_hits: number }[];
   };
 }) {
   const router = useRouter();
@@ -63,11 +59,51 @@ export function SearchPageWrapper({
   const [query, setQuery] = React.useState(initialQuery);
 
   const [loaded, setLoaded] = React.useState(result.loaded);
-  const [statsLoaded, setStatsLoaded] = React.useState(result.statsLoaded);
   React.useEffect(() => {
     setLoaded(result.loaded);
-    setStatsLoaded(result.statsLoaded);
   }, [result]);
+
+  const [stats, setStats] = React.useState<{
+    statsLoaded: boolean;
+    statsTerm: string;
+    statsDoc: string;
+    statsExcludeModern: boolean;
+    statsIgnoreSep: boolean;
+    numResults: number;
+    histogram: { period: number; num_hits: number }[];
+  }>({
+    statsLoaded: false,
+    statsTerm: "",
+    statsDoc: "",
+    statsExcludeModern: false,
+    statsIgnoreSep: false,
+    numResults: 0,
+    histogram: [],
+  });
+
+  const refreshStats = React.useCallback((query: SearchQuery) => {
+    async function fetchStats() {
+      const result = await getStats(query);
+      if (result.status === "success") {
+        setStats({
+          statsLoaded: true,
+          statsTerm: query.term,
+          statsDoc: query.doc,
+          statsExcludeModern: query.excludeModern,
+          statsIgnoreSep: query.ignoreSep,
+          numResults: result.num_results,
+          histogram: result.histogram,
+        });
+      }
+    }
+    fetchStats();
+  }, []);
+
+  React.useEffect(() => {
+    const newParams = parseSearchParams(searchParams);
+    setQuery(newParams);
+    refreshStats(newParams);
+  }, [searchParams, refreshStats]);
 
   const refresh = React.useCallback(
     (query: SearchQuery) => {
@@ -82,14 +118,14 @@ export function SearchPageWrapper({
       ) {
         query.page = 1;
         setQuery(query);
-        setStatsLoaded(false);
+        setStats({ ...stats, statsLoaded: false });
       }
       // Update URL
       const params = makeSearchParams(query).toString();
       const url = params ? `/search?${params}` : "/search";
       router.push(url);
     },
-    [initialQuery, setQuery, router],
+    [initialQuery, setQuery, stats, router],
   );
 
   // Convenience function to set page
@@ -126,17 +162,17 @@ export function SearchPageWrapper({
       // Current Results
       loaded={loaded}
       result={result.result}
+      pageN={result.page_N}
       resultTerm={result.result_term}
       resultPage={result.result_page}
       resultDoc={result.result_doc}
       resultExcludeModern={result.excludeModern}
       resultIgnoreSep={result.ignoreSep}
       // Current Stats
-      statsLoaded={statsLoaded}
-      statsTerm={result.stats_term}
-      pageN={result.page_N}
-      numResults={result.num_results}
-      histogram={result.histogram}
+      statsLoaded={stats.statsLoaded}
+      statsTerm={stats.statsTerm}
+      numResults={stats.numResults}
+      histogram={stats.histogram}
       // Callbacks
       onRefresh={forceRefreshResults}
     />
