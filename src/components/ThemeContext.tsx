@@ -6,8 +6,8 @@ import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { setCookie } from "cookies-next";
 import React, { createContext } from "react";
 
+import { darkTheme, lightTheme } from "@/app/themes";
 import { THEME_COOKIE_KEY } from "@/components/config";
-import { darkTheme, lightTheme } from "@/themes";
 
 export const ThemeContext = createContext([{}, (_: "light" | "dark") => {}]);
 

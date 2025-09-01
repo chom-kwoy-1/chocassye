@@ -24,20 +24,19 @@ import Link from "next/link";
 import React from "react";
 import { Trans } from "react-i18next";
 
-import { lightTheme } from "@/themes";
-
-import { findMatchingRanges, highlight, toText } from "./Highlight";
-import Histogram from "./Histogram";
-import HowToPage from "./HowToPage";
-import { useTranslation } from "./TranslationProvider";
-import { yale_to_hangul } from "./YaleToHangul.mjs";
+import { lightTheme } from "@/app/themes";
+import { findMatchingRanges, highlight, toText } from "@/components/Highlight";
+import Histogram from "@/components/Histogram";
+import HowToPage from "@/components/HowToPage";
+import { useTranslation } from "@/components/TranslationProvider";
+import { yale_to_hangul } from "@/components/YaleToHangul.mjs";
 import {
   StyledTableCell,
   StyledTableRow,
   highlightColors,
-} from "./client_utils";
-import { zip } from "./common_utils.mjs";
-import { IMAGE_BASE_URL } from "./config";
+} from "@/components/client_utils";
+import { zip } from "@/components/common_utils.mjs";
+import { IMAGE_BASE_URL } from "@/components/config";
 
 function SearchResultsList(props) {
   const { t } = useTranslation();
@@ -446,9 +445,6 @@ let SearchResultsWrapper = function (props) {
 function arePropsEqual(oldProps, newProps) {
   let equal = true;
   for (let key of Object.keys(oldProps)) {
-    if (key === "setPage") {
-      continue;
-    }
     const isEqual = Object.is(oldProps[key], newProps[key]);
     equal &&= isEqual;
   }

@@ -25,11 +25,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 
+import { darkTheme, lightTheme } from "@/app/themes";
 import {
   TranslationContext,
   useTranslation,
 } from "@/components/TranslationProvider";
-import { darkTheme, lightTheme } from "@/themes";
 
 import { ThemeContext } from "./ThemeContext";
 

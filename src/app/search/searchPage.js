@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import React from "react";
 
-import SearchResults from "@/components/SearchResults";
+import SearchResults from "@/app/search/SearchResults";
 import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
 import { useTranslation } from "@/components/TranslationProvider";
 import { hangul_to_yale, yale_to_hangul } from "@/components/YaleToHangul.mjs";

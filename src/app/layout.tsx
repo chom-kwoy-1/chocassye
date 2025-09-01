@@ -12,7 +12,7 @@ import DarkLightThemeProvider from "@/components/ThemeContext";
 import { TranslationProvider } from "@/components/TranslationProvider";
 import { THEME_COOKIE_KEY } from "@/components/config";
 
-import "../index.css";
+import "./index.css";
 
 polyfill(); // Polyfill for interweave on server side
 
