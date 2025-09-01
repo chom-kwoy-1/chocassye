@@ -17,7 +17,6 @@ import React from "react";
 import { Trans } from "react-i18next";
 
 import { useTranslation } from "./TranslationProvider";
-import "./i18n";
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {

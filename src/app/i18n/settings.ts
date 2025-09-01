@@ -12,5 +12,7 @@ export function getOptions(lng = fallbackLng, ns = defaultNS) {
     fallbackNS: defaultNS,
     defaultNS,
     ns,
+    transSupportBasicHtmlNodes: true,
+    transKeepBasicHtmlNodesFor: ["br", "strong", "i"],
   };
 }

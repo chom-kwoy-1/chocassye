@@ -1,16 +1,19 @@
 import { createInstance } from "i18next";
+import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
+import { UseTranslationOptions } from "react-i18next";
 import { initReactI18next } from "react-i18next/initReactI18next";
 
 import { getOptions } from "./settings";
 
-const initI18next = async (lng, ns) => {
+const initI18next = async (lng: string, ns: string) => {
   const i18nInstance = createInstance();
   await i18nInstance
+    .use(ICU)
     .use(initReactI18next)
     .use(
       resourcesToBackend(
-        (language, namespace) =>
+        (language: string, namespace: string) =>
           import(`./locales/${language}/${namespace}.json`),
       ),
     )
@@ -18,11 +21,15 @@ const initI18next = async (lng, ns) => {
   return i18nInstance;
 };
 
-export async function useTranslation(lng, ns = undefined, options = {}) {
-  const i18nextInstance = await initI18next(lng, ns);
+export async function useTranslation(
+  lng: string | undefined = undefined,
+  ns: string | undefined = undefined,
+  options: UseTranslationOptions<undefined> = {},
+) {
+  const i18nextInstance = await initI18next(lng!, ns!);
   return {
     t: i18nextInstance.getFixedT(
-      lng,
+      lng!,
       Array.isArray(ns) ? ns[0] : ns,
       options.keyPrefix,
     ),

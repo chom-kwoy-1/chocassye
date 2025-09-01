@@ -3,9 +3,11 @@
 import { getCookie, setCookie } from "cookies-next";
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import ICU from "i18next-icu";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { useEffect, useState } from "react";
 import {
+  UseTranslationOptions,
   initReactI18next,
   useTranslation as useTranslationOrg,
 } from "react-i18next";
@@ -15,11 +17,12 @@ import { cookieName, getOptions, languages } from "./settings";
 const runsOnServerSide = typeof window === "undefined";
 
 i18next
+  .use(ICU)
   .use(initReactI18next)
   .use(LanguageDetector)
   .use(
     resourcesToBackend(
-      (language, namespace) =>
+      (language: string, namespace: string) =>
         import(`./locales/${language}/${namespace}.json`),
     ),
   )
@@ -32,7 +35,11 @@ i18next
     preload: runsOnServerSide ? languages : [],
   });
 
-export function useTranslation(lng, ns, options) {
+export function useTranslation(
+  lng: string | undefined,
+  ns: string | undefined = undefined,
+  options: UseTranslationOptions<undefined> = {},
+) {
   const i18nextCookie = getCookie(cookieName);
   const ret = useTranslationOrg(ns, options);
   const { i18n } = ret;
