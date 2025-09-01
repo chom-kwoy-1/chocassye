@@ -315,7 +315,8 @@ function getMatchingRanges(
 
   let match_ranges = [];
   let match;
-  while ((match = hlRegex.exec(targetText)) !== null) {
+  const regex = new RegExp(hlRegex.source, "g");
+  while ((match = regex.exec(targetText)) !== null) {
     let matchBegin = match.index;
     let matchEnd = match.index + match[0].length;
     let match_range = [

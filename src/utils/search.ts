@@ -7,7 +7,7 @@ import { searchTerm2Regex } from "@/components/Regex.mjs";
 import type { NgramMaps } from "./load_ngram_index";
 import { find_candidate_ids } from "./regex_index";
 
-type SentenceRow = {
+export type SentenceRow = {
   filename: string;
   year: number;
   year_start: number;
@@ -68,7 +68,7 @@ export async function makeCorpusQuery(
     await client.query(
       format(
         `SET cursor_tuple_fraction = %L`,
-        Math.min(0.01, (offset + count) / candIds.size),
+        Math.min(0.00001, (offset + count) / candIds.size),
       ),
     );
 
@@ -80,12 +80,12 @@ export async function makeCorpusQuery(
               VALUES %L
             )
             SELECT b.filename AS filename,
-              b.year AS year,
-              b.year_start AS year_start,
-              b.year_end AS year_end,
-              b.year_string AS year_string,
-              b.year_sort AS year_sort,
-              st.*
+                   b.year AS year,
+                   b.year_start AS year_start,
+                   b.year_end AS year_end,
+                   b.year_string AS year_string,
+                   b.year_sort AS year_sort,
+                   st.*
               FROM sentences st
                 JOIN tmp_ids t ON st.id = t.id
                 JOIN books b ON st.filename = b.filename
@@ -99,58 +99,66 @@ export async function makeCorpusQuery(
         ),
       ),
     );
+
+    const results: SentenceRow[] = [];
+    while (results.length < offset + count) {
+      const rows = await cursor.read(count);
+      if (rows.length === 0) {
+        break; // no more rows
+      }
+      for (const row of rows) {
+        const text: string = ignoreSep ? row.text_without_sep : row.text;
+        if (row.id == 214840) {
+          console.log(row);
+          console.log(regex, text, regex.test(text));
+        }
+        if (!regex.test(text)) {
+          continue;
+        }
+        results.push(row);
+        if (results.length >= offset + count) {
+          break;
+        }
+      }
+    }
+
+    await cursor.close();
+
+    return results.slice(offset);
   } catch (error) {
     console.log(`Error while searching "${term}", falling back to psql`, error);
 
     const textFieldName = ignoreSep ? "st.text_without_sep" : "st.text";
 
-    cursor = client.query(
-      new Cursor(
-        format(
-          `
-            SELECT b.filename AS filename,
-              b.year AS year,
-              b.year_start AS year_start,
-              b.year_end AS year_end,
-              b.year_string AS year_string,
-              b.year_sort AS year_sort,
-              st.*
-              FROM sentences st
-                JOIN books b ON st.filename = b.filename
-              WHERE ${textFieldName} ~ %L 
-                    ${filterDoc} ${filterLang}
-              ORDER BY
-                st.year_sort ASC,
-                st.filename::bytea ASC,
-                st.number_in_book ASC
-          `,
-          [regex.source],
-        ),
+    const results = await client.query(
+      format(
+        `
+          SELECT b.filename AS filename,
+            b.year AS year,
+            b.year_start AS year_start,
+            b.year_end AS year_end,
+            b.year_string AS year_string,
+            b.year_sort AS year_sort,
+            st.*
+            FROM sentences st
+              JOIN books b ON st.filename = b.filename
+            WHERE ${textFieldName} ~ %L
+                  ${filterDoc} ${filterLang}
+            ORDER BY
+              st.year_sort ASC,
+              st.filename::bytea ASC,
+              st.number_in_book ASC
+            OFFSET %L
+            LIMIT %L
+        `,
+        [regex.source],
+        offset,
+        count,
       ),
     );
+
+    return results.rows;
   }
-
-  const results: SentenceRow[] = [];
-  while (results.length < offset + count) {
-    const rows = await cursor.read(count);
-    if (rows.length === 0) {
-      break; // no more rows
-    }
-    for (const row of rows) {
-      const text: string = ignoreSep ? row.text_without_sep : row.text;
-      if (!regex.test(text)) {
-        continue;
-      }
-      results.push(row);
-      if (results.length >= offset + count) {
-        break;
-      }
-    }
-  }
-
-  await cursor.close();
-
-  return results.slice(offset);
 }
 
 export async function makeCorpusStatsQuery(

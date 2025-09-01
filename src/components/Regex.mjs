@@ -52,5 +52,5 @@ export function searchTerm2Regex(text, ignoreSep = false) {
     regex = `${regex}$`;
   }
 
-  return new RegExp(regex, "g");
+  return new RegExp(regex);
 }
