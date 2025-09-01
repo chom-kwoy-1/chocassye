@@ -19,55 +19,46 @@ async function test() {
   console.log(`Connected successfully to DB ${DB_NAME}`);
 
   const ngramIndex = await loadNgramIndex(path.join(process.cwd(), "index"));
-  pool
-    .connect()
-    .then(async (client) => {
-      {
-        const startTime = new Date();
-        const result = await makeCorpusQuery(
-          client,
-          "hwo.la",
-          "언해",
-          false,
-          false,
-          200,
-          50,
-          ngramIndex,
-        );
-        const elapsed = new Date().getTime() - startTime.getTime();
-        console.log(result);
-        console.log("Query executed in " + elapsed + "ms");
-      }
-      client.release();
+  const client = await pool.connect();
+  for (let runIdx = 0; runIdx < 5; ++runIdx) {
+    const startTime = new Date();
+    const result = await makeCorpusQuery(
+      client,
+      "hwo.la",
+      "",
+      false,
+      false,
+      200,
+      50,
+      ngramIndex,
+    );
+    const elapsed = new Date().getTime() - startTime.getTime();
+    console.log(result?.length);
+    console.log("Search Query executed in " + elapsed + "ms");
+  }
 
-      console.log("Finished");
-    })
-    .then(() => {
-      return pool.connect();
-    })
-    .then(async (client) => {
-      {
-        const startTime = new Date();
-        const queryString = await makeCorpusStatsQuery(
-          "hwo.la",
-          "언해",
-          false,
-          false,
-          ngramIndex,
-        );
-        let results = null;
-        if (queryString !== null) {
-          results = await client.query(queryString);
-        }
-        const elapsed = new Date().getTime() - startTime.getTime();
-        console.log(results);
-        console.log("Query executed in " + elapsed + "ms");
-      }
+  console.log("Finished");
+  for (let runIdx = 0; runIdx < 5; ++runIdx) {
+    const startTime = new Date();
+    const queryString = await makeCorpusStatsQuery(
+      "hwo.la",
+      "",
+      false,
+      false,
+      ngramIndex,
+    );
+    let results = null;
+    if (queryString !== null) {
+      results = await client.query(queryString);
+    }
+    const elapsed = new Date().getTime() - startTime.getTime();
+    console.log(results?.rowCount);
+    console.log("Stats Query executed in " + elapsed + "ms");
+  }
 
-      client.release();
+  client.release();
 
-      console.log("Finished");
-    });
+  console.log("Finished");
 }
 
 test();

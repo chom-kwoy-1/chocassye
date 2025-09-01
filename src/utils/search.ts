@@ -1,3 +1,4 @@
+import fs from "fs";
 import { format } from "node-pg-format";
 import { PoolClient } from "pg";
 import Cursor from "pg-cursor";
@@ -72,33 +73,33 @@ export async function makeCorpusQuery(
       ),
     );
 
-    cursor = client.query(
-      new Cursor(
-        format(
-          `
-            WITH tmp_ids (id) AS (
-              VALUES %L
-            )
-            SELECT b.filename AS filename,
-                   b.year AS year,
-                   b.year_start AS year_start,
-                   b.year_end AS year_end,
-                   b.year_string AS year_string,
-                   b.year_sort AS year_sort,
-                   st.*
-              FROM sentences st
-                JOIN tmp_ids t ON st.id = t.id
-                JOIN books b ON st.filename = b.filename
-              WHERE 1=1 ${filterDoc} ${filterLang}
-              ORDER BY
-                st.year_sort ASC,
-                st.filename::bytea ASC,
-                st.number_in_book ASC
-          `,
-          Array.from(candIds).map((id) => [id]),
-        ),
-      ),
+    const queryString = format(
+      `
+        WITH tmp_ids (id) AS (
+          VALUES %L
+        )
+        SELECT b.filename AS filename,
+               b.year AS year,
+               b.year_start AS year_start,
+               b.year_end AS year_end,
+               b.year_string AS year_string,
+               b.year_sort AS year_sort,
+               st.*
+          FROM sentences st
+            JOIN tmp_ids t ON st.id = t.id
+            JOIN books b ON st.filename = b.filename
+          WHERE 1=1 ${filterDoc} ${filterLang}
+          ORDER BY
+            st.year_sort ASC,
+            st.filename::bytea ASC,
+            st.number_in_book ASC
+      `,
+      Array.from(candIds).map((id) => [id]),
     );
+
+    // fs.writeFileSync("query.txt", queryString);
+
+    cursor = client.query(new Cursor(queryString));
 
     const results: SentenceRow[] = [];
     while (results.length < offset + count) {
