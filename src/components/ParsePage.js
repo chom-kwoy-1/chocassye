@@ -15,6 +15,7 @@ import React from "react";
 import { useTranslation } from "./TranslationProvider";
 import { yale_to_hangul } from "./YaleToHangul";
 import { postData } from "./client_utils.js";
+import "./i18n";
 
 function makeParseTreeDOM(parseTree) {
   if (typeof parseTree.children === "string") {

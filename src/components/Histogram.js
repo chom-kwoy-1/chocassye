@@ -3,6 +3,7 @@ import React from "react";
 
 import { useTranslation } from "./TranslationProvider";
 import { range } from "./common_utils.mjs";
+import "./i18n";
 
 export default function Histogram(props) {
   const { t } = useTranslation();
