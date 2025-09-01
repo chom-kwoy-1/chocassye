@@ -1,7 +1,5 @@
-import fs from "fs";
 import { format } from "node-pg-format";
 import { PoolClient } from "pg";
-import Cursor from "pg-cursor";
 
 import { searchTerm2Regex } from "@/components/Regex.mjs";
 
@@ -53,7 +51,8 @@ export async function makeCorpusQuery(
       `;
   }
 
-  let cursor;
+  const textFieldName = ignoreSep ? "st.text_without_sep" : "st.text";
+
   try {
     const candIds = await getCandidateIds(regex, ignoreSep, ngramIndex);
     if (candIds === null) {
@@ -88,48 +87,25 @@ export async function makeCorpusQuery(
           FROM sentences st
             JOIN tmp_ids t ON st.id = t.id
             JOIN books b ON st.filename = b.filename
-          WHERE 1=1 ${filterDoc} ${filterLang}
+          WHERE ${textFieldName} ~ %L ${filterDoc} ${filterLang}
           ORDER BY
             st.year_sort ASC,
             st.filename::bytea ASC,
             st.number_in_book ASC
+          OFFSET %L
+          LIMIT %L
       `,
       Array.from(candIds).map((id) => [id]),
+      [regex.source],
+      offset,
+      count,
     );
 
-    // fs.writeFileSync("query.txt", queryString);
+    const result = await client.query(queryString);
 
-    cursor = client.query(new Cursor(queryString));
-
-    const results: SentenceRow[] = [];
-    while (results.length < offset + count) {
-      const rows = await cursor.read(count);
-      if (rows.length === 0) {
-        break; // no more rows
-      }
-      for (const row of rows) {
-        const text: string = ignoreSep ? row.text_without_sep : row.text;
-        if (row.id == 214840) {
-          console.log(row);
-          console.log(regex, text, regex.test(text));
-        }
-        if (!regex.test(text)) {
-          continue;
-        }
-        results.push(row);
-        if (results.length >= offset + count) {
-          break;
-        }
-      }
-    }
-
-    await cursor.close();
-
-    return results.slice(offset);
+    return result.rows;
   } catch (error) {
     console.log(`Error while searching "${term}", falling back to psql`, error);
-
-    const textFieldName = ignoreSep ? "st.text_without_sep" : "st.text";
 
     const results = await client.query(
       format(

@@ -24,7 +24,7 @@ async function test() {
     const startTime = new Date();
     const result = await makeCorpusQuery(
       client,
-      "hwo.la",
+      "hwon",
       "",
       false,
       false,
@@ -41,7 +41,7 @@ async function test() {
   for (let runIdx = 0; runIdx < 5; ++runIdx) {
     const startTime = new Date();
     const queryString = await makeCorpusStatsQuery(
-      "hwo.la",
+      "hwon",
       "",
       false,
       false,
