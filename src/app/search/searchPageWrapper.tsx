@@ -55,7 +55,10 @@ export function SearchPageWrapper({
   const searchParams = useSearchParams();
 
   // Currently displayed search query
-  const initialQuery = parseSearchParams(searchParams);
+  const initialQuery = React.useMemo(
+    () => parseSearchParams(searchParams),
+    [searchParams],
+  );
   const [query, setQuery] = React.useState(initialQuery);
 
   const [loaded, setLoaded] = React.useState(result.loaded);
@@ -131,11 +134,11 @@ export function SearchPageWrapper({
   // Convenience function to set page
   const setPage = React.useCallback(
     (page: number) => {
-      const newQuery = { ...query, page: page };
+      const newQuery = { ...initialQuery, page: page };
       setQuery(newQuery);
       refresh(newQuery);
     },
-    [refresh, query],
+    [refresh, initialQuery],
   );
 
   function forceRefreshResults() {

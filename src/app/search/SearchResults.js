@@ -41,6 +41,8 @@ import { IMAGE_BASE_URL } from "@/components/config";
 function SearchResultsList(props) {
   const { t } = useTranslation();
 
+  console.log("Rerender SearchResults");
+
   let footnotes = []; // TODO: fix footnotes
 
   return (
