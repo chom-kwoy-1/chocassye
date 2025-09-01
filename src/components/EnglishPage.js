@@ -1,7 +1,6 @@
 import React from "react";
 
 import { postData } from "./client_utils.js";
-import "./i18n";
 
 function TestWrapper() {
   const [state, setState] = React.useState({
