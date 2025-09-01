@@ -179,7 +179,7 @@ function addCustomComponents(theme) {
             styleSheet += `
               mark[data-hl-id="${index}"] {
                 background-color: ${color[theme.palette.mode === "light" ? "A100" : "300"]};
-                color: "black";
+                color: black;
               }
             `;
           });
