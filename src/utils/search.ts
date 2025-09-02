@@ -6,6 +6,10 @@ import { searchTerm2Regex } from "@/components/Regex.mjs";
 import type { NgramMaps } from "./load_ngram_index";
 import { find_candidate_ids } from "./regex_index";
 
+const TRIGRAM_THRESHOLD: number = parseInt(
+  process.env.TRIGRAM_THRESHOLD ?? "1000",
+);
+
 export type SentenceRow = {
   filename: string;
   year: number;
@@ -53,24 +57,22 @@ export async function makeCorpusQuery(
 
   const textFieldName = ignoreSep ? "st.text_without_sep" : "st.text";
 
+  let candIds;
   try {
-    const candIds = await getCandidateIds(regex, ignoreSep, ngramIndex);
+    candIds = await getCandidateIds(regex, ignoreSep, ngramIndex);
     if (candIds === null) {
       return null;
     }
 
-    console.log(`Got ${candIds.size} candidate IDs for term "${term}"`);
+    console.log(`Got ${candIds.size} candidate IDs for term "${term}".`);
+  } catch (_) {
+    candIds = null;
+  }
 
+  if (candIds !== null && candIds.size < TRIGRAM_THRESHOLD) {
     if (candIds.size === 0) {
       return null;
     }
-
-    await client.query(
-      format(
-        `SET cursor_tuple_fraction = %L`,
-        Math.min(0.00001, (offset + count) / candIds.size),
-      ),
-    );
 
     const queryString = format(
       `
@@ -104,8 +106,8 @@ export async function makeCorpusQuery(
     const result = await client.query(queryString);
 
     return result.rows;
-  } catch (error) {
-    console.log(`Error while searching "${term}", falling back to psql`, error);
+  } else {
+    console.log(`Falling back to regular psql.`);
 
     const results = await client.query(
       format(
@@ -170,12 +172,24 @@ export async function makeCorpusStatsQuery(
   }
 
   let queryString = null;
+
+  let candIds;
   try {
+    candIds = await getCandidateIds(regex, ignoreSep, ngramIndex);
+    if (candIds === null) {
+      return null;
+    }
+
+    console.log(`Got ${candIds.size} candidate IDs for term "${term}".`);
+  } catch (_) {
+    candIds = null;
+  }
+
+  if (candIds !== null && candIds.size < TRIGRAM_THRESHOLD) {
     const candIds = await getCandidateIds(regex, ignoreSep, ngramIndex);
     if (candIds === null) {
       return null;
     }
-    console.log(`Got ${candIds.size} candidate IDs for term "${term}"`);
 
     if (candIds.size === 0) {
       return null;
@@ -197,8 +211,8 @@ export async function makeCorpusStatsQuery(
       Array.from(candIds).map((id) => [id]),
       [regex.source],
     );
-  } catch (error) {
-    console.log(`Error while searching "${term}", falling back to psql`, error);
+  } else {
+    console.log(`Falling back to regular psql.`);
 
     queryString = format(
       `

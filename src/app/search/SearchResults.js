@@ -15,15 +15,15 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { tooltipClasses } from "@mui/material/Tooltip";
 import { grey } from "@mui/material/colors";
-import { ThemeProvider, styled } from "@mui/material/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { Interweave } from "interweave";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Trans } from "react-i18next";
 
+import { ImageTooltip } from "@/app/search/ImageTooltip";
 import { lightTheme } from "@/app/themes";
 import { findMatchingRanges, highlight, toText } from "@/components/Highlight";
 import Histogram from "@/components/Histogram";
@@ -122,21 +122,6 @@ function SearchResultsList(props) {
     </React.Fragment>
   );
 }
-
-const ImageTooltip = styled(({ className, ...props }) => (
-  <Tooltip {...props} classes={{ popper: className }} />
-))(({ theme }) => ({
-  [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: "#f5f5f9",
-    color: "rgba(0, 0, 0, 0.87)",
-    // maxWidth: window.innerWidth * 0.3,
-    // maxHeight: Math.min(window.innerHeight, window.innerWidth * 0.3 * 1.6),
-    maxWidth: 512 * 0.3,
-    maxHeight: Math.min(512, 512 * 0.3 * 1.6),
-    fontSize: theme.typography.pxToRem(12),
-    border: "1px solid #dadde9",
-  },
-}));
 
 function PageImagePreview(props) {
   const { t } = useTranslation();
