@@ -1,7 +1,16 @@
 import React from "react";
 
+import { getTranslation } from "../../components/detectLanguage";
 import { fetchList } from "./fetchList";
 import { SourceListPageWrapper } from "./sourceListPage";
+
+export async function generateMetadata() {
+  const { t } = await getTranslation();
+  return {
+    title: t("page-title-sourcelist"),
+    description: t("page-description"),
+  };
+}
 
 export default async function SourceList() {
   const offset = 0;

@@ -1,12 +1,18 @@
-"use client";
-
 import { Box, Divider, Stack, Typography } from "@mui/material";
 import React from "react";
 
-import { useTranslation } from "@/components/TranslationProvider";
+import { getTranslation } from "../../components/detectLanguage";
 
-function AboutWrapper() {
-  const { t } = useTranslation();
+export async function generateMetadata() {
+  const { t } = await getTranslation();
+  return {
+    title: t("page-title-about"),
+    description: t("page-description"),
+  };
+}
+
+export default async function About() {
+  const { t } = await getTranslation();
 
   return (
     <Stack spacing={2} sx={{ px: 2 }}>
@@ -127,5 +133,3 @@ function AboutWrapper() {
     </Stack>
   );
 }
-
-export default AboutWrapper;

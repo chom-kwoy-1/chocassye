@@ -1,7 +1,18 @@
 import React from "react";
 
+import { getTranslation } from "../../components/detectLanguage";
 import { fetchSource } from "./fetchSource";
 import { SourcePage } from "./sourcePage";
+
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const bookName = params.name;
+  const { t } = await getTranslation();
+  return {
+    title: t("page-title-with-bookname", { bookName: bookName }),
+    description: t("page-description"),
+  };
+}
 
 export default async function Source({ searchParams }) {
   const params = await searchParams;
