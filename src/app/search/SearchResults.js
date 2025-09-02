@@ -212,7 +212,7 @@ function SentenceAndPage(props) {
         allowList={["mark", "span", "a"]}
         allowAttributes={true}
       />
-      &#8203;
+      <wbr />
       {/* Add source link */}
       <span style={{ color: sourceTextColor }}>
         &lang;
