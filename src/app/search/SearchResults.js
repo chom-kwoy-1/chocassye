@@ -166,9 +166,9 @@ function SentenceAndPage(props) {
   const sourceTextColor =
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
-  let pageLink;
+  let imagePreviewLink;
   if (props.sentence.hasimages && props.sentence.page !== "") {
-    pageLink = props.sentence.page.split("-").map((page, i) => {
+    imagePreviewLink = props.sentence.page.split("-").map((page, i) => {
       const imageURL = IMAGE_BASE_URL + props.book.name + "/" + page + ".jpg";
       return (
         <ImageTooltip
@@ -195,7 +195,7 @@ function SentenceAndPage(props) {
       );
     });
   } else {
-    pageLink = props.sentence.page !== "" ? props.sentence.page : null;
+    imagePreviewLink = props.sentence.page !== "" ? props.sentence.page : null;
   }
 
   return (
@@ -218,6 +218,8 @@ function SentenceAndPage(props) {
         &lang;
         <Link
           className="sourceLink"
+          rel="noopener noreferrer"
+          target="_blank" // Open in new tab
           href={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep ? "yes" : "no"}`}
           style={{ textDecoration: `underline dotted ${sourceTextColor}` }}
         >
@@ -225,7 +227,7 @@ function SentenceAndPage(props) {
             ? props.book.name
             : `${props.book.name}:`}
         </Link>
-        {pageLink}
+        {imagePreviewLink}
         &rang;
       </span>
     </React.Fragment>
