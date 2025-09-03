@@ -62,7 +62,7 @@ function Sentence(props) {
               color: sourceTextColor,
               textDecoration: "underline dotted",
             }}
-            href={`${IMAGE_BASE_URL}${bookname}/${page}.jpg`}
+            href={`${IMAGE_BASE_URL}/${bookname}/${page}.jpg`}
             target="blank"
             key={i}
           >
