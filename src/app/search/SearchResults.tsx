@@ -8,6 +8,7 @@ import {
   Grid,
   Pagination,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableContainer,
@@ -37,6 +38,7 @@ import {
   highlightColors,
 } from "@/components/client_utils";
 import { IMAGE_BASE_URL } from "@/components/config";
+import useDimensions from "@/utils/useDimensions";
 import { zip } from "@/utils/zip";
 
 function SearchResultsList(props: {
@@ -93,10 +95,10 @@ function SearchResultsList(props: {
                     {zip(book.sentences, book.matchIdsInBook).map(
                       ([sentence, match_ids_in_sentence], i) => (
                         <Grid key={i} sx={{ py: 0.4 }}>
-                          <SentenceAndPage
+                          <SentenceWithCtx
                             sentenceWithCtx={sentence}
                             book={book}
-                            match_ids_in_sentence={match_ids_in_sentence}
+                            matchIdsInSentence={match_ids_in_sentence}
                             highlightTerm={props.resultTerm}
                             ignoreSep={props.ignoreSep}
                             romanize={props.romanize}
@@ -139,33 +141,65 @@ function SearchResultsList(props: {
   );
 }
 
+function SentenceWithCtx(props: {
+  sentenceWithCtx: SentenceWithContext;
+  book: Book;
+  matchIdsInSentence: number[];
+  highlightTerm: string;
+  ignoreSep: boolean;
+  romanize: boolean;
+}) {
+  return (
+    <SentenceAndPage
+      sentenceWithCtx={props.sentenceWithCtx}
+      book={props.book}
+      matchIdsInSentence={props.matchIdsInSentence}
+      highlightTerm={props.highlightTerm}
+      ignoreSep={props.ignoreSep}
+      romanize={props.romanize}
+    />
+  );
+}
+
+const BLUR_DATA_URL = // Blurred image of a page
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAARCAYAAADkIz3lAAAA" +
+  "CXBIWXMAAA7EAAAOxAGVKw4bAAABsklEQVQokY3SvW4TQRTF8f/cmdmdXa+TeIkdK1YIUh" +
+  "6AgtemTUUBJUiIAgqQQEIoEEBK4u/12jsfFMsD5NY/nXOKq1JKiUecAdgsvqNEEFEoUYjS" +
+  "zH99ARIhBHzoeria32KsRWmN1pr95oHVn88oY1HG0nVtD19fvyQvC3TmiMGT/AFXHVEUJa" +
+  "IFkdjDD5++cnE+wrqCgGHdHKhHnhfPp/z4+Ztmu+yhtRnL5YZKMqLkrNYNSmlevXmL0cJ4" +
+  "5HpY5pqz2hFtxvbQMRyUzKYTijwjJc++3SAA5XHNpo0E31EPM+qTiu12i0ikaRrmi//Vzy" +
+  "YF94sOHwJ1lfN3vmO12fFtcU/XeSonfeLBR6rhCbOLS7LMcXN7x/jIMR2VpK5Fi/SJ0XfY" +
+  "wQBEo1WHyx1aoCwLTsdPiOge6szh/QFHTm41xwPFw2KB6JrZ+RlN6/tqrwzJt6yXc7wS7p" +
+  "YN8/WO8emIoiyxmelhKJ5iRleEENHGcnkxZTisGAxKrLWICCqllN6/u2bfttzffEQkIWKQ" +
+  "5FEIAUPu8n7jeDzhsFsS7iKiLXleYrRASqQY8b7rEx/zj/8AKXG2WTJjYXMAAAAASUVORK" +
+  "5CYII=";
+
 function PageImagePreview(props: { page: string; imageURL: string }) {
   const { t } = useTranslation();
 
+  const ref = React.useRef<HTMLDivElement | null>(null);
+  const { width } = useDimensions(ref);
+
   return (
-    <Grid container>
-      <Grid size={12}>
-        <Image
-          src={props.imageURL}
-          alt={t("Image for page", { page: props.page })}
-          style={{
-            maxHeight: "100%",
-            maxWidth: "100%",
-            objectFit: "scale-down",
-          }}
-          width={400}
-          height={600}
-        />
-      </Grid>
-      <Grid size={12}>{t("Image for page", { page: props.page })}</Grid>
-    </Grid>
+    <Stack ref={ref} direction="column" spacing={0}>
+      <Image
+        src={props.imageURL}
+        alt={t("Image for page", { page: props.page })}
+        style={{ objectFit: "contain" }}
+        placeholder="blur"
+        blurDataURL={BLUR_DATA_URL}
+        width={width}
+        height={width * 1.4}
+      />
+      <span>{t("Image for page", { page: props.page })}</span>
+    </Stack>
   );
 }
 
 function SentenceAndPage(props: {
   sentenceWithCtx: SentenceWithContext;
   book: Book;
-  match_ids_in_sentence: number[];
+  matchIdsInSentence: number[];
   highlightTerm: string;
   ignoreSep: boolean;
   romanize: boolean;
@@ -215,7 +249,7 @@ function SentenceAndPage(props: {
         content={highlight(
           sentence.html ?? sentence.text,
           props.highlightTerm,
-          props.match_ids_in_sentence,
+          props.matchIdsInSentence,
           props.romanize,
           props.ignoreSep,
         )}
