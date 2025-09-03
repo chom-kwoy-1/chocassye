@@ -1,10 +1,16 @@
+import { Metadata } from "next";
 import React from "react";
 
-import { getTranslation } from "../../components/detectLanguage";
+import { getTranslation } from "@/components/detectLanguage";
+
 import { search } from "./search";
 import { SearchPageWrapper } from "./searchPageWrapper";
 
-export async function generateMetadata({ searchParams }) {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}): Promise<Metadata> {
   const params = await searchParams;
   const searchTerm = params.term ?? "";
   const { t } = await getTranslation();
@@ -17,7 +23,11 @@ export async function generateMetadata({ searchParams }) {
   };
 }
 
-export default async function Search({ searchParams }) {
+export default async function Search({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}) {
   const params = await searchParams;
   const query = {
     term: params.term ?? "",

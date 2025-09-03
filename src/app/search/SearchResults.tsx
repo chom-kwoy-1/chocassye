@@ -22,8 +22,10 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Trans } from "react-i18next";
+import { zip } from "zip-ts";
 
 import { ImageTooltip } from "@/app/search/ImageTooltip";
+import { Book, SentenceWithContext } from "@/app/search/search";
 import { lightTheme } from "@/app/themes";
 import { findMatchingRanges, highlight, toText } from "@/components/Highlight";
 import Histogram from "@/components/Histogram";
@@ -35,13 +37,29 @@ import {
   StyledTableRow,
   highlightColors,
 } from "@/components/client_utils";
-import { zip } from "@/components/common_utils.mjs";
 import { IMAGE_BASE_URL } from "@/components/config";
 
-function SearchResultsList(props) {
+function SearchResultsList(props: {
+  filteredResults: {
+    sentences: SentenceWithContext[];
+    matchIdsInBook: number[][];
+    name: string;
+    year: number;
+    year_start: number;
+    year_end: number;
+    year_string: string;
+    year_sort: number;
+    count: number;
+  }[];
+  romanize: boolean;
+  ignoreSep: boolean;
+  resultTerm: string;
+}) {
   const { t } = useTranslation();
 
-  let footnotes = []; // TODO: fix footnotes
+  const footnotes: string[] = []; // TODO: fix footnotes
+
+  console.log(props.filteredResults);
 
   return (
     <React.Fragment>
@@ -50,7 +68,7 @@ function SearchResultsList(props) {
           <Table size="small">
             <TableBody>
               {/* For each book */}
-              {props.filteredResults.map(([book, match_ids_in_book], i) => (
+              {props.filteredResults.map((book, i) => (
                 <StyledTableRow key={i}>
                   {/* Year column */}
                   <StyledTableCell
@@ -74,11 +92,11 @@ function SearchResultsList(props) {
                   {/* Sentences column */}
                   <StyledTableCell>
                     {/* For each sentence */}
-                    {zip(book.sentences, match_ids_in_book).map(
-                      ([sentence, match_ids_in_sentence], i) => (
+                    {zip(book.sentences, book.matchIdsInBook)
+                      .map(([sentence, match_ids_in_sentence], i) => (
                         <Grid key={i} sx={{ py: 0.4 }}>
                           <SentenceAndPage
-                            sentence={sentence}
+                            sentenceWithCtx={sentence}
                             book={book}
                             match_ids_in_sentence={match_ids_in_sentence}
                             highlightTerm={props.resultTerm}
@@ -86,8 +104,8 @@ function SearchResultsList(props) {
                             romanize={props.romanize}
                           />
                         </Grid>
-                      ),
-                    )}
+                      ))
+                      .toArray()}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
@@ -123,7 +141,7 @@ function SearchResultsList(props) {
   );
 }
 
-function PageImagePreview(props) {
+function PageImagePreview(props: { page: string; imageURL: string }) {
   const { t } = useTranslation();
 
   return (
@@ -146,15 +164,26 @@ function PageImagePreview(props) {
   );
 }
 
-function SentenceAndPage(props) {
+function SentenceAndPage(props: {
+  sentenceWithCtx: SentenceWithContext;
+  book: Book;
+  match_ids_in_sentence: number[];
+  highlightTerm: string;
+  ignoreSep: boolean;
+  romanize: boolean;
+}) {
   const theme = useTheme();
   const sourceTextColor =
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
+  const sentence = props.sentenceWithCtx.mainSentence;
+
+  console.log(sentence);
+
   let imagePreviewLink;
-  if (props.sentence.hasimages && props.sentence.page !== "") {
-    imagePreviewLink = props.sentence.page.split("-").map((page, i) => {
-      const imageURL = IMAGE_BASE_URL + props.book.name + "/" + page + ".jpg";
+  if (sentence.hasimages && sentence.page !== "") {
+    imagePreviewLink = sentence.page.split("-").map((page, i) => {
+      const imageURL = `${IMAGE_BASE_URL}/${props.book.name}/${page}.jpg`;
       return (
         <ImageTooltip
           title={<PageImagePreview page={page} imageURL={imageURL} />}
@@ -174,13 +203,13 @@ function SentenceAndPage(props) {
             >
               {page}
             </a>
-            {i < props.sentence.page.split("-").length - 1 ? "-" : null}
+            {i < sentence.page.split("-").length - 1 ? "-" : null}
           </span>
         </ImageTooltip>
       );
     });
   } else {
-    imagePreviewLink = props.sentence.page !== "" ? props.sentence.page : null;
+    imagePreviewLink = sentence.page !== "" ? sentence.page : null;
   }
 
   return (
@@ -188,7 +217,7 @@ function SentenceAndPage(props) {
       {/* Highlighted sentence */}
       <Interweave
         content={highlight(
-          props.sentence.html ?? props.sentence.text,
+          sentence.html ?? sentence.text,
           props.highlightTerm,
           props.match_ids_in_sentence,
           props.romanize,
@@ -205,12 +234,18 @@ function SentenceAndPage(props) {
           className="sourceLink"
           rel="noopener noreferrer"
           target="_blank" // Open in new tab
-          href={`/source?name=${props.book.name}&n=${props.sentence.number_in_book}&hl=${props.highlightTerm}&is=${props.ignoreSep ? "yes" : "no"}`}
+          href={
+            "/source?" +
+            new URLSearchParams({
+              name: props.book.name,
+              n: `${sentence.number_in_book}`,
+              hl: props.highlightTerm,
+              is: props.ignoreSep ? "yes" : "no",
+            }).toString()
+          }
           style={{ textDecoration: `underline dotted ${sourceTextColor}` }}
         >
-          {props.sentence.page === null
-            ? props.book.name
-            : `${props.book.name}:`}
+          {sentence.page === null ? props.book.name : `${props.book.name}:`}
         </Link>
         {imagePreviewLink}
         &rang;
@@ -219,15 +254,20 @@ function SentenceAndPage(props) {
   );
 }
 
-function getResultMatches(results, searchTerm, ignoreSep) {
-  let matches = [];
+function getResultMatches(
+  results: Book[],
+  searchTerm: string,
+  ignoreSep: boolean,
+): string[][][] {
+  const matches: string[][][] = [];
 
   for (const book of results) {
-    let book_parts = [];
-    for (const sentence of book.sentences) {
-      let text = sentence.html ?? sentence.text;
+    const book_parts: string[][] = [];
+    for (const sentenceWithCtx of book.sentences) {
+      const sentence = sentenceWithCtx.mainSentence;
+      const text = sentence.html ?? sentence.text;
 
-      let [rawText, rawTextMapping] = toText(text, false);
+      const [rawText, rawTextMapping] = toText(text, false);
 
       const match_ranges = findMatchingRanges(
         text,
@@ -237,9 +277,9 @@ function getResultMatches(results, searchTerm, ignoreSep) {
         ignoreSep,
       );
 
-      let parts = [];
-      for (let range of match_ranges) {
-        parts.push(yale_to_hangul(rawText.slice(range[0], range[1])));
+      const parts: string[] = [];
+      for (const range of match_ranges) {
+        parts.push(yale_to_hangul(rawText.slice(range[0], range[1])) as string);
       }
 
       book_parts.push(parts);
@@ -251,27 +291,43 @@ function getResultMatches(results, searchTerm, ignoreSep) {
   return matches;
 }
 
-let SearchResultsWrapper = function (props) {
+type SearchResultsProps = {
+  results: Book[];
+  numResults: number;
+  romanize: boolean;
+  handleRomanizeChange: (value: boolean) => void;
+  ignoreSep: boolean;
+  resultTerm: string;
+  resultPage: number;
+  resultDoc: string;
+  histogram: { period: number; num_hits: number }[];
+  statsLoaded: boolean;
+  statsTerm: string;
+  pageN: number;
+  page: number;
+  setPage: (page: number) => void;
+};
+
+function SearchResultsWrapper(props: SearchResultsProps) {
   const { t } = useTranslation();
 
   const [disabledMatches, setDisabledMatches] = React.useState(new Set());
 
-  function toggleMatch(_, i) {
-    let newDisabledMatches = new Set(disabledMatches);
+  function toggleMatch(i: number) {
+    const newDisabledMatches = new Set(disabledMatches);
     if (newDisabledMatches.has(i)) {
       newDisabledMatches.delete(i);
     } else {
       newDisabledMatches.add(i);
     }
     setDisabledMatches(newDisabledMatches);
-    console.log(newDisabledMatches);
   }
 
   React.useEffect(() => {
     setDisabledMatches(new Set());
-  }, [props.resultTerm, props.page, props.doc]);
+  }, [props.resultTerm, props.page]);
 
-  let num_pages = Math.ceil(props.numResults / props.pageN);
+  const numPages = Math.ceil(props.numResults / props.pageN);
 
   const matches = getResultMatches(
     props.results,
@@ -281,33 +337,36 @@ let SearchResultsWrapper = function (props) {
   const uniqueMatches = [...new Set(matches.flat(2))];
 
   // Array(book)[Array(sentence)[Array(matches)[int]]]
-  const matchIndices = matches.map((matches_in_book) =>
-    matches_in_book.map((matches_in_sentence) =>
-      matches_in_sentence.map((match) => uniqueMatches.indexOf(match)),
+  const matchIndices = matches.map((matchesInBook) =>
+    matchesInBook.map((matchesInSentence) =>
+      matchesInSentence.map((match) => uniqueMatches.indexOf(match)),
     ),
   );
 
-  const filtered_results_list = zip(props.results, matchIndices)
+  const filteredResultsList = zip(props.results, matchIndices)
+    // filter out entire book if all matches in it are disabled
     .filter(
-      (
-        [_, match_ids_in_book], // filter out entire book if all matches in it are disabled
-      ) =>
-        !match_ids_in_book.flat().every((id) => disabledMatches.has(id)) ||
-        match_ids_in_book.flat().length === 0,
+      ([_, matchIdsInBook]) =>
+        !matchIdsInBook.flat().every((id) => disabledMatches.has(id)) ||
+        matchIdsInBook.flat().length === 0,
     )
-    .map(([book, match_ids_in_book]) => {
-      // filter out sentence if all matches in it are disabled
+    // filter out sentence if all matches in it are disabled
+    .map(([book, matchIdsInBook]) => {
+      const sentencesAndIndices = zip(book.sentences, matchIdsInBook)
+        .filter(
+          ([_, matchIdsInSentence]) =>
+            !matchIdsInSentence.every((id) => disabledMatches.has(id)) ||
+            matchIdsInSentence.flat().length === 0,
+        )
+        .toArray();
 
-      let sentences_and_indices = zip(book.sentences, match_ids_in_book).filter(
-        ([_, match_ids_in_sentence]) =>
-          !match_ids_in_sentence.every((id) => disabledMatches.has(id)) ||
-          match_ids_in_sentence.flat().length === 0,
-      );
-
-      let [sentences, indices] = zip(...sentences_and_indices);
-
-      return [{ ...book, sentences: sentences }, indices];
-    });
+      return {
+        ...book,
+        sentences: sentencesAndIndices.map(([sentence, _]) => sentence),
+        matchIdsInBook: sentencesAndIndices.map(([_, index]) => index),
+      };
+    })
+    .toArray();
 
   const theme = useTheme();
   const hlColors = highlightColors.map(
@@ -350,8 +409,8 @@ let SearchResultsWrapper = function (props) {
                   label={part}
                   sx={{ backgroundColor: color }}
                   size="small"
-                  onDelete={(event) => {
-                    toggleMatch(event, i);
+                  onDelete={() => {
+                    toggleMatch(i);
                   }}
                   variant={isEnabled ? "filled" : "outlined"}
                   clickable
@@ -371,17 +430,17 @@ let SearchResultsWrapper = function (props) {
             </Typography>
           }
           checked={props.romanize}
-          onChange={(event) => props.handleRomanizeChange(event.target.checked)}
+          onChange={() => props.handleRomanizeChange(!props.romanize)}
         />
       </Grid>
 
       {/* Pager on top */}
       <Grid size={12}>
         <Box display="flex" justifyContent="center" alignItems="center">
-          {filtered_results_list.length > 0 ? (
+          {filteredResultsList.length > 0 ? (
             <Pagination
               color="primary"
-              count={num_pages}
+              count={numPages}
               siblingCount={2}
               boundaryCount={2}
               page={props.page}
@@ -394,7 +453,7 @@ let SearchResultsWrapper = function (props) {
 
       {/* Results area */}
       <Grid size={12}>
-        {filtered_results_list.length > 0 ? null : (
+        {filteredResultsList.length > 0 ? null : (
           <div>
             <Trans i18nKey="No match. Please follow the instructions below for better results." />
             <HowToPage title="" />
@@ -403,7 +462,7 @@ let SearchResultsWrapper = function (props) {
       </Grid>
 
       <SearchResultsList
-        filteredResults={filtered_results_list}
+        filteredResults={filteredResultsList}
         romanize={props.romanize}
         ignoreSep={props.ignoreSep}
         resultTerm={props.resultTerm}
@@ -412,10 +471,10 @@ let SearchResultsWrapper = function (props) {
       {/* Pager on bottom */}
       <Grid size={12} marginTop={1}>
         <Box display="flex" justifyContent="center" alignItems="center">
-          {filtered_results_list.length > 0 ? (
+          {filteredResultsList.length > 0 ? (
             <Pagination
               color="primary"
-              count={num_pages}
+              count={numPages}
               siblingCount={2}
               boundaryCount={2}
               page={props.page}
@@ -427,16 +486,6 @@ let SearchResultsWrapper = function (props) {
       </Grid>
     </React.Fragment>
   );
-};
-
-function arePropsEqual(oldProps, newProps) {
-  let equal = true;
-  for (let key of Object.keys(oldProps)) {
-    const isEqual = Object.is(oldProps[key], newProps[key]);
-    equal &&= isEqual;
-  }
-  return equal;
 }
-SearchResultsWrapper = React.memo(SearchResultsWrapper, arePropsEqual);
 
-export default SearchResultsWrapper;
+export default React.memo(SearchResultsWrapper);

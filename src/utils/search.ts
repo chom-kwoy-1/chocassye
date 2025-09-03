@@ -7,20 +7,40 @@ import type { NgramMaps } from "./load_ngram_index";
 import { find_candidate_ids } from "./regex_index";
 
 const TRIGRAM_THRESHOLD: number = parseInt(
-  process.env.TRIGRAM_THRESHOLD ?? "1000",
+  process.env.TRIGRAM_THRESHOLD ?? "5000",
 );
 
-export type SentenceRow = {
+export type Sentence = {
+  id: number;
   filename: string;
+  text: string;
+  text_without_sep: string;
+  text_with_tone: string | null;
+  html: string;
+  type: string;
+  lang: string;
+  page: string;
+  orig_tag: string;
+  number_in_page: string;
+  number_in_book: number;
+  hasimages: boolean;
+  year_sort: number;
+  decade_sort: number;
+  is_target: boolean;
+};
+
+type SentenceRow = {
+  filename: string;
+  number_in_book: number;
+  sentences: Sentence[];
   year: number;
   year_start: number;
   year_end: number;
   year_string: string;
   year_sort: number;
-  id: number;
-  text: string;
-  text_without_sep: string;
-  number_in_book: number;
+  bibliography: string;
+  num_sentences: number;
+  non_chinese_sentence_count: number;
 };
 
 export async function makeCorpusQuery(
@@ -78,24 +98,44 @@ export async function makeCorpusQuery(
       `
         WITH tmp_ids (id) AS (
           VALUES %L
-        )
-        SELECT b.filename AS filename,
-               b.year AS year,
-               b.year_start AS year_start,
-               b.year_end AS year_end,
-               b.year_string AS year_string,
-               b.year_sort AS year_sort,
-               st.*
+        ),
+        results AS (
+          SELECT st.*
+            FROM sentences st
+              JOIN tmp_ids t ON st.id = t.id
+            WHERE ${textFieldName} ~ %L ${filterDoc} ${filterLang}
+            ORDER BY
+              st.year_sort ASC,
+              st.filename::bytea ASC,
+              st.number_in_book ASC
+            OFFSET %L
+            LIMIT %L
+        ),
+        context AS (
+          SELECT 
+            r.id,
+            r.filename,
+            r.number_in_book,
+            r.year_sort,
+            array_agg(
+              to_jsonb(st) || jsonb_build_object(
+                'is_target', (r.id = st.id)
+              )
+            ) AS sentences
           FROM sentences st
-            JOIN tmp_ids t ON st.id = t.id
-            JOIN books b ON st.filename = b.filename
-          WHERE ${textFieldName} ~ %L ${filterDoc} ${filterLang}
-          ORDER BY
-            st.year_sort ASC,
-            st.filename::bytea ASC,
-            st.number_in_book ASC
-          OFFSET %L
-          LIMIT %L
+            JOIN results r 
+              ON st.filename = r.filename
+              AND st.number_in_book BETWEEN
+                  r.number_in_book-5 AND r.number_in_book+5
+            GROUP BY r.id, r.filename, r.number_in_book, r.year_sort
+        )
+        SELECT b.*, c.sentences, c.number_in_book
+        FROM context c
+        JOIN books b ON c.filename = b.filename
+        ORDER BY
+          c.year_sort ASC,
+          c.filename::bytea ASC,
+          c.number_in_book ASC
       `,
       Array.from(candIds).map((id) => [id]),
       [regex.source],
@@ -109,32 +149,52 @@ export async function makeCorpusQuery(
   } else {
     console.log(`Falling back to regular psql.`);
 
-    const results = await client.query(
-      format(
-        `
-          SELECT b.filename AS filename,
-            b.year AS year,
-            b.year_start AS year_start,
-            b.year_end AS year_end,
-            b.year_string AS year_string,
-            b.year_sort AS year_sort,
-            st.*
-            FROM sentences st
-              JOIN books b ON st.filename = b.filename
-            WHERE ${textFieldName} ~ %L
-                  ${filterDoc} ${filterLang}
-            ORDER BY
-              st.year_sort ASC,
-              st.filename::bytea ASC,
-              st.number_in_book ASC
-            OFFSET %L
-            LIMIT %L
+    const queryString = format(
+      `
+        WITH results AS (
+        SELECT st.*
+          FROM sentences st
+          WHERE ${textFieldName} ~ %L
+                ${filterDoc} ${filterLang}
+          ORDER BY
+            st.year_sort ASC,
+            st.filename::bytea ASC,
+            st.number_in_book ASC
+          OFFSET %L
+          LIMIT %L
+        ),
+        context AS (
+          SELECT 
+            r.id,
+            r.filename,
+            r.number_in_book,
+            r.year_sort,
+            array_agg(
+              to_jsonb(st) || jsonb_build_object(
+                'is_target', (r.id = st.id)
+              )
+            ) AS sentences
+          FROM sentences st
+            JOIN results r 
+              ON st.filename = r.filename
+              AND st.number_in_book BETWEEN
+                  r.number_in_book-5 AND r.number_in_book+5
+            GROUP BY r.id, r.filename, r.number_in_book, r.year_sort
+        )
+        SELECT b.*, c.sentences, c.number_in_book
+        FROM context c
+        JOIN books b ON c.filename = b.filename
+        ORDER BY
+          c.year_sort ASC,
+          c.filename::bytea ASC,
+          c.number_in_book ASC
         `,
-        [regex.source],
-        offset,
-        count,
-      ),
+      [regex.source],
+      offset,
+      count,
     );
+
+    const results = await client.query(queryString);
 
     return results.rows;
   }

@@ -4,7 +4,11 @@ import escapeStringRegexp from "escape-string-regexp";
 import { format } from "node-pg-format";
 
 import { getNgramIndex, getPool } from "@/app/db";
-import { makeCorpusQuery, makeCorpusStatsQuery } from "@/utils/search";
+import {
+  Sentence,
+  makeCorpusQuery,
+  makeCorpusStatsQuery,
+} from "@/utils/search";
 
 const PAGE_N: number = parseInt(process.env.PAGE_N || "50");
 
@@ -16,8 +20,10 @@ export type SearchQuery = {
   ignoreSep: boolean;
 };
 
-type Sentence = {
-  text: string;
+export type SentenceWithContext = {
+  mainSentence: Sentence;
+  contextBefore: Sentence[];
+  contextAfter: Sentence[];
 };
 
 export type Book = {
@@ -27,7 +33,7 @@ export type Book = {
   year_end: number;
   year_string: string;
   year_sort: number;
-  sentences: Sentence[];
+  sentences: SentenceWithContext[];
   count: number;
 };
 
@@ -87,7 +93,12 @@ export async function search(
           count: 0,
         });
       }
-      books[books.length - 1].sentences.push(row);
+      const targetIdx = row.sentences.findIndex((sent) => sent.is_target);
+      books[books.length - 1].sentences.push({
+        mainSentence: row.sentences[targetIdx],
+        contextBefore: row.sentences.slice(0, targetIdx),
+        contextAfter: row.sentences.slice(targetIdx + 1),
+      });
       books[books.length - 1].count += 1;
     }
 

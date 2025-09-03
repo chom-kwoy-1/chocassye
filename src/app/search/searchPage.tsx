@@ -1,5 +1,3 @@
-"use client";
-
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   Backdrop,
@@ -13,23 +11,51 @@ import {
   Snackbar,
   Typography,
 } from "@mui/material";
-import React from "react";
+import React, { ChangeEvent } from "react";
 
 import SearchResults from "@/app/search/SearchResults";
+import { Book } from "@/app/search/search";
 import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
 import { useTranslation } from "@/components/TranslationProvider";
 import { hangul_to_yale, yale_to_hangul } from "@/components/YaleToHangul.mjs";
 
 import DocSelector from "./DocSelector";
 
-export function SearchPage(props) {
+export function SearchPage(props: {
+  term: string;
+  setTerm: (term: string) => void;
+  doc: string;
+  setDoc: (doc: string) => void;
+  page: number;
+  setPage: (page: number) => void;
+  excludeModern: boolean;
+  setExcludeModern: (value: boolean) => void;
+  ignoreSep: boolean;
+  setIgnoreSep: (value: boolean) => void;
+  // Current Results
+  loaded: boolean;
+  result: Book[];
+  pageN: number;
+  resultTerm: string;
+  resultPage: number;
+  resultDoc: string;
+  resultExcludeModern: boolean;
+  resultIgnoreSep: boolean;
+  // Current Stats
+  statsLoaded: boolean;
+  statsTerm: string;
+  numResults: number;
+  histogram: { period: number; num_hits: number }[];
+  // Callbacks
+  onRefresh: () => void;
+}) {
   const { t } = useTranslation();
 
   const [romanize, setRomanize] = React.useState(false);
   const [displayHangul, setDisplayHangul] = React.useState(true);
   const [copyNotifOpen, setCopyNotifOpen] = React.useState(false);
 
-  const hangulSearchTerm = yale_to_hangul(props.term);
+  const hangulSearchTerm = yale_to_hangul(props.term) as string;
   const normalizedSearchTerm = hangul_to_yale(props.term);
 
   return (
@@ -39,8 +65,10 @@ export function SearchPage(props) {
           value={props.term}
           setTerm={props.setTerm}
           label={t("Search term...")}
-          onChange={(event) => props.setTerm(event.target.value)}
-          onKeyDown={(ev) => {
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            props.setTerm(event.target.value)
+          }
+          onKeyDown={(ev: KeyboardEvent) => {
             if (ev.key === "Enter") {
               props.onRefresh();
             }
@@ -58,7 +86,7 @@ export function SearchPage(props) {
       <Grid size={{ xs: 12, sm: 4 }}>
         <DocSelector
           doc={props.doc}
-          handleDocChange={(doc) => props.setDoc(doc)}
+          handleDocChange={(doc: string) => props.setDoc(doc)}
           onRefresh={() => props.onRefresh()}
         />
       </Grid>
@@ -124,7 +152,7 @@ export function SearchPage(props) {
               </Typography>
             }
             checked={props.excludeModern}
-            onChange={(event) => props.setExcludeModern(event.target.checked)}
+            onChange={() => props.setExcludeModern(!props.excludeModern)}
           />
         </Grid>
         <Grid size="auto">
@@ -136,7 +164,7 @@ export function SearchPage(props) {
               </Typography>
             }
             checked={props.ignoreSep}
-            onChange={(event) => props.setIgnoreSep(event.target.checked)}
+            onChange={() => props.setIgnoreSep(!props.ignoreSep)}
           />
         </Grid>
       </Grid>

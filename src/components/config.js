@@ -1,4 +1,4 @@
 export const IMAGE_BASE_URL =
-  "https://f004.backblazeb2.com/file/chocassye/scans/";
+  "https://f004.backblazeb2.com/file/chocassye/scans";
 
 export const THEME_COOKIE_KEY = "preferred-theme";
