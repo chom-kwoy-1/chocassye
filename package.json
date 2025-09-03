@@ -38,8 +38,7 @@
     "react-paginate": "^8.3.0",
     "react-string-replace": "^1.1.1",
     "regexpp": "^3.2.0",
-    "web-vitals": "^5.1.0",
-    "zip-ts": "^1.0.1"
+    "web-vitals": "^5.1.0"
   },
   "scripts": {
     "dev": "next dev --turbopack",

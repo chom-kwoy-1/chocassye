@@ -1,8 +1,9 @@
 import { Box, Card, Grid, Tooltip, useTheme } from "@mui/material";
 import React from "react";
 
+import { range } from "@/utils/zip";
+
 import { useTranslation } from "./TranslationProvider";
-import { range } from "./common_utils.mjs";
 
 export default function Histogram(props) {
   const { t } = useTranslation();
@@ -34,31 +35,33 @@ export default function Histogram(props) {
         <Card elevation={3}>
           <Box position="relative">
             <Grid container spacing={0}>
-              {range(BEGIN, END - 50, 50).map((year, i) => {
-                return (
-                  <Grid
-                    key={i}
-                    size={{
-                      xs: (12 / (END - BEGIN)) * 100,
-                      sm: (12 / (END - BEGIN)) * 50,
-                    }}
-                    sx={{
-                      display: {
-                        xs: year % 100 === 0 ? "flex" : "none",
-                        sm: "flex",
-                      },
-                      borderLeft: year === BEGIN ? 0 : 1.5,
-                      borderColor: "text.secondary",
-                      zIndex: 100,
-                      pointerEvents: "none",
-                      fontSize: "0.9em",
-                    }}
-                    minHeight="50px"
-                  >
-                    {year}
-                  </Grid>
-                );
-              })}
+              {range(BEGIN, END - 50, 50)
+                .map((year, i) => {
+                  return (
+                    <Grid
+                      key={i}
+                      size={{
+                        xs: (12 / (END - BEGIN)) * 100,
+                        sm: (12 / (END - BEGIN)) * 50,
+                      }}
+                      sx={{
+                        display: {
+                          xs: year % 100 === 0 ? "flex" : "none",
+                          sm: "flex",
+                        },
+                        borderLeft: year === BEGIN ? 0 : 1.5,
+                        borderColor: "text.secondary",
+                        zIndex: 100,
+                        pointerEvents: "none",
+                        fontSize: "0.9em",
+                      }}
+                      minHeight="50px"
+                    >
+                      {year}
+                    </Grid>
+                  );
+                })
+                .toArray()}
             </Grid>
             <Box position="absolute" top={0} minHeight="50px" width="100%">
               {data.map((decade, i) => {

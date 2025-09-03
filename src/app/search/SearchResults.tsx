@@ -22,7 +22,6 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Trans } from "react-i18next";
-import { zip } from "zip-ts";
 
 import { ImageTooltip } from "@/app/search/ImageTooltip";
 import { Book, SentenceWithContext } from "@/app/search/search";
@@ -38,6 +37,7 @@ import {
   highlightColors,
 } from "@/components/client_utils";
 import { IMAGE_BASE_URL } from "@/components/config";
+import { zip } from "@/utils/zip";
 
 function SearchResultsList(props: {
   filteredResults: {
@@ -58,8 +58,6 @@ function SearchResultsList(props: {
   const { t } = useTranslation();
 
   const footnotes: string[] = []; // TODO: fix footnotes
-
-  console.log(props.filteredResults);
 
   return (
     <React.Fragment>
@@ -92,8 +90,8 @@ function SearchResultsList(props: {
                   {/* Sentences column */}
                   <StyledTableCell>
                     {/* For each sentence */}
-                    {zip(book.sentences, book.matchIdsInBook)
-                      .map(([sentence, match_ids_in_sentence], i) => (
+                    {zip(book.sentences, book.matchIdsInBook).map(
+                      ([sentence, match_ids_in_sentence], i) => (
                         <Grid key={i} sx={{ py: 0.4 }}>
                           <SentenceAndPage
                             sentenceWithCtx={sentence}
@@ -104,8 +102,8 @@ function SearchResultsList(props: {
                             romanize={props.romanize}
                           />
                         </Grid>
-                      ))
-                      .toArray()}
+                      ),
+                    )}
                   </StyledTableCell>
                 </StyledTableRow>
               ))}
@@ -177,8 +175,6 @@ function SentenceAndPage(props: {
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
   const sentence = props.sentenceWithCtx.mainSentence;
-
-  console.log(sentence);
 
   let imagePreviewLink;
   if (sentence.hasimages && sentence.page !== "") {
@@ -352,21 +348,18 @@ function SearchResultsWrapper(props: SearchResultsProps) {
     )
     // filter out sentence if all matches in it are disabled
     .map(([book, matchIdsInBook]) => {
-      const sentencesAndIndices = zip(book.sentences, matchIdsInBook)
-        .filter(
-          ([_, matchIdsInSentence]) =>
-            !matchIdsInSentence.every((id) => disabledMatches.has(id)) ||
-            matchIdsInSentence.flat().length === 0,
-        )
-        .toArray();
+      const sentencesAndIndices = zip(book.sentences, matchIdsInBook).filter(
+        ([_, matchIdsInSentence]) =>
+          !matchIdsInSentence.every((id) => disabledMatches.has(id)) ||
+          matchIdsInSentence.flat().length === 0,
+      );
 
       return {
         ...book,
         sentences: sentencesAndIndices.map(([sentence, _]) => sentence),
         matchIdsInBook: sentencesAndIndices.map(([_, index]) => index),
       };
-    })
-    .toArray();
+    });
 
   const theme = useTheme();
   const hlColors = highlightColors.map(
