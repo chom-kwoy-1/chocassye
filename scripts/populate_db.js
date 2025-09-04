@@ -1,41 +1,46 @@
-'use strict';
+"use strict";
 
-import pg from 'pg';
-import {insert_into_db} from "../src/utils/insert_into_db.js";
-import {insert_documents} from "../src/utils/parse_xml.js";
 import fs from "fs";
-import {insert_txt_documents} from "./add_txt_to_db";
+import pg from "pg";
+
+import { insert_into_db } from "../src/utils/insert_into_db.js";
+import { insert_documents } from "../src/utils/parse_xml.js";
+import { insert_txt_documents } from "./add_txt_to_db";
 
 async function populate_db(database_name, doc_cnt) {
-  const {Pool} = pg;
+  const { Pool } = pg;
   const startPool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'postgres',
-    password: 'password',
+    user: "postgres",
+    host: "localhost",
+    database: "postgres",
+    password: "password",
   });
 
   // drop tables `books` and `sentences`
-  const pool = await startPool.query(`
+  const pool = await startPool
+    .query(
+      `
     CREATE DATABASE ${database_name} 
       WITH OWNER postgres ENCODING 'UTF8' LC_COLLATE='C' LC_CTYPE='C' TEMPLATE template0;
-    `)
-    .catch(err => {})
+    `,
+    )
+    .catch((err) => {})
     .then(() => {
       const pool = new Pool({
-        user: 'postgres',
-        host: 'localhost',
+        user: "postgres",
+        host: "localhost",
         database: database_name,
-        password: 'password',
+        password: "password",
       });
       console.log("Connected successfully to server");
       return pool;
     });
 
   // make new directory called `index`
-  fs.mkdirSync('index', { recursive: true });
+  fs.mkdirSync("index", { recursive: true });
 
-  return pool.query('DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;')
+  return pool
+    .query("DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;")
     .then(() => {
       console.log("Dropped tables.");
       const create_books = `
@@ -73,29 +78,10 @@ async function populate_db(database_name, doc_cnt) {
           decade_sort INTEGER
         );
       `;
-      const create_ngrams = `
-        CREATE TABLE ngrams (
-          id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-          ngram VARCHAR(4),
-          is_without_sep BOOLEAN,
-          UNIQUE(ngram, is_without_sep)
-        );
-      `;
       return Promise.all([
         pool.query(create_books),
         pool.query(create_sentences),
-        pool.query(create_ngrams),
       ]);
-    })
-    .then(() => {
-      const create_ngram_rel = `
-        CREATE TABLE ngram_rel (
-          ngram_id INTEGER REFERENCES ngrams(id),
-          sentence_id INTEGER REFERENCES sentences(id),
-          PRIMARY KEY(ngram_id, sentence_id)
-        );
-      `;
-      return pool.query(create_ngram_rel);
     })
     .then(async () => {
       const BATCH_SIZE = process.env.BATCH ? parseInt(process.env.BATCH) : 16;
@@ -138,6 +124,24 @@ async function populate_db(database_name, doc_cnt) {
       `);
     })
     .then(() => {
+      return pool.query(`
+        CREATE INDEX IF NOT EXISTS filename_number_in_book
+          ON public.sentences USING btree
+          (filename COLLATE pg_catalog."default" ASC NULLS LAST, number_in_book ASC NULLS LAST)
+          WITH (deduplicate_items=True)
+          TABLESPACE pg_default;
+      `);
+    })
+    .then(() => {
+      return pool.query(`
+        CREATE INDEX IF NOT EXISTS books_filename_idx
+          ON public.books USING btree
+          (filename COLLATE pg_catalog."default" ASC NULLS LAST)
+          WITH (deduplicate_items=True)
+          TABLESPACE pg_default;
+      `);
+    })
+    .then(() => {
       console.log("Created indexes.");
       console.log("Cleaning up...");
     });
@@ -148,7 +152,6 @@ if (!process.env.DB_NAME) {
   process.exit(1);
 }
 const doc_cnt = process.env.DOC_CNT ? parseInt(process.env.DOC_CNT) : null;
-populate_db(process.env.DB_NAME, doc_cnt)
-  .then(() => {
-    console.log("Database populated successfully.");
-  })
+populate_db(process.env.DB_NAME, doc_cnt).then(() => {
+  console.log("Database populated successfully.");
+});
