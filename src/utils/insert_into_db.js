@@ -87,8 +87,8 @@ export async function insert_into_db(pool, index, book_details, sentences) {
 
       const text = sentence.text;
       let ngrams_sep = new Set([
-        ...make_ngrams(text, 1),
-        ...make_ngrams(text, 2),
+        // ...make_ngrams(text, 1),
+        // ...make_ngrams(text, 2),
         ...make_ngrams(text, 3),
       ]);
 
@@ -96,8 +96,8 @@ export async function insert_into_db(pool, index, book_details, sentences) {
       let ngrams_nosep = new Set();
       if (text_without_sep !== undefined) {
         ngrams_nosep = new Set([
-          ...make_ngrams(text_without_sep, 1),
-          ...make_ngrams(text_without_sep, 2),
+          // ...make_ngrams(text_without_sep, 1),
+          // ...make_ngrams(text_without_sep, 2),
           ...make_ngrams(text_without_sep, 3),
         ]);
       }
