@@ -1,3 +1,5 @@
+import { escapeStringRegexp } from "next/dist/shared/lib/escape-regexp";
+
 import { PUA_CONV_TABLE } from "./PuaToUni.mjs";
 
 const YALE_TO_HANGUL_INITIAL_CONSONANTS = {
@@ -73,16 +75,30 @@ const YALE_TO_HANGUL_FINAL_CONSONANTS = {
   ks: "\u11aa",
   n: "\u11ab",
   nc: "\u11ac",
+  nk: "\u11c5",
+  nt: "\u11c6",
+  ns: "\u11c7",
+  nz: "\u11c8",
   nh: "\u11ad",
   t: "\u11ae",
   l: "\u11af",
   lk: "\u11b0",
+  lks: "\u11cc",
+  lt: "\u11ce",
   lm: "\u11b1",
+  lmk: "\u11d1",
+  lms: "\u11d2",
+  lmh: "\ud7d8",
   lp: "\u11b2",
+  lps: "\u11d3",
   ls: "\u11b3",
+  lss: "\u11d6",
   lth: "\u11b4",
   lph: "\u11b5",
   lh: "\u11b6",
+  lz: "\u11d7",
+  lW: "\u11d5",
+  lq: "\u11d9",
   m: "\u11b7",
   p: "\u11b8",
   ps: "\u11b9",
@@ -95,13 +111,8 @@ const YALE_TO_HANGUL_FINAL_CONSONANTS = {
   th: "\u11c0",
   ph: "\u11c1",
   h: "\u11c2",
-  nt: "\u11c6",
-  ns: "\u11c7",
-  nz: "\u11c8",
   nth: "\u11c9",
-  lks: "\u11cc",
-  lz: "\u11d7",
-  lq: "\u11d9",
+  nch: "\ud7cc",
   mk: "\u11da",
   mp: "\u11dc",
   ms: "\u11dd",
@@ -113,10 +124,18 @@ const YALE_TO_HANGUL_FINAL_CONSONANTS = {
   st: "\u11e8",
   z: "\u11eb",
   ng: "\u11f0",
+  ngk: "\u11ec",
+  ngkk: "\u11ed",
+  ngkh: "\u11ef",
   f: "\u11f4",
   q: "\u11f9",
   ngs: "\u11f1",
   pl: "\u11e3",
+};
+
+const YALE_TO_HANGUL_CONSONANTS = {
+  ...YALE_TO_HANGUL_FINAL_CONSONANTS,
+  ...YALE_TO_HANGUL_INITIAL_CONSONANTS,
 };
 
 const YALE_TO_HANGUL_VOWELS = {
@@ -158,103 +177,105 @@ const YALE_TO_HANGUL_TONE_MARKS = {
   R: "\u302f",
 };
 
+// prettier-ignore
 const TO_COMPATIBLITY_CONS = {
-  ᄀ: "ㄱ",
-  ᄁ: "ㄲ",
-  ᆪ: "ㄳ",
-  ᄂ: "ㄴ",
-  ᆬ: "ㄵ",
-  ᆭ: "ㄶ",
-  ᄃ: "ㄷ",
-  ᄄ: "ㄸ",
-  ᄅ: "ㄹ",
-  ᆰ: "ㄺ",
-  ᆱ: "ㄻ",
-  ᆲ: "ㄼ",
-  ᆳ: "ㄽ",
-  ᆴ: "ㄾ",
-  ᆵ: "ㄿ",
-  ᄚ: "ㅀ",
-  ᄆ: "ㅁ",
-  ᄇ: "ㅂ",
-  ᄈ: "ㅃ",
-  ᄡ: "ㅄ",
-  ᄉ: "ㅅ",
-  ᄊ: "ㅆ",
-  ᄋ: "ㅇ",
-  ᄌ: "ㅈ",
-  ᄍ: "ㅉ",
-  ᄎ: "ㅊ",
-  ᄏ: "ㅋ",
-  ᄐ: "ㅌ",
-  ᄑ: "ㅍ",
-  ᄒ: "ㅎ",
-  ᄔ: "ㅥ",
-  ᄕ: "ㅦ",
-  ᇇ: "ㅧ",
-  ᇈ: "ㅨ",
-  ᇌ: "ㅩ",
-  ᇎ: "ㅪ",
-  ᇓ: "ㅫ",
-  ᇗ: "ㅬ",
-  ᇙ: "ㅭ",
-  ᄜ: "ㅮ",
-  ᇝ: "ㅯ",
-  ᇟ: "ㅰ",
-  ᄝ: "ㅱ",
-  ᄞ: "ㅲ",
-  ᄠ: "ㅳ",
-  ᄢ: "ㅴ",
-  ᄣ: "ㅵ",
-  ᄧ: "ㅶ",
-  ᄩ: "ㅷ",
-  ᄫ: "ㅸ",
-  ᄬ: "ㅹ",
-  ᄭ: "ㅺ",
-  ᄮ: "ㅻ",
-  ᄯ: "ㅼ",
-  ᄲ: "ㅽ",
-  ᄶ: "ㅾ",
-  ᅀ: "ㅿ",
-  ᅇ: "ㆀ",
-  ᅌ: "ㆁ",
-  ᇱ: "ㆂ",
-  ᇲ: "ㆃ",
-  ᅗ: "ㆄ",
-  ᅘ: "ㆅ",
-  ᅙ: "ㆆ",
+  "ᄀ": "ㄱ",
+  "ᄁ": "ㄲ",
+  "ᆪ": "ㄳ",
+  "ᄂ": "ㄴ",
+  "ᆬ": "ㄵ",
+  "ᆭ": "ㄶ",
+  "ᄃ": "ㄷ",
+  "ᄄ": "ㄸ",
+  "ᄅ": "ㄹ",
+  "ᆰ": "ㄺ",
+  "ᆱ": "ㄻ",
+  "ᆲ": "ㄼ",
+  "ᆳ": "ㄽ",
+  "ᆴ": "ㄾ",
+  "ᆵ": "ㄿ",
+  "ᄚ": "ㅀ",
+  "ᄆ": "ㅁ",
+  "ᄇ": "ㅂ",
+  "ᄈ": "ㅃ",
+  "ᄡ": "ㅄ",
+  "ᄉ": "ㅅ",
+  "ᄊ": "ㅆ",
+  "ᄋ": "ㅇ",
+  "ᄌ": "ㅈ",
+  "ᄍ": "ㅉ",
+  "ᄎ": "ㅊ",
+  "ᄏ": "ㅋ",
+  "ᄐ": "ㅌ",
+  "ᄑ": "ㅍ",
+  "ᄒ": "ㅎ",
+  "ᄔ": "ㅥ",
+  "ᄕ": "ㅦ",
+  "ᇇ": "ㅧ",
+  "ᇈ": "ㅨ",
+  "ᇌ": "ㅩ",
+  "ᇎ": "ㅪ",
+  "ᇓ": "ㅫ",
+  "ᇗ": "ㅬ",
+  "ᇙ": "ㅭ",
+  "ᄜ": "ㅮ",
+  "ᇝ": "ㅯ",
+  "ᇟ": "ㅰ",
+  "ᄝ": "ㅱ",
+  "ᄞ": "ㅲ",
+  "ᄠ": "ㅳ",
+  "ᄢ": "ㅴ",
+  "ᄣ": "ㅵ",
+  "ᄧ": "ㅶ",
+  "ᄩ": "ㅷ",
+  "ᄫ": "ㅸ",
+  "ᄬ": "ㅹ",
+  "ᄭ": "ㅺ",
+  "ᄮ": "ㅻ",
+  "ᄯ": "ㅼ",
+  "ᄲ": "ㅽ",
+  "ᄶ": "ㅾ",
+  "ᅀ": "ㅿ",
+  "ᅇ": "ㆀ",
+  "ᅌ": "ㆁ",
+  "ᇱ": "ㆂ",
+  "ᇲ": "ㆃ",
+  "ᅗ": "ㆄ",
+  "ᅘ": "ㆅ",
+  "ᅙ": "ㆆ",
 };
 
+// prettier-ignore
 const TO_COMPATIBILITY_VOWELS = {
-  ᅡ: "ㅏ",
-  ᅢ: "ㅐ",
-  ᅣ: "ㅑ",
-  ᅤ: "ㅒ",
-  ᅥ: "ㅓ",
-  ᅦ: "ㅔ",
-  ᅧ: "ㅕ",
-  ᅨ: "ㅖ",
-  ᅩ: "ㅗ",
-  ᅪ: "ㅘ",
-  ᅫ: "ㅙ",
-  ᅬ: "ㅚ",
-  ᅭ: "ㅛ",
-  ᅮ: "ㅜ",
-  ᅯ: "ㅝ",
-  ᅰ: "ㅞ",
-  ᅱ: "ㅟ",
-  ᅲ: "ㅠ",
-  ᅳ: "ㅡ",
-  ᅴ: "ㅢ",
-  ᅵ: "ㅣ",
-  ᆄ: "ㆇ",
-  ᆅ: "ㆈ",
-  ᆈ: "ㆉ",
-  ᆑ: "ㆊ",
-  ᆒ: "ㆋ",
-  ᆔ: "ㆌ",
-  ᆞ: "ㆍ",
-  ᆡ: "ㆎ",
+  "ᅡ": "ㅏ",
+  "ᅢ": "ㅐ",
+  "ᅣ": "ㅑ",
+  "ᅤ": "ㅒ",
+  "ᅥ": "ㅓ",
+  "ᅦ": "ㅔ",
+  "ᅧ": "ㅕ",
+  "ᅨ": "ㅖ",
+  "ᅩ": "ㅗ",
+  "ᅪ": "ㅘ",
+  "ᅫ": "ㅙ",
+  "ᅬ": "ㅚ",
+  "ᅭ": "ㅛ",
+  "ᅮ": "ㅜ",
+  "ᅯ": "ㅝ",
+  "ᅰ": "ㅞ",
+  "ᅱ": "ㅟ",
+  "ᅲ": "ㅠ",
+  "ᅳ": "ㅡ",
+  "ᅴ": "ㅢ",
+  "ᅵ": "ㅣ",
+  "ᆄ": "ㆇ",
+  "ᆅ": "ㆈ",
+  "ᆈ": "ㆉ",
+  "ᆑ": "ㆊ",
+  "ᆒ": "ㆋ",
+  "ᆔ": "ㆌ",
+  "ᆞ": "ㆍ",
+  "ᆡ": "ㆎ",
 };
 
 const TO_COMPATIBILITY_FORM = {
@@ -282,17 +303,36 @@ const VOWEL_HANGUL_TO_YALE = {
   ...inv(YALE_TO_HANGUL_VOWELS),
 };
 
-const VOWELS_RE =
-  /(ywey|yway|yay|yey|way|woy|wey|wuy|yoy|yuy|ywe|ywa|ay|ya|ey|ye|wo|wa|yo|wu|we|yu|uy|oy|a|e|u|i|o)/g;
-const CONS_RE =
-  /psk|pst|psc|pth|ss\/|cc\/|ch\/|ss\\|cc\\|ch\\|kk|nn|tt|pp|ss|GG|cc|ch|kh|th|ph|pk|pt|ps|pc|sk|sn|st|sp|sc|sh|hh|ng|s\/|c\/|s\\|c\\|k|n|t|l|m|p|s|G|c|h|W|z|q|`/g;
+function makeRegex(items, maxLen) {
+  let sortedItems = [];
+  for (let len = maxLen; len > 0; --len) {
+    for (const item of items) {
+      if (item.length === len) {
+        sortedItems.push(escapeStringRegexp(item));
+      }
+    }
+  }
+  return new RegExp(`(${sortedItems.join("|")})`);
+}
+
+const VOWELS_RE = makeRegex(Object.keys(YALE_TO_HANGUL_VOWELS), 4);
+const CONS_RE = makeRegex(
+  Array.from(
+    new Set([
+      ...Object.keys(YALE_TO_HANGUL_INITIAL_CONSONANTS),
+      ...Object.keys(YALE_TO_HANGUL_FINAL_CONSONANTS),
+    ]),
+  ),
+  4,
+);
+
 const INDEP_CONS_RE =
-  /(ᄀ|ᄁ|ᄂ|ᄔ|ᄃ|ᄄ|ᄅ|ᄆ|ᄇ|ᄈ|ᄉ|ᄊ|ᄋ|ᅇ|ᄌ|ᄍ|ᄎ|ᄏ|ᄐ|ᄑ|ᄒ|ᄞ|ᄠ|ᄡ|ᄢ|ᄣ|ᄦ|ᄧ|ᄩ|ᄫ|ᄭ|ᄮ|ᄯ|ᄲ|ᄶ|ᄻ|ᅀ|ᅘ|ᅙ|ᅌ|ᄼ|ᄽ|ᅎ|ᅏ|ᅔ|ᄾ|ᄿ|ᅐ|ᅑ|ᅕ|ᅟ)(?!ᅡ|ᅢ|ᅣ|ᅤ|ᅥ|ᅦ|ᅧ|ᅨ|ᅩ|ᅪ|ᅫ|ᅬ|ᅭ|ᅮ|ᅯ|ᅰ|ᅱ|ᅲ|ᅳ|ᅴ|ᅵ|ᆞ|ᆡ|ᆈ|ᆔ|ᆑ|ᆒ|ᆄ|ᆅ)/g;
-const COMPAT_CONS_RE =
-  /ㅏ|ㅐ|ㅑ|ㅒ|ㅓ|ㅔ|ㅕ|ㅖ|ㅗ|ㅘ|ㅙ|ㅚ|ㅛ|ㅜ|ㅝ|ㅞ|ㅟ|ㅠ|ㅡ|ㅢ|ㅣ|ㆇ|ㆈ|ㆉ|ㆊ|ㆋ|ㆌ|ㆍ|ㆎ/g;
+  /([ᄀᄁᄂᄔᄃᄄᄅᄆᄇᄈᄉᄊᄋᅇᄌᄍᄎᄏᄐᄑᄒᄞᄠᄡᄢᄣᄦᄧᄩᄫᄭᄮᄯᄲᄶᄻᅀᅘᅙᅌᄼᄽᅎᅏᅔᄾᄿᅐᅑᅕᅟ])(?![ᅡᅢᅣᅤᅥᅦᅧᅨᅩᅪᅫᅬᅭᅮᅯᅰᅱᅲᅳᅴᅵᆞᆡᆈᆔᆑᆒᆄᆅ])/;
+const COMPAT_VOWELS_RE =
+  /[ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣㆇㆈㆉㆊㆋㆌㆍㆎ]/;
 
 export function normalize_string(string) {
-  string = string.replace(COMPAT_CONS_RE, function (ch) {
+  string = string.replace(COMPAT_VOWELS_RE, function (ch) {
     return "\u115f" + ch;
   });
 
@@ -388,11 +428,13 @@ export function yale_to_hangul(string, get_index_map = false) {
       let i = prefix_len;
       let middle_part_output = "";
       for (const part of remaining.split(".")) {
+        const cons_re = new RegExp(CONS_RE.source, "g");
+
         let match;
         let last_idx = 0;
-        while ((match = CONS_RE.exec(part)) !== null) {
+        while ((match = cons_re.exec(part)) !== null) {
           let start = match.index;
-          let end = CONS_RE.lastIndex;
+          let end = cons_re.lastIndex;
           if (last_idx < end) {
             if (last_idx < start) {
               let piece = part.slice(last_idx, start);
@@ -408,7 +450,7 @@ export function yale_to_hangul(string, get_index_map = false) {
               for (let j = i; j < i + piece.length; ++j) {
                 index_map[input_idx + j] = syllable_begin_pos;
               }
-              middle_part_output += YALE_TO_HANGUL_INITIAL_CONSONANTS[piece];
+              middle_part_output += YALE_TO_HANGUL_CONSONANTS[piece];
               syllable_begin_pos += 1;
               i += piece.length;
             }
