@@ -93,6 +93,7 @@ export async function search(
           count: 0,
         });
       }
+      row.sentences.sort((a, b) => a.number_in_book - b.number_in_book);
       const targetIdx = row.sentences.findIndex((sent) => sent.is_target);
       books[books.length - 1].sentences.push({
         mainSentence: row.sentences[targetIdx],

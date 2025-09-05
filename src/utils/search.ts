@@ -121,10 +121,6 @@ export async function makeCorpusQuery(
               to_jsonb(st) || jsonb_build_object(
                 'is_target', (r.id = st.id)
               )
-              ORDER BY 
-                st.year_sort ASC,
-                st.filename::bytea ASC,
-                st.number_in_book ASC
             ) AS sentences
           FROM sentences st
             JOIN results r 

@@ -167,18 +167,18 @@ function addCustomComponents(theme) {
                 padding-left: 20pt;
               }
               
-              ${ancestorSelector}.text span[orig-tag="g"] {
+              ${ancestorSelector}.sourceSentence .text span[orig-tag="g"] {
                 font-size: 150%;
                 margin-right: 4pt;
                 color: ${isLightMode ? blue["900"] : blue["300"]};
               }
-              ${ancestorSelector}.text span[orig-tag="m"] {
+              ${ancestorSelector}.sourceSentence .text span[orig-tag="m"] {
                 margin-right: 4pt;
               }
-              ${ancestorSelector}.text span[orig-tag="s"] {
+              ${ancestorSelector}.sourceSentence .text span[orig-tag="s"] {
                 margin-right: 4pt;
               }
-              ${ancestorSelector}.text span[orig-tag="expl"] {
+              ${ancestorSelector}.sourceSentence .text span[orig-tag="expl"] {
                 color: ${isLightMode ? blue["900"] : blue["300"]};
                 font-weight: lighter;
               }

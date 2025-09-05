@@ -23,7 +23,7 @@ import { ThemeProvider, styled } from "@mui/material/styles";
 import { Interweave } from "interweave";
 import Image from "next/image";
 import Link from "next/link";
-import React, { Ref } from "react";
+import React from "react";
 import { Trans } from "react-i18next";
 
 import { ImageTooltip } from "@/app/search/ImageTooltip";
