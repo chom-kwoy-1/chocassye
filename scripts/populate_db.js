@@ -40,7 +40,7 @@ async function populate_db(database_name, doc_cnt) {
   fs.mkdirSync("index", { recursive: true });
 
   return pool
-    .query("DROP TABLE IF EXISTS books, sentences, ngrams, ngram_rel CASCADE;")
+    .query("DROP TABLE IF EXISTS books, sentences CASCADE;")
     .then(() => {
       console.log("Dropped tables.");
       const create_books = `
@@ -93,17 +93,6 @@ async function populate_db(database_name, doc_cnt) {
 
       await insert_txt_documents(pool, doc_cnt);
       await insert_documents(insert, BATCH_SIZE, doc_cnt);
-    })
-    .then(() => {
-      console.log("Populated tables.");
-      console.log("Creating indexes...");
-      return pool.query(`
-        CREATE INDEX IF NOT EXISTS sentence_id
-          ON public.ngram_rel USING btree
-          (sentence_id ASC NULLS LAST)
-          WITH (deduplicate_items=True)
-          TABLESPACE pg_default; 
-      `);
     })
     .then(() => {
       return pool.query(`

@@ -135,45 +135,55 @@ function addCustomComponents(theme) {
               opacity: 0;
             }
             
-            .sourceSentence.sentence_type_title {
-              line-height: 30pt;
-            }
             .sourceSentence.sentence_type_title .text {
-              font-size: 20pt;
-            }
-            
-            .sourceSentence.sentence_lang_chi .text,
-            .sourceSentence.sentence_type_chi .text {
-              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-            }
-            
-            .sourceSentence.sentence_lang_mod .text,
-            .sourceSentence.sentence_type_mod .text {
-              color: ${themeParam.palette.mode === "light" ? brown["600"] : brown["200"]};
-            }
-            
-            .sourceSentence[class*="sentence_type_anno"] .text,
-            .sourceSentence[class*="sentence_type_note"] .text {
-              font-size: 13pt;
-              padding-left: 20pt;
-            }
-            
-            .text span[orig-tag="g"] {
-              font-size: 20pt;
-              margin-right: 4pt;
-              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-            }
-            .text span[orig-tag="m"] {
-              margin-right: 4pt;
-            }
-            .text span[orig-tag="s"] {
-              margin-right: 4pt;
-            }
-            .text span[orig-tag="expl"] {
-              color: ${themeParam.palette.mode === "light" ? blue["900"] : blue["300"]};
-              font-weight: lighter;
+              font-size: 150%;
             }
           `;
+
+          for (const type of ["theme", "dark", "light"]) {
+            let isLightMode, ancestorSelector;
+            if (type === "theme") {
+              isLightMode = themeParam.palette.mode === "light";
+              ancestorSelector = "";
+            } else {
+              isLightMode = type === "light";
+              ancestorSelector = `.${type}ThemeRoot `;
+            }
+
+            styleSheet += `
+              ${ancestorSelector}.sourceSentence.sentence_lang_chi .text,
+              ${ancestorSelector}.sourceSentence.sentence_type_chi .text {
+                color: ${isLightMode ? blue["900"] : blue["300"]};
+              }
+              
+              ${ancestorSelector}.sourceSentence.sentence_lang_mod .text,
+              ${ancestorSelector}.sourceSentence.sentence_type_mod .text {
+                color: ${isLightMode ? brown["600"] : brown["200"]};
+              }
+              
+              ${ancestorSelector}.sourceSentence[class*="sentence_type_anno"] .text,
+              ${ancestorSelector}.sourceSentence[class*="sentence_type_note"] .text {
+                font-size: smaller;
+                padding-left: 20pt;
+              }
+              
+              ${ancestorSelector}.text span[orig-tag="g"] {
+                font-size: 150%;
+                margin-right: 4pt;
+                color: ${isLightMode ? blue["900"] : blue["300"]};
+              }
+              ${ancestorSelector}.text span[orig-tag="m"] {
+                margin-right: 4pt;
+              }
+              ${ancestorSelector}.text span[orig-tag="s"] {
+                margin-right: 4pt;
+              }
+              ${ancestorSelector}.text span[orig-tag="expl"] {
+                color: ${isLightMode ? blue["900"] : blue["300"]};
+                font-weight: lighter;
+              }
+            `;
+          }
 
           highlightColors.forEach((color, index) => {
             styleSheet += `

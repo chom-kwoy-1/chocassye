@@ -45,7 +45,7 @@ function Sentence(props) {
   const highlight_term = props.highlight_term;
   const ignoreSep = props.ignoreSep;
   const text = sentence.html ?? sentence.text;
-  const html = highlight(text, highlight_term, null, false, ignoreSep, null);
+  const html = highlight(text, highlight_term, null, false, ignoreSep);
 
   const theme = useTheme();
   const sourceTextColor =
@@ -55,7 +55,7 @@ function Sentence(props) {
   if (sentence.hasimages && sentence.page !== "") {
     displayPage = sentence.page.split("-").map((page, i) => (
       <Tooltip key={i} title={t("Image for page", { page: page })}>
-        <span>
+        <span style={{ whiteSpace: "nowrap" }}>
           <a
             className="pageNum"
             style={{
@@ -77,7 +77,11 @@ function Sentence(props) {
   return (
     <StyledTableRow>
       <StyledTableCell
-        className={`sourceSentence sentence_type_${sentence.type} sentence_lang_${sentence.lang}`}
+        className={[
+          `sourceSentence`,
+          `sentence_type_${sentence.type}`,
+          `sentence_lang_${sentence.lang}`,
+        ].join(" ")}
       >
         <Typography component="span" sx={{ fontSize: "1.3em" }}>
           <Interweave
@@ -230,7 +234,11 @@ export function SourcePage(props) {
 
       {/* Bibliography and attributions */}
       <Grid size={{ xs: 10, sm: 8, lg: 6 }} mx="auto">
-        <TableContainer component={Paper} elevation={1}>
+        <TableContainer
+          component={Paper}
+          elevation={1}
+          style={{ overflow: "visible" }}
+        >
           <Table size="small">
             <TableBody>
               {props.result.data.bibliography === "" ? null : (

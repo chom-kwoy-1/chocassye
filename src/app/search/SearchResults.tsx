@@ -1,3 +1,4 @@
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import {
   Backdrop,
   Box,
@@ -6,6 +7,7 @@ import {
   CircularProgress,
   FormControlLabel,
   Grid,
+  IconButton,
   Pagination,
   Paper,
   Stack,
@@ -17,19 +19,20 @@ import {
   useTheme,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
-import { ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider, styled } from "@mui/material/styles";
 import { Interweave } from "interweave";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { Ref } from "react";
 import { Trans } from "react-i18next";
 
 import { ImageTooltip } from "@/app/search/ImageTooltip";
 import { Book, SentenceWithContext } from "@/app/search/search";
-import { lightTheme } from "@/app/themes";
+import { darkTheme, lightTheme } from "@/app/themes";
 import { findMatchingRanges, highlight, toText } from "@/components/Highlight";
 import Histogram from "@/components/Histogram";
 import HowToPage from "@/components/HowToPage";
+import { ThemeContext } from "@/components/ThemeContext";
 import { useTranslation } from "@/components/TranslationProvider";
 import { yale_to_hangul } from "@/components/YaleToHangul.mjs";
 import {
@@ -38,6 +41,7 @@ import {
   highlightColors,
 } from "@/components/client_utils";
 import { IMAGE_BASE_URL } from "@/components/config";
+import { Sentence } from "@/utils/search";
 import useDimensions from "@/utils/useDimensions";
 import { zip } from "@/utils/zip";
 
@@ -64,7 +68,11 @@ function SearchResultsList(props: {
   return (
     <React.Fragment>
       <Grid size={12}>
-        <TableContainer component={Paper} elevation={3}>
+        <TableContainer
+          component={Paper}
+          elevation={3}
+          style={{ overflow: "visible" }}
+        >
           <Table size="small">
             <TableBody>
               {/* For each book */}
@@ -141,6 +149,32 @@ function SearchResultsList(props: {
   );
 }
 
+function useOutsideAlerter<T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
+  callback: () => void,
+) {
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // @ts-expect-error I dont know how to suppress this error
+      if (ref.current && event.target && !ref.current.contains(event.target)) {
+        callback();
+      }
+    }
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the event listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, callback]);
+}
+
+const AlternatingBox = styled(Box)(({ theme }) => ({
+  "&:nth-of-type(odd)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
 function SentenceWithCtx(props: {
   sentenceWithCtx: SentenceWithContext;
   book: Book;
@@ -149,15 +183,137 @@ function SentenceWithCtx(props: {
   ignoreSep: boolean;
   romanize: boolean;
 }) {
+  const { t } = useTranslation();
+  const [curTheme, _] = React.useContext(ThemeContext);
+  const invTheme = curTheme === lightTheme ? darkTheme : lightTheme;
+  const [isCtxOpen, setIsCtxOpen] = React.useState(false);
+
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+
+  const removeCtxView = React.useCallback(() => {
+    setIsCtxOpen(false);
+  }, []);
+  useOutsideAlerter(wrapperRef, removeCtxView);
+
   return (
-    <SentenceAndPage
-      sentenceWithCtx={props.sentenceWithCtx}
-      book={props.book}
-      matchIdsInSentence={props.matchIdsInSentence}
-      highlightTerm={props.highlightTerm}
-      ignoreSep={props.ignoreSep}
-      romanize={props.romanize}
-    />
+    <div ref={wrapperRef} style={{ position: "relative" }}>
+      <ThemeProvider theme={invTheme}>
+        <Box
+          className={`${invTheme.palette.mode}ThemeRoot`}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            transform: "translateY(-100%)",
+            paddingBottom: ".5rem",
+            zIndex: 100,
+            display: isCtxOpen ? "inherit" : "none",
+          }}
+        >
+          <Paper
+            elevation={5}
+            style={{
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              opacity: 0.9,
+            }}
+          >
+            {props.sentenceWithCtx.contextBefore.map((sentence, i) => (
+              <AlternatingBox
+                key={i}
+                className={[
+                  `sourceSentence`,
+                  `sentence_type_${sentence.type}`,
+                  `sentence_lang_${sentence.lang}`,
+                ].join(" ")}
+                style={{ lineHeight: 2.0 }}
+                px={2}
+              >
+                <SentenceAndPage
+                  sentence={sentence}
+                  book={props.book}
+                  matchIdsInSentence={null}
+                  highlightTerm={props.highlightTerm}
+                  ignoreSep={props.ignoreSep}
+                  romanize={props.romanize}
+                  showSource={false}
+                />
+              </AlternatingBox>
+            ))}
+          </Paper>
+        </Box>
+      </ThemeProvider>
+      <SentenceAndPage
+        sentence={props.sentenceWithCtx.mainSentence}
+        book={props.book}
+        matchIdsInSentence={props.matchIdsInSentence}
+        highlightTerm={props.highlightTerm}
+        ignoreSep={props.ignoreSep}
+        romanize={props.romanize}
+        showSource={true}
+      />
+      <span
+        style={{
+          position: "absolute", // make it take up no space
+          bottom: 0,
+          transform: "translateY(16%)",
+        }}
+      >
+        <Tooltip title={t("Click to see context")}>
+          <IconButton
+            onClick={() => {
+              setIsCtxOpen(!isCtxOpen);
+            }}
+          >
+            <UnfoldMoreIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Tooltip>
+      </span>
+      <ThemeProvider theme={invTheme}>
+        <Box
+          className={`${invTheme.palette.mode}ThemeRoot`}
+          style={{
+            position: "absolute",
+            left: 0,
+            zIndex: 100,
+            paddingTop: ".5rem",
+            display: isCtxOpen ? "inherit" : "none",
+          }}
+        >
+          <Paper
+            elevation={5}
+            style={{
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              opacity: 0.9,
+            }}
+          >
+            {props.sentenceWithCtx.contextAfter.map((sentence, i) => (
+              <AlternatingBox
+                key={i}
+                className={[
+                  `sourceSentence`,
+                  `sentence_type_${sentence.type}`,
+                  `sentence_lang_${sentence.lang}`,
+                ].join(" ")}
+                style={{ lineHeight: 2.0 }}
+                px={2}
+              >
+                <SentenceAndPage
+                  sentence={sentence}
+                  book={props.book}
+                  matchIdsInSentence={null}
+                  highlightTerm={props.highlightTerm}
+                  ignoreSep={props.ignoreSep}
+                  romanize={props.romanize}
+                  showSource={false}
+                />
+              </AlternatingBox>
+            ))}
+          </Paper>
+        </Box>
+      </ThemeProvider>
+    </div>
   );
 }
 
@@ -196,56 +352,71 @@ function PageImagePreview(props: { page: string; imageURL: string }) {
   );
 }
 
+function ImagePreviewLink({
+  sentence,
+  bookName,
+  sourceTextColor,
+}: {
+  sentence: Sentence;
+  bookName: string;
+  sourceTextColor: "#757575" | "#bdbdbd";
+}) {
+  if (sentence.hasimages && sentence.page !== "") {
+    return (
+      <>
+        {sentence.page.split("-").map((page, i) => {
+          const imageURL = `${IMAGE_BASE_URL}/${bookName}/${page}.jpg`;
+          return (
+            <ImageTooltip
+              title={<PageImagePreview page={page} imageURL={imageURL} />}
+              placement="right"
+              key={i}
+            >
+              <span>
+                <a
+                  className="pageNum"
+                  style={{
+                    color: sourceTextColor,
+                    textDecoration: `underline solid ${sourceTextColor}`,
+                  }}
+                  href={imageURL}
+                  target="blank"
+                  key={i}
+                >
+                  {page}
+                </a>
+                {i < sentence.page.split("-").length - 1 ? "-" : null}
+              </span>
+            </ImageTooltip>
+          );
+        })}
+      </>
+    );
+  } else {
+    return <>{sentence.page !== "" ? sentence.page : null}</>;
+  }
+}
+
 function SentenceAndPage(props: {
-  sentenceWithCtx: SentenceWithContext;
+  sentence: Sentence;
   book: Book;
-  matchIdsInSentence: number[];
+  matchIdsInSentence: number[] | null;
   highlightTerm: string;
   ignoreSep: boolean;
   romanize: boolean;
+  showSource: boolean;
 }) {
   const theme = useTheme();
   const sourceTextColor =
     theme.palette.mode === "light" ? grey["600"] : grey["400"];
 
-  const sentence = props.sentenceWithCtx.mainSentence;
-
-  let imagePreviewLink;
-  if (sentence.hasimages && sentence.page !== "") {
-    imagePreviewLink = sentence.page.split("-").map((page, i) => {
-      const imageURL = `${IMAGE_BASE_URL}/${props.book.name}/${page}.jpg`;
-      return (
-        <ImageTooltip
-          title={<PageImagePreview page={page} imageURL={imageURL} />}
-          placement="right"
-          key={i}
-        >
-          <span>
-            <a
-              className="pageNum"
-              style={{
-                color: sourceTextColor,
-                textDecoration: `underline solid ${sourceTextColor}`,
-              }}
-              href={imageURL}
-              target="blank"
-              key={i}
-            >
-              {page}
-            </a>
-            {i < sentence.page.split("-").length - 1 ? "-" : null}
-          </span>
-        </ImageTooltip>
-      );
-    });
-  } else {
-    imagePreviewLink = sentence.page !== "" ? sentence.page : null;
-  }
+  const sentence = props.sentence;
 
   return (
     <React.Fragment>
       {/* Highlighted sentence */}
       <Interweave
+        className="text"
         content={highlight(
           sentence.html ?? sentence.text,
           props.highlightTerm,
@@ -256,30 +427,39 @@ function SentenceAndPage(props: {
         allowList={["mark", "span", "a"]}
         allowAttributes={true}
       />
-      <wbr />
-      {/* Add source link */}
-      <span style={{ color: sourceTextColor }}>
-        &lang;
-        <Link
-          className="sourceLink"
-          rel="noopener noreferrer"
-          target="_blank" // Open in new tab
-          href={
-            "/source?" +
-            new URLSearchParams({
-              name: props.book.name,
-              n: `${sentence.number_in_book}`,
-              hl: props.highlightTerm,
-              is: props.ignoreSep ? "yes" : "no",
-            }).toString()
-          }
-          style={{ textDecoration: `underline dotted ${sourceTextColor}` }}
-        >
-          {sentence.page === null ? props.book.name : `${props.book.name}:`}
-        </Link>
-        {imagePreviewLink}
-        &rang;
-      </span>
+      {props.showSource ? (
+        <>
+          &nbsp;
+          <wbr />
+          {/* Add source link */}
+          <span style={{ color: sourceTextColor }}>
+            [
+            <Link
+              className="sourceLink"
+              rel="noopener noreferrer"
+              target="_blank" // Open in new tab
+              href={
+                "/source?" +
+                new URLSearchParams({
+                  name: props.book.name,
+                  n: `${sentence.number_in_book}`,
+                  hl: props.highlightTerm,
+                  is: props.ignoreSep ? "yes" : "no",
+                }).toString()
+              }
+              style={{ textDecoration: `underline dotted ${sourceTextColor}` }}
+            >
+              {sentence.page === null ? props.book.name : `${props.book.name}:`}
+            </Link>
+            <ImagePreviewLink
+              sentence={sentence}
+              bookName={props.book.name}
+              sourceTextColor={sourceTextColor}
+            />
+            ]
+          </span>
+        </>
+      ) : null}
     </React.Fragment>
   );
 }
