@@ -204,12 +204,13 @@ function SentenceWithCtx(props: {
       props.sentenceWithCtx.mainSentence.text_with_tone ??
         props.sentenceWithCtx.mainSentence.text,
     ) as string;
+    const lng = props.book.year > 1600 ? "ko-ear" : "okm";
     const items = [
       `quote-book`,
-      `okm`,
+      `${lng}`,
       `title=ko:${props.book.name}`,
-      `year=1481`,
-      `page=9b`,
+      `year=${props.book.year_string}`,
+      `page=${props.sentenceWithCtx.mainSentence.page}`,
       `passage=^${text}.`,
       `t=<enter translation here>`,
     ];
