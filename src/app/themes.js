@@ -135,6 +135,10 @@ function addCustomComponents(theme) {
               opacity: 0;
             }
             
+            .searchResultSentence:hover {
+              background-color: rgba(0, 0, 0, 0.1);
+            }
+            
             .sourceSentence.sentence_type_title .text {
               font-size: 150%;
             }

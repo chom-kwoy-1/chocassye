@@ -10,6 +10,7 @@ import {
   IconButton,
   Pagination,
   Paper,
+  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -102,7 +103,7 @@ function SearchResultsList(props: {
                     {/* For each sentence */}
                     {zip(book.sentences, book.matchIdsInBook).map(
                       ([sentence, match_ids_in_sentence], i) => (
-                        <Grid key={i} sx={{ py: 0.4 }}>
+                        <Box key={i}>
                           <SentenceWithCtx
                             sentenceWithCtx={sentence}
                             book={book}
@@ -111,7 +112,7 @@ function SearchResultsList(props: {
                             ignoreSep={props.ignoreSep}
                             romanize={props.romanize}
                           />
-                        </Grid>
+                        </Box>
                       ),
                     )}
                   </StyledTableCell>
@@ -195,8 +196,72 @@ function SentenceWithCtx(props: {
   }, []);
   useOutsideAlerter(wrapperRef, removeCtxView);
 
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [copyNotifOpen, setCopyNotifOpen] = React.useState(false);
+
+  const makeWiktionaryCitation = React.useCallback(() => {
+    const text = yale_to_hangul(
+      props.sentenceWithCtx.mainSentence.text_with_tone ??
+        props.sentenceWithCtx.mainSentence.text,
+    ) as string;
+    const items = [
+      `quote-book`,
+      `okm`,
+      `title=ko:${props.book.name}`,
+      `year=1481`,
+      `page=9b`,
+      `passage=^${text}.`,
+      `t=<enter translation here>`,
+    ];
+
+    const prevSentence =
+      props.sentenceWithCtx.contextBefore[
+        props.sentenceWithCtx.contextBefore.length - 1
+      ];
+    const chinese =
+      prevSentence?.lang === "chi" ? prevSentence.text : undefined;
+    if (chinese !== undefined) {
+      items.push(`origlang=lzh`);
+      items.push(`origtext=lzh:${chinese}`);
+    }
+
+    return `{{${items.join("|")}}}`;
+  }, [props.sentenceWithCtx, props.book]);
+
+  React.useEffect(() => {
+    const handleKeyPress = async (event: KeyboardEvent) => {
+      if (isHovered) {
+        // Perform action when key is pressed and mouse is inside
+        if (event.key === "w") {
+          const citation = makeWiktionaryCitation();
+          await navigator.clipboard.writeText(citation);
+          setCopyNotifOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [makeWiktionaryCitation, isHovered]); // Re-run effect if isHovered changes
+
   return (
-    <div ref={wrapperRef} style={{ position: "relative" }}>
+    <div
+      ref={wrapperRef}
+      style={{ position: "relative" }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Snackbar
+        open={copyNotifOpen}
+        autoHideDuration={1000}
+        onClose={() => {
+          setCopyNotifOpen(false);
+        }}
+        message={`Copied Wiktionary citation to clipboard.`}
+      />
       <ThemeProvider theme={invTheme}>
         <Box
           className={`${invTheme.palette.mode}ThemeRoot`}
@@ -243,32 +308,34 @@ function SentenceWithCtx(props: {
           </Paper>
         </Box>
       </ThemeProvider>
-      <SentenceAndPage
-        sentence={props.sentenceWithCtx.mainSentence}
-        book={props.book}
-        matchIdsInSentence={props.matchIdsInSentence}
-        highlightTerm={props.highlightTerm}
-        ignoreSep={props.ignoreSep}
-        romanize={props.romanize}
-        showSource={true}
-      />
-      <span
-        style={{
-          position: "absolute", // make it take up no space
-          bottom: 0,
-          transform: "translateY(16%)",
-        }}
-      >
-        <Tooltip title={t("Click to see context")}>
-          <IconButton
-            onClick={() => {
-              setIsCtxOpen(!isCtxOpen);
-            }}
-          >
-            <UnfoldMoreIcon sx={{ fontSize: 14 }} />
-          </IconButton>
-        </Tooltip>
-      </span>
+      <Box className={"searchResultSentence"} sx={{ py: 0.4 }}>
+        <SentenceAndPage
+          sentence={props.sentenceWithCtx.mainSentence}
+          book={props.book}
+          matchIdsInSentence={props.matchIdsInSentence}
+          highlightTerm={props.highlightTerm}
+          ignoreSep={props.ignoreSep}
+          romanize={props.romanize}
+          showSource={true}
+        />
+        <span
+          style={{
+            position: "absolute", // make it take up no space
+            bottom: 0,
+            transform: "translateY(16%)",
+          }}
+        >
+          <Tooltip title={t("Click to see context")}>
+            <IconButton
+              onClick={() => {
+                setIsCtxOpen(!isCtxOpen);
+              }}
+            >
+              <UnfoldMoreIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          </Tooltip>
+        </span>
+      </Box>
       <ThemeProvider theme={invTheme}>
         <Box
           className={`${invTheme.palette.mode}ThemeRoot`}
