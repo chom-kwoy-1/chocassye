@@ -219,7 +219,9 @@ function SentenceWithCtx(props: {
         props.sentenceWithCtx.contextBefore.length - 1
       ];
     const chinese =
-      prevSentence?.lang === "chi" ? prevSentence.text : undefined;
+      prevSentence?.lang === "chi"
+        ? (yale_to_hangul(prevSentence.text) as string)
+        : undefined;
     if (chinese !== undefined) {
       items.push(`origlang=lzh`);
       items.push(`origtext=lzh:${chinese}`);
