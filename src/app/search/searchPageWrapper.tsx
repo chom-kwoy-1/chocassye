@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 
-import { Book, SearchQuery, getStats } from "./search";
+import { Book, SearchQuery, StatsResult } from "./search";
 import { SearchPage } from "./searchPage";
 
 function parseSearchParams(searchParams: URLSearchParams): SearchQuery {
@@ -38,6 +38,7 @@ function makeSearchParams(query: SearchQuery): URLSearchParams {
 
 export function SearchPageWrapper({
   result,
+  statsPromise,
 }: {
   result: {
     loaded: boolean;
@@ -49,8 +50,10 @@ export function SearchPageWrapper({
     excludeModern: boolean;
     ignoreSep: boolean;
   };
+  statsPromise: Promise<StatsResult>;
 }) {
   const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
 
   const searchParams = useSearchParams();
 
@@ -61,82 +64,44 @@ export function SearchPageWrapper({
   );
   const [query, setQuery] = React.useState(initialQuery);
 
-  const [loaded, setLoaded] = React.useState(result.loaded);
-  React.useEffect(() => {
-    setLoaded(result.loaded);
-  }, [result]);
-
-  const [stats, setStats] = React.useState<{
-    statsLoaded: boolean;
-    statsTerm: string;
-    statsDoc: string;
-    statsExcludeModern: boolean;
-    statsIgnoreSep: boolean;
-    numResults: number;
-    histogram: { period: number; num_hits: number }[];
-  }>({
-    statsLoaded: false,
-    statsTerm: "",
-    statsDoc: "",
-    statsExcludeModern: false,
-    statsIgnoreSep: false,
-    numResults: 0,
-    histogram: [],
-  });
-
-  const refreshStats = React.useCallback((query: SearchQuery) => {
-    async function fetchStats() {
-      const result = await getStats(query);
-      if (result.status === "success") {
-        setStats({
-          statsLoaded: true,
-          statsTerm: query.term,
-          statsDoc: query.doc,
-          statsExcludeModern: query.excludeModern,
-          statsIgnoreSep: query.ignoreSep,
-          numResults: result.num_results,
-          histogram: result.histogram,
-        });
-      }
-    }
-    fetchStats();
-  }, []);
-
   React.useEffect(() => {
     const newParams = parseSearchParams(searchParams);
     setQuery(newParams);
-    refreshStats(newParams);
-  }, [searchParams, refreshStats]);
+  }, [searchParams]);
 
   const refresh = React.useCallback(
     (query: SearchQuery) => {
-      // Show loading state
-      setLoaded(false);
-      // Reset page if search term changed
-      if (
-        initialQuery.term !== query.term ||
-        initialQuery.doc !== query.doc ||
-        initialQuery.excludeModern !== query.excludeModern ||
-        initialQuery.ignoreSep !== query.ignoreSep
-      ) {
-        query.page = 1;
-        setQuery(query);
-        setStats({ ...stats, statsLoaded: false });
-      }
-      // Update URL
-      const params = makeSearchParams(query).toString();
-      const url = params ? `/search?${params}` : "/search";
-      router.push(url);
+      startTransition(() => {
+        // Reset page if search term changed
+        if (
+          initialQuery.term !== query.term ||
+          initialQuery.doc !== query.doc ||
+          initialQuery.excludeModern !== query.excludeModern ||
+          initialQuery.ignoreSep !== query.ignoreSep
+        ) {
+          query.page = 1;
+          setQuery(query);
+        }
+        // Update URL
+        const params = makeSearchParams(query).toString();
+        const url = params ? `/search?${params}` : "/search";
+        router.push(url);
+      });
     },
-    [initialQuery, setQuery, stats, router],
+    [initialQuery, setQuery, router],
   );
 
   // Convenience function to set page
   const setPage = React.useCallback(
     (page: number) => {
-      const newQuery = { ...initialQuery, page: page };
-      setQuery(newQuery);
-      refresh(newQuery);
+      if (page === initialQuery.page) {
+        return;
+      }
+      startTransition(() => {
+        const newQuery = { ...initialQuery, page: page };
+        setQuery(newQuery);
+        refresh(newQuery);
+      });
     },
     [refresh, initialQuery],
   );
@@ -163,7 +128,7 @@ export function SearchPageWrapper({
         setQuery({ ...query, ignoreSep: value })
       }
       // Current Results
-      loaded={loaded}
+      loaded={!isPending}
       result={result.result}
       pageN={result.page_N}
       resultTerm={result.result_term}
@@ -172,10 +137,7 @@ export function SearchPageWrapper({
       resultExcludeModern={result.excludeModern}
       resultIgnoreSep={result.ignoreSep}
       // Current Stats
-      statsLoaded={stats.statsLoaded}
-      statsTerm={stats.statsTerm}
-      numResults={stats.numResults}
-      histogram={stats.histogram}
+      statsPromise={statsPromise}
       // Callbacks
       onRefresh={forceRefreshResults}
     />

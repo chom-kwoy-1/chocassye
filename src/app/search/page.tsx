@@ -1,9 +1,9 @@
 import { Metadata } from "next";
-import React from "react";
+import React, { Suspense } from "react";
 
 import { getTranslation } from "@/components/detectLanguage";
 
-import { search } from "./search";
+import { getStats, search } from "./search";
 import { SearchPageWrapper } from "./searchPageWrapper";
 
 export async function generateMetadata({
@@ -36,6 +36,7 @@ export default async function Search({
     excludeModern: params.excludeModern === "yes",
     ignoreSep: params.ignoreSep === "yes",
   };
+  const statsPromise = getStats(query);
   const results = await search(query);
   if (results.status === "success") {
     return (
@@ -50,6 +51,7 @@ export default async function Search({
           excludeModern: query.excludeModern,
           ignoreSep: query.ignoreSep,
         }}
+        statsPromise={statsPromise}
       />
     );
   } else {

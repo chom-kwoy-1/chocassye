@@ -119,14 +119,19 @@ export async function search(
   }
 }
 
-export async function getStats(query: SearchQuery): Promise<
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export type StatsResult =
   | {
       status: "success";
       num_results: number;
       histogram: { period: number; num_hits: number }[];
     }
-  | { status: "error"; msg: string }
-> {
+  | { status: "error"; msg: string };
+
+export async function getStats(query: SearchQuery): Promise<StatsResult> {
   // Get current time
   const beginTime = new Date();
 
@@ -155,6 +160,8 @@ export async function getStats(query: SearchQuery): Promise<
     }
 
     const results = await client.query(queryString);
+
+    await sleep(5000);
 
     const elapsed = new Date().getTime() - beginTime.getTime();
     console.log("Successfully retrieved search stats in " + elapsed + "ms");

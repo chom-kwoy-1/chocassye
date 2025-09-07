@@ -14,7 +14,7 @@ import {
 import React, { ChangeEvent } from "react";
 
 import SearchResults from "@/app/search/SearchResults";
-import { Book } from "@/app/search/search";
+import { Book, StatsResult } from "@/app/search/search";
 import TextFieldWithGugyeol from "@/components/TextFieldWithGugyeol";
 import { useTranslation } from "@/components/TranslationProvider";
 import { hangul_to_yale, yale_to_hangul } from "@/components/YaleToHangul.mjs";
@@ -42,10 +42,7 @@ export function SearchPage(props: {
   resultExcludeModern: boolean;
   resultIgnoreSep: boolean;
   // Current Stats
-  statsLoaded: boolean;
-  statsTerm: string;
-  numResults: number;
-  histogram: { period: number; num_hits: number }[];
+  statsPromise: Promise<StatsResult>;
   // Callbacks
   onRefresh: () => void;
 }) {
@@ -171,7 +168,7 @@ export function SearchPage(props: {
 
       <Grid size={12}>
         <Typography sx={{ fontSize: "1em", fontWeight: 600 }}>
-          {t("number Results", { numResults: props.numResults })}
+          {/*{t("number Results", { numResults: props.numResults })}*/}
           &ensp;
           {props.result.length > 0 ? (
             t("current page", {
@@ -201,16 +198,13 @@ export function SearchPage(props: {
 
           <SearchResults
             results={props.result}
-            numResults={props.numResults}
             romanize={romanize}
             handleRomanizeChange={setRomanize}
             ignoreSep={props.resultIgnoreSep}
             resultTerm={props.resultTerm} // for triggering re-render
             resultPage={props.resultPage} // for triggering re-render
             resultDoc={props.resultDoc} // for triggering re-render
-            histogram={props.histogram}
-            statsLoaded={props.statsLoaded}
-            statsTerm={props.statsTerm} // for triggering re-render
+            statsPromise={props.statsPromise}
             pageN={props.pageN}
             page={props.page}
             setPage={props.setPage}

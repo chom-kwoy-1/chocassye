@@ -24,11 +24,11 @@ import { ThemeProvider, styled } from "@mui/material/styles";
 import { Interweave } from "interweave";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { Suspense } from "react";
 import { Trans } from "react-i18next";
 
 import { ImageTooltip } from "@/app/search/ImageTooltip";
-import { Book, SentenceWithContext } from "@/app/search/search";
+import { Book, SentenceWithContext, StatsResult } from "@/app/search/search";
 import { darkTheme, lightTheme } from "@/app/themes";
 import { findMatchingRanges, highlight, toText } from "@/components/Highlight";
 import Histogram from "@/components/Histogram";
@@ -571,18 +571,33 @@ function getResultMatches(
   return matches;
 }
 
+function HistogramWrapper({
+  statsPromise,
+  setPage,
+  pageN,
+}: {
+  statsPromise: Promise<StatsResult>;
+  setPage: (page: number) => void;
+  pageN: number;
+}) {
+  console.log("Loading histogram...");
+  const stats: StatsResult = React.use(statsPromise);
+  console.log("Loaded histogram:", stats);
+  if (stats.status === "error") {
+    return <div>Error loading histogram: {stats.msg}</div>;
+  }
+  return <Histogram data={stats.histogram} setPage={setPage} pageN={pageN} />;
+}
+
 type SearchResultsProps = {
   results: Book[];
-  numResults: number;
   romanize: boolean;
   handleRomanizeChange: (value: boolean) => void;
   ignoreSep: boolean;
   resultTerm: string;
   resultPage: number;
   resultDoc: string;
-  histogram: { period: number; num_hits: number }[];
-  statsLoaded: boolean;
-  statsTerm: string;
+  statsPromise: Promise<StatsResult>;
   pageN: number;
   page: number;
   setPage: (page: number) => void;
@@ -607,7 +622,7 @@ function SearchResultsWrapper(props: SearchResultsProps) {
     setDisabledMatches(new Set());
   }, [props.resultTerm, props.page]);
 
-  const numPages = Math.ceil(props.numResults / props.pageN);
+  // const numPages = Math.ceil(props.numResults / props.pageN);
 
   const matches = getResultMatches(
     props.results,
@@ -652,27 +667,33 @@ function SearchResultsWrapper(props: SearchResultsProps) {
 
   return (
     <React.Fragment>
-      <Grid size={12} container sx={{ position: "relative" }}>
-        <Grid size={12}>
-          <Backdrop
-            sx={{
-              color: "#fff",
-              zIndex: (theme) => theme.zIndex.drawer + 1,
-              position: "absolute",
-            }}
-            open={!props.statsLoaded}
-          >
-            <CircularProgress color="inherit" />
-          </Backdrop>
-        </Grid>
-        <Grid size={12}>
-          <Histogram
-            data={props.histogram}
-            setPage={props.setPage}
-            pageN={props.pageN}
-          />
-        </Grid>
-      </Grid>
+      <Suspense
+        fallback={
+          <Grid size={12} container sx={{ position: "relative" }}>
+            <Grid size={12}>
+              <Backdrop
+                sx={{
+                  color: "#fff",
+                  zIndex: (theme) => theme.zIndex.drawer + 1,
+                  position: "absolute",
+                }}
+                open={true}
+              >
+                <CircularProgress color="inherit" />
+              </Backdrop>
+            </Grid>
+            <Grid size={12}>
+              <Histogram data={[]} setPage={null} pageN={props.pageN} />
+            </Grid>
+          </Grid>
+        }
+      >
+        <HistogramWrapper
+          statsPromise={props.statsPromise}
+          pageN={props.pageN}
+          setPage={props.setPage}
+        />
+      </Suspense>
 
       {/* Show highlight match legend */}
       <Grid size="grow" mt={1} mb={2} container columnSpacing={1} spacing={1}>
@@ -712,21 +733,21 @@ function SearchResultsWrapper(props: SearchResultsProps) {
       </Grid>
 
       {/* Pager on top */}
-      <Grid size={12}>
-        <Box display="flex" justifyContent="center" alignItems="center">
-          {filteredResultsList.length > 0 ? (
-            <Pagination
-              color="primary"
-              count={numPages}
-              siblingCount={2}
-              boundaryCount={2}
-              page={props.page}
-              shape="rounded"
-              onChange={(_, page) => props.setPage(page)}
-            />
-          ) : null}
-        </Box>
-      </Grid>
+      {/*<Grid size={12}>*/}
+      {/*  <Box display="flex" justifyContent="center" alignItems="center">*/}
+      {/*    {filteredResultsList.length > 0 ? (*/}
+      {/*      <Pagination*/}
+      {/*        color="primary"*/}
+      {/*        count={numPages}*/}
+      {/*        siblingCount={2}*/}
+      {/*        boundaryCount={2}*/}
+      {/*        page={props.page}*/}
+      {/*        shape="rounded"*/}
+      {/*        onChange={(_, page) => props.setPage(page)}*/}
+      {/*      />*/}
+      {/*    ) : null}*/}
+      {/*  </Box>*/}
+      {/*</Grid>*/}
 
       {/* Results area */}
       <Grid size={12}>
@@ -746,21 +767,21 @@ function SearchResultsWrapper(props: SearchResultsProps) {
       />
 
       {/* Pager on bottom */}
-      <Grid size={12} marginTop={1}>
-        <Box display="flex" justifyContent="center" alignItems="center">
-          {filteredResultsList.length > 0 ? (
-            <Pagination
-              color="primary"
-              count={numPages}
-              siblingCount={2}
-              boundaryCount={2}
-              page={props.page}
-              shape="rounded"
-              onChange={(_, page) => props.setPage(page)}
-            />
-          ) : null}
-        </Box>
-      </Grid>
+      {/*<Grid size={12} marginTop={1}>*/}
+      {/*  <Box display="flex" justifyContent="center" alignItems="center">*/}
+      {/*    {filteredResultsList.length > 0 ? (*/}
+      {/*      <Pagination*/}
+      {/*        color="primary"*/}
+      {/*        count={numPages}*/}
+      {/*        siblingCount={2}*/}
+      {/*        boundaryCount={2}*/}
+      {/*        page={props.page}*/}
+      {/*        shape="rounded"*/}
+      {/*        onChange={(_, page) => props.setPage(page)}*/}
+      {/*      />*/}
+      {/*    ) : null}*/}
+      {/*  </Box>*/}
+      {/*</Grid>*/}
     </React.Fragment>
   );
 }

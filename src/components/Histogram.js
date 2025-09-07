@@ -30,7 +30,7 @@ export default function Histogram(props) {
     .reduce((a, b) => a + b, 0);
 
   return (
-    <Grid container>
+    <Grid container size={12}>
       <Grid size={12}>
         <Card elevation={3}>
           <Box position="relative">
