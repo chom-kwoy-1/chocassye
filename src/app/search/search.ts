@@ -161,8 +161,6 @@ export async function getStats(query: SearchQuery): Promise<StatsResult> {
 
     const results = await client.query(queryString);
 
-    await sleep(5000);
-
     const elapsed = new Date().getTime() - beginTime.getTime();
     console.log("Successfully retrieved search stats in " + elapsed + "ms");
 

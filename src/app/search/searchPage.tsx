@@ -42,7 +42,7 @@ export function SearchPage(props: {
   resultExcludeModern: boolean;
   resultIgnoreSep: boolean;
   // Current Stats
-  statsPromise: Promise<StatsResult>;
+  statsPromise: Promise<StatsResult> | null;
   // Callbacks
   onRefresh: () => void;
 }) {
@@ -201,6 +201,7 @@ export function SearchPage(props: {
             romanize={romanize}
             handleRomanizeChange={setRomanize}
             ignoreSep={props.resultIgnoreSep}
+            excludeModern={props.resultExcludeModern}
             resultTerm={props.resultTerm} // for triggering re-render
             resultPage={props.resultPage} // for triggering re-render
             resultDoc={props.resultDoc} // for triggering re-render

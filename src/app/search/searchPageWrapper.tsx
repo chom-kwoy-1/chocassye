@@ -63,6 +63,7 @@ export function SearchPageWrapper({
     [searchParams],
   );
   const [query, setQuery] = React.useState(initialQuery);
+  const [refreshStats, setRefreshStats] = React.useState(true);
 
   React.useEffect(() => {
     const newParams = parseSearchParams(searchParams);
@@ -71,22 +72,33 @@ export function SearchPageWrapper({
 
   const refresh = React.useCallback(
     (query: SearchQuery) => {
-      startTransition(() => {
-        // Reset page if search term changed
-        if (
-          initialQuery.term !== query.term ||
-          initialQuery.doc !== query.doc ||
-          initialQuery.excludeModern !== query.excludeModern ||
-          initialQuery.ignoreSep !== query.ignoreSep
-        ) {
-          query.page = 1;
-          setQuery(query);
-        }
-        // Update URL
-        const params = makeSearchParams(query).toString();
-        const url = params ? `/search?${params}` : "/search";
-        router.push(url);
-      });
+      if (
+        initialQuery.term !== query.term ||
+        initialQuery.doc !== query.doc ||
+        initialQuery.excludeModern !== query.excludeModern ||
+        initialQuery.ignoreSep !== query.ignoreSep ||
+        initialQuery.page !== query.page
+      ) {
+        startTransition(() => {
+          // Reset page if search term changed
+          if (
+            initialQuery.term !== query.term ||
+            initialQuery.doc !== query.doc ||
+            initialQuery.excludeModern !== query.excludeModern ||
+            initialQuery.ignoreSep !== query.ignoreSep
+          ) {
+            query = { ...query, page: 1 };
+            setQuery(query);
+            setRefreshStats(true);
+          } else {
+            setRefreshStats(false);
+          }
+          // Update URL
+          const params = makeSearchParams(query).toString();
+          const url = params ? `/search?${params}` : "/search";
+          router.push(url);
+        });
+      }
     },
     [initialQuery, setQuery, router],
   );
@@ -137,7 +149,7 @@ export function SearchPageWrapper({
       resultExcludeModern={result.excludeModern}
       resultIgnoreSep={result.ignoreSep}
       // Current Stats
-      statsPromise={statsPromise}
+      statsPromise={refreshStats ? statsPromise : null}
       // Callbacks
       onRefresh={forceRefreshResults}
     />
