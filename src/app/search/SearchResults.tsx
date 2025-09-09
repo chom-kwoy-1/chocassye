@@ -412,21 +412,33 @@ function SearchResultsWrapper(props: SearchResultsProps) {
       />
 
       {/* Pager on bottom */}
-      {/*<Grid size={12} marginTop={1}>*/}
-      {/*  <Box display="flex" justifyContent="center" alignItems="center">*/}
-      {/*    {filteredResultsList.length > 0 ? (*/}
-      {/*      <Pagination*/}
-      {/*        color="primary"*/}
-      {/*        count={numPages}*/}
-      {/*        siblingCount={2}*/}
-      {/*        boundaryCount={2}*/}
-      {/*        page={props.page}*/}
-      {/*        shape="rounded"*/}
-      {/*        onChange={(_, page) => props.setPage(page)}*/}
-      {/*      />*/}
-      {/*    ) : null}*/}
-      {/*  </Box>*/}
-      {/*</Grid>*/}
+      <Grid size={12} marginTop={1}>
+        <Suspense
+          key={suspenseKey}
+          fallback={
+            <Backdrop
+              sx={{
+                color: "#fff",
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+                maxHeight: "100px",
+                position: "static",
+              }}
+              open={true}
+            >
+              {t("Loading pager...")}
+              <CircularProgress color="inherit" />
+            </Backdrop>
+          }
+        >
+          <PagerWrapper
+            statsPromise={props.statsPromise}
+            setPage={props.setPage}
+            results={props.results}
+            page={props.page}
+            pageN={props.pageN}
+          />
+        </Suspense>
+      </Grid>
     </React.Fragment>
   );
 }
