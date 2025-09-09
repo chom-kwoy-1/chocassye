@@ -376,8 +376,7 @@ function SentenceAndPage(props: {
       />
       {props.showSource ? (
         <>
-          &nbsp;
-          <wbr />
+          {" "}
           {/* Add source link */}
           <span style={{ color: sourceTextColor }}>
             [

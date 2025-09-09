@@ -115,7 +115,7 @@ function HowToPageWrapper(props) {
           <Trans i18nKey="rom-detail-1">
             <strong>
               ‘ㅇ’ is always romanized into ‘<code>G</code>’
-            </strong>{" "}
+            </strong>
             (a capital G) regardless of the environment it appears in.
           </Trans>
         </MarkdownListItem>

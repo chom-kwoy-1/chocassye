@@ -35,7 +35,7 @@ export default function Histogram(props) {
         <Card elevation={3}>
           <Box position="relative">
             <Grid container spacing={0}>
-              {range(BEGIN, END - 50, 50).map((year, i) => {
+              {range(BEGIN, END, 50).map((year, i) => {
                 return (
                   <Grid
                     key={i}
