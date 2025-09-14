@@ -11,7 +11,7 @@ import {
   Snackbar,
   Typography,
 } from "@mui/material";
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, Suspense, useState } from "react";
 
 import SearchResults from "@/app/search/SearchResults";
 import { Book, StatsResult } from "@/app/search/search";
@@ -20,6 +20,28 @@ import { useTranslation } from "@/components/TranslationProvider";
 import { hangul_to_yale, yale_to_hangul } from "@/components/YaleToHangul.mjs";
 
 import DocSelector from "./DocSelector";
+
+function TotalNumberWrapper({
+  statsPromise,
+}: {
+  statsPromise: Promise<StatsResult> | null;
+}) {
+  const { t } = useTranslation();
+  const [cachedStats, setCachedStats] = useState<StatsResult | null>(null);
+  let stats = cachedStats;
+  if (statsPromise) {
+    stats = React.use(statsPromise);
+    if (stats !== cachedStats) {
+      setCachedStats(stats);
+    }
+  }
+  if (stats === null || stats.status === "error") {
+    return (
+      <div>Error loading total count. Please try refreshing the page.</div>
+    );
+  }
+  return <span>{t("number Results", { numResults: stats.num_results })}</span>;
+}
 
 export function SearchPage(props: {
   term: string;
@@ -168,7 +190,9 @@ export function SearchPage(props: {
 
       <Grid size={12}>
         <Typography sx={{ fontSize: "1em", fontWeight: 600 }}>
-          {/*{t("number Results", { numResults: props.numResults })}*/}
+          <Suspense fallback={<span>{t("Loading...")}</span>}>
+            <TotalNumberWrapper statsPromise={props.statsPromise} />
+          </Suspense>
           &ensp;
           {props.result.length > 0 ? (
             t("current page", {
