@@ -25,7 +25,7 @@ export function EnglishClient() {
       />
       {/*한글 출력 */}
       <div>↓</div>
-      <div>{hangulOutput}</div>
+      <div>{`${hangulOutput}`}</div>
     </Stack>
   );
 }

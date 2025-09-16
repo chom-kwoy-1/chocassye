@@ -18,5 +18,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [new URL("https://*.backblazeb2.com/**")],
   },
 };
-
+process.on("unhandledRejection", (error) => {
+  console.log("unhandledRejection", error);
+});
 export default nextConfig;

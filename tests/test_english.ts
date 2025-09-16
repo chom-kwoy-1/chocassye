@@ -1,6 +1,5 @@
-import { phonemize } from "phonemize";
-
 import { convert, normalizeIPA, wordlist } from "@/utils/convert_eng";
+import { phonemize } from "@/utils/phonemize";
 
 function assert(a: string, b: string) {
   if (a !== b) {
@@ -27,6 +26,7 @@ assert(await convert("lake"), "레이크");
 assert(await convert("hello"), "헬러우");
 assert(await convert("call"), "코을");
 assert(await convert("water"), "우오으터");
+assert(await convert("aurorasphere"), "오으로으러쓰피으");
 
 assert(await convert("May I have some water?"), "메이 아이 하브 썸 우오으터?");
 assert(

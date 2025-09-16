@@ -7,7 +7,7 @@ import { EnglishClient } from "./client";
 export async function generateMetadata() {
   const { t } = await getTranslation();
   return {
-    title: t("page-title-about"),
+    title: t("English"),
     description: t("page-description"),
   };
 }

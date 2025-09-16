@@ -2,7 +2,8 @@ import { assemble } from "es-hangul";
 import fs from "fs";
 import { promisify } from "node:util";
 import path from "path";
-import { phonemize } from "phonemize";
+
+import { phonemize } from "@/utils/phonemize";
 
 export const wordlist = new Map<string, string[]>();
 await promisify(fs.readFile)(
@@ -259,7 +260,7 @@ function compose(initial: string, vowel: string, final: string) {
   return assemble([initial, vowel, final]);
 }
 
-export async function convert(text: string) {
+export async function convert(text: string): Promise<string> {
   const words = phonemize(text, {
     returnArray: true,
     format: "ipa",
