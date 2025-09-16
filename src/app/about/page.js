@@ -1,7 +1,7 @@
 import { Box, Divider, Stack, Typography } from "@mui/material";
 import React from "react";
 
-import { getTranslation } from "../../components/detectLanguage";
+import { getTranslation } from "@/components/detectLanguage";
 
 export async function generateMetadata() {
   const { t } = await getTranslation();

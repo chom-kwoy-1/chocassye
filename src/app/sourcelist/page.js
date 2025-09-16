@@ -1,6 +1,7 @@
 import React from "react";
 
-import { getTranslation } from "../../components/detectLanguage";
+import { getTranslation } from "@/components/detectLanguage";
+
 import { fetchList } from "./fetchList";
 import { SourceListPageWrapper } from "./sourceListPage";
 
