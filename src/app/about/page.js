@@ -1,4 +1,5 @@
 import { Box, Divider, Stack, Typography } from "@mui/material";
+import Link from "next/link";
 import React from "react";
 
 import { getTranslation } from "@/components/detectLanguage";
@@ -126,6 +127,9 @@ export default async function About() {
               <a href="https://blog.됬.xyz/" target="blank">
                 ᄎᆞᆷ괴로운 블로그 (개발자의 블로그)
               </a>
+            </li>
+            <li>
+              <Link href="/english">ᄎᆞᆷ괴로운 영어 표기법 변환기</Link>
             </li>
           </ul>
         </Typography>

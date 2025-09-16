@@ -43,7 +43,7 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "cross-env NGRAM_TRUNCATE=5 IS_BUILDING=1 next build --debug",
+    "build": "cross-env NGRAM_TRUNCATE=5 IS_BUILDING=1 next build",
     "start": "next start",
     "lint": "npx eslint",
     "populate-db": "tsx scripts/populate_db.js",
